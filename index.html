@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enshrouded Server JSON Generator</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            margin-top: 40px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            cursor: pointer;
+        }
+
+        h2:hover {
+            color: #555;
+        }
+
+        section {
+            margin-bottom: 30px;
+        }
+
+        .collapsible-content {
+            display: none;
+        }
+
+        .collapsible-content.active {
+            display: block;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            cursor: help;
+        }
+
+        .inline-block {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-right: 1rem;
+            border: 2px solid #333;
+            background: #fff;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #333;
+            color: white;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        .primary-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        #custom-settings {
+            display: none;
+        }
+
+        #output {
+            margin-top: 40px;
+            display: none;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            border: 2px solid #333;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        #download-link {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            color: #333;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        #download-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            h2 {
+                font-size: 18px;
+            }
+
+            input,
+            select,
+            button {
+                font-size: 16px;
+            }
+        }
+
+        .grid-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .group-item {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .group-item h3 {
+            margin-top: 0;
+        }
+
+        .delete-group {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff0000;
+            color: white;
+        }
+
+        .add-group {
+            display: block;
+            margin: 20px 0;
+        }
+
+        .grid-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        /* Reduce layout shift: reserve space for small labels and controls */
+        label small {
+            display: inline-block;
+            width: 72px;
+            text-align: right;
+            margin-left: 6px;
+        }
+
+        .pct-control {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pct-control input[type="number"] {
+            width: 84px;
+        }
+
+        .pct-control input[type="range"] {
+            flex: 1;
+        }
+
+        /* stable-field: reserve vertical space and align controls to avoid layout shift */
+        .stable-field {
+            min-height: 72px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Accessible focus styles */
+        :focus {
+            outline: 3px solid #0366d6;
+            outline-offset: 2px;
+        }
+
+        .secondary-button {
+            background: #666;
+        }
+
+        @media (max-width: 768px) {
+            .stable-field {
+                min-height: 84px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Small unobtrusive ad box: replace contents with your monetization snippet or a partner link -->
+        <div id="top-ad"
+            style="text-align:center;margin-bottom:12px;padding:8px;border:1px solid #e0e0e0;background:#fafafa;font-size:14px;color:#333;">
+            <a href="#" id="ad-link" style="color:#333;text-decoration:none;">Support this tool — host with Enshrouded
+                Config</a>
+        </div>
+        <h1>Enshrouded Server JSON Generator</h1>
+        <p style="text-align: center;">Configure settings with collapsible sections for clarity. Manage user groups
+            dynamically—add, edit, or remove (at least one required). Hover over labels for tooltips. Settings are saved
+            in local storage. Generate and download JSON.</p>
+
+        <section id="basic-settings">
+            <h2 onclick="toggleCollapse(this)">Basic Server Settings</h2>
+            <div class="collapsible-content active">
+                <div class="grid-group">
+                    <div>
+                        <label
+                            title="The name of the dedicated server as it will appear in the server list. Use a non-offensive name.">Server
+                            Name:</label>
+                        <input type="text" id="name" value="Enshrouded Server">
+                    </div>
+                    <div>
+                        <label
+                            title="The directory for the world saved on the dedicated server. Default: ./savegame">Save
+                            Directory:</label>
+                        <input type="text" id="saveDirectory" value="./savegame">
+                    </div>
+                    <div>
+                        <label title="The directory for storing log-files. Default: ./logs">Log Directory:</label>
+                        <input type="text" id="logDirectory" value="./logs">
+                    </div>
+                    <div>
+                        <label
+                            title="The IP of the server for internal network configurations. Default: 0.0.0.0">IP:</label>
+                        <input type="text" id="ip" value="0.0.0.0">
+                    </div>
+                    <div>
+                        <label
+                            title="The port for server queries, changeable to match firewall settings. Default: 15637">Query
+                            Port:</label>
+                        <input type="number" id="queryPort" value="15637" min="1" max="65535">
+                    </div>
+                    <div>
+                        <label
+                            title="The number of available player slots (1-16). Lower for better performance if needed.">Slot
+                            Count:</label>
+                        <input type="number" id="slotCount" value="16" min="1" max="16">
+                    </div>
+                    <div>
+                        <label title="Switch between proximity or global voice chat. Options: Proximity / Global">Voice
+                            Chat Mode:</label>
+                        <select id="voiceChatMode">
+                            <option value="Proximity" selected>Proximity</option>
+                            <option value="Global">Global</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label title="Enable or disable voice chat completely. Options: true / false">Enable Voice
+                            Chat:</label>
+                        <select id="enableVoiceChat">
+                            <option value="false" selected>false</option>
+                            <option value="true">true</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label title="Enable or disable text chat completely. Options: true / false">Enable Text
+                            Chat:</label>
+                        <select id="enableTextChat">
+                            <option value="false" selected>false</option>
+                            <option value="true">true</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="preset-settings">
+            <h2 onclick="toggleCollapse(this)">Game Settings Preset</h2>
+            <div class="collapsible-content active">
+                <label
+                    title="The difficulty preset: Default, Relaxed, Hard, Survival, Custom. Custom enables individual tweaks.">Preset:</label>
+                <select id="gameSettingsPreset">
+                    <option value="Default" selected>Default</option>
+                    <option value="Relaxed">Relaxed</option>
+                    <option value="Hard">Hard</option>
+                    <option value="Survival">Survival</option>
+                    <option value="Custom">Custom</option>
+                </select>
+            </div>
+        </section>
+
+        <section id="custom-settings">
+            <h2 onclick="toggleCollapse(this)">Custom Game Settings</h2>
+            <div class="collapsible-content">
+                <div class="grid-group">
+                    <div>
+                        <label title="Scales the max health for players by a factor (0.25-4).">Player Health Factor:
+                            <small id="playerHealthFactorPct">100%</small></label>
+                        <input type="number" id="playerHealthFactor" step="0.01" min="0.25" max="4" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales the max mana for players by a factor (0.25-4).">Player Mana Factor: <small
+                                id="playerManaFactorPct">100%</small></label>
+                        <input type="number" id="playerManaFactor" step="0.01" min="0.25" max="4" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales the max stamina for players by a factor (0.25-4).">Player Stamina Factor:
+                            <small id="playerStaminaFactorPct">100%</small></label>
+                        <input type="number" id="playerStaminaFactor" step="0.01" min="0.25" max="4" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales the max amount of available body heat (0.5,1,1.5,2).">Player Body Heat
+                            Factor: <small id="playerBodyHeatFactorPct">100%</small></label>
+                        <div class="inline-block">
+                            <select id="playerBodyHeatFactor">
+                                <option value="0.5">Low</option>
+                                <option value="1" selected>Default</option>
+                                <option value="1.5">High</option>
+                                <option value="2">Max</option>
+                            </select>
+                        </div>
+
+                    </div>
+                    <div>
+                        <label title="If false, weapons don't break anymore (true/false).">Enable Durability:</label>
+                        <select id="enableDurability">
+                            <option value="true" selected>true</option>
+                            <option value="false">false</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label title="Enables hunger and starvation (true/false).">Enable Starving Debuff:</label>
+                        <select id="enableStarvingDebuff">
+                            <option value="false" selected>false</option>
+                            <option value="true">true</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label title="Scales food buff durations (0.5-2).">Food Buff Duration Factor: <small
+                                id="foodBuffDurationFactorPct">100%</small></label>
+                        <input type="number" id="foodBuffDurationFactor" step="0.01" min="0.5" max="2" value="1">
+                    </div>
+                    <div>
+                        <label title="Length of hungry state before starving (nanoseconds, 5-20 minutes).">Hunger to
+                            Starving: <small id="fromHungerToStarvingMin">10 min</small></label>
+                        <input type="number" id="fromHungerToStarving" value="600000000000" step="60000000000"
+                            min="300000000000" max="1200000000000">
+                    </div>
+                    <div>
+                        <label title="Scales how long players can remain in the Shroud (0.5-2).">Shroud Time Factor:
+                            <small id="shroudTimeFactorPct">100%</small></label>
+                        <input type="number" id="shroudTimeFactor" step="0.01" min="0.5" max="2" value="1">
+                    </div>
+                    <div>
+                        <label title="If false, glider not affected by air turbulences (true/false).">Enable Glider
+                            Turbulences:</label>
+                        <select id="enableGliderTurbulences">
+                            <option value="true" selected>true</option>
+                            <option value="false">false</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label title="How often new weather phenomena appear (Disabled/Rare/Normal/Often).">Weather
+                            Frequency:</label>
+                        <select id="weatherFrequency">
+                            <option value="Disabled">Disabled</option>
+                            <option value="Rare">Rare</option>
+                            <option value="Normal" selected>Normal</option>
+                            <option value="Often">Often</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label title="Amount of enemies in the world (Few/Normal/Many/Extreme).">Enemy Amount:</label>
+                        <select id="randomSpawnerAmount">
+                            <option value="Few">Few</option>
+                            <option value="Normal" selected>Normal</option>
+                            <option value="Many">Many</option>
+                            <option value="Extreme">Extreme</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label title="Scales mining damage for terraforming and resource yield (0.5-2).">Mining Damage
+                            Factor: <small id="miningDamageFactorPct">100%</small></label>
+                        <input type="number" id="miningDamageFactor" step="0.01" min="0.5" max="2" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales plant growth speed (0.25-2).">Plant Growth Speed Factor: <small
+                                id="plantGrowthSpeedFactorPct">100%</small></label>
+                        <input type="number" id="plantGrowthSpeedFactor" step="0.01" min="0.25" max="2" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales amount of materials per loot stack (0.25-2).">Resource Drop Stack Amount
+                            Factor: <small id="resourceDropStackAmountFactorPct">100%</small></label>
+                        <input type="number" id="resourceDropStackAmountFactor" step="0.01" min="0.25" max="2"
+                            value="1">
+                    </div>
+                    <div>
+                        <label title="Scales production times for workshop items (0.25-2).">Factory Production Speed
+                            Factor: <small id="factoryProductionSpeedFactorPct">100%</small></label>
+                        <input type="number" id="factoryProductionSpeedFactor" step="0.01" min="0.25" max="2" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales Runes returned when salvaging upgraded weapons (0-1).">Perk Upgrade
+                            Recycling Factor: <small id="perkUpgradeRecyclingFactorPct">50%</small></label>
+                        <input type="number" id="perkUpgradeRecyclingFactor" step="0.01" min="0" max="1" value="0.5">
+                    </div>
+                    <div>
+                        <label title="Scales Runes required for upgrading weapons (0.25-2).">Perk Cost Factor: <small
+                                id="perkCostFactorPct">100%</small></label>
+                        <input type="number" id="perkCostFactor" step="0.01" min="0.25" max="2" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales XP from combat (0.25-2).">Experience Combat Factor: <small
+                                id="experienceCombatFactorPct">100%</small></label>
+                        <input type="number" id="experienceCombatFactor" step="0.01" min="0.25" max="2" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales XP from mining (0-2).">Experience Mining Factor: <small
+                                id="experienceMiningFactorPct">100%</small></label>
+                        <input type="number" id="experienceMiningFactor" step="0.01" min="0" max="2" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales XP from exploring and quests (0.25-2).">Experience Exploration Quests
+                            Factor: <small id="experienceExplorationQuestsFactorPct">100%</small></label>
+                        <input type="number" id="experienceExplorationQuestsFactor" step="0.01" min="0.25" max="2"
+                            value="1">
+                    </div>
+                    <div>
+                        <label title="How many enemies can attack at once (Few/Normal/Many/Extreme).">Aggro Pool
+                            Amount:</label>
+                        <select id="aggroPoolAmount">
+                            <option value="Few">Few</option>
+                            <option value="Normal" selected>Normal</option>
+                            <option value="Many">Many</option>
+                            <option value="Extreme">Extreme</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label title="Scales enemy damage, excluding bosses (0.25-5).">Enemy Damage Factor: <small
+                                id="enemyDamageFactorPct">100%</small></label>
+                        <input type="number" id="enemyDamageFactor" step="0.01" min="0.25" max="5" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales enemy health, excluding bosses (0.25-4).">Enemy Health Factor: <small
+                                id="enemyHealthFactorPct">100%</small></label>
+                        <input type="number" id="enemyHealthFactor" step="0.01" min="0.25" max="4" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales enemy stamina for stunning, excluding bosses (0.5-2).">Enemy Stamina
+                            Factor: <small id="enemyStaminaFactorPct">100%</small></label>
+                        <input type="number" id="enemyStaminaFactor" step="0.01" min="0.5" max="2" value="1">
+                    </div>
+                    <div class="stable-field">
+                        <label title="Scales enemy perception range, excluding bosses (0.5-2).">Enemy Perception Range
+                            Factor: <small id="enemyPerceptionRangeFactorPct">100%</small></label>
+                        <input type="number" id="enemyPerceptionRangeFactor" step="0.01" min="0.5" max="2" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales boss damage (0.2-5).">Boss Damage Factor: <small
+                                id="bossDamageFactorPct">100%</small></label>
+                        <input type="number" id="bossDamageFactor" step="0.01" min="0.2" max="5" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales boss health (0.2-5).">Boss Health Factor: <small
+                                id="bossHealthFactorPct">100%</small></label>
+                        <input type="number" id="bossHealthFactor" step="0.01" min="0.2" max="5" value="1">
+                    </div>
+                    <div>
+                        <label title="Scales frequency of enemy attacks, excluding bosses (0.25-4).">Threat Bonus:
+                            <small id="threatBonusPct">100%</small></label>
+                        <input type="number" id="threatBonus" step="0.01" min="0.25" max="4" value="1">
+                    </div>
+                    <div>
+                        <label
+                            title="If true, enemies won't attack until attacked, excluding bosses (true/false).">Pacify
+                            All Enemies:</label>
+                        <select id="pacifyAllEnemies">
+                            <option value="false" selected>false</option>
+                            <option value="true">true</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            title="Reaction when startling wildlife during taming (KeepProgress/LoseSomeProgress/LoseAllProgress).">Taming
+                            Startle Repercussion:</label>
+                        <select id="tamingStartleRepercussion">
+                            <option value="KeepProgress">Keep Progress</option>
+                            <option value="LoseSomeProgress" selected>Lose Some Progress</option>
+                            <option value="LoseAllProgress">Lose All Progress</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label title="Scales length of daytime (nanoseconds, 2-60 minutes).">Day Time Duration: <small
+                                id="dayTimeDurationMin">30 min</small></label>
+                        <input type="number" id="dayTimeDuration" value="1800000000000" step="60000000000"
+                            min="120000000000" max="3600000000000">
+                    </div>
+                    <div>
+                        <label title="Scales length of nighttime (nanoseconds, 2-60 minutes).">Night Time
+                            Duration:</label>
+                        <input type="number" id="nightTimeDuration" value="720000000000" step="60000000000"
+                            min="120000000000" max="3600000000000">
+                    </div>
+                    <div>
+                        <label title="Modify Shroud curse chance (Easy/Normal/Hard). Easy turns it off.">Curse
+                            Modifier:</label>
+                        <select id="curseModifier">
+                            <option value="Easy">Easy (off)</option>
+                            <option value="Normal" selected>Normal</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            title="What players lose on death (AddBackpackMaterials/Everything/NoTombstone).">Tombstone
+                            Mode:</label>
+                        <select id="tombstoneMode">
+                            <option value="AddBackpackMaterials" selected>Materials Only</option>
+                            <option value="Everything">Everything</option>
+                            <option value="NoTombstone">No Tombstone</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="user-groups">
+            <h2 onclick="toggleCollapse(this)">User Groups</h2>
+            <div class="collapsible-content active">
+                <p>Manage user groups. At least one group is required.</p>
+                <div id="groups-container"></div>
+                <button class="add-group" onclick="addGroup()">Add New Group</button>
+            </div>
+        </section>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="primary-button" onclick="generateJSON()">Generate JSON</button>
+            <button id="resetDefaults" class="secondary-button" style="padding:12px;" onclick="resetToDefaults()">Reset to Defaults</button>
+        </div>
+        <div id="aria-status" aria-live="polite" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;"> </div>
+
+        <section id="output">
+            <h2>Generated JSON</h2>
+            <textarea id="jsonOutput"></textarea>
+            <a id="download-link" download="enshrouded_server.json">Download JSON File</a>
+            <p>Copy or download the JSON and place it in your server directory.</p>
+        </section>
+    </div>
+
+    <script>
+        let userGroups = [
+            { id: 0, name: 'Admin', password: 'AdminXXXXXXXX', canKickBan: true, canAccessInventories: true, canEditBase: true, canExtendBase: true, reservedSlots: 0 },
+            { id: 1, name: 'Friend', password: 'FriendXXXXXXXX', canKickBan: false, canAccessInventories: true, canEditBase: true, canExtendBase: false, reservedSlots: 0 },
+            { id: 2, name: 'Guest', password: 'GuestXXXXXXXX', canKickBan: false, canAccessInventories: false, canEditBase: false, canExtendBase: false, reservedSlots: 0 }
+        ];
+        let nextId = 3;
+
+        function renderGroups() {
+            const container = document.getElementById('groups-container');
+            container.innerHTML = '';
+            userGroups.forEach(group => {
+                const div = document.createElement('div');
+                div.className = 'group-item';
+                div.innerHTML = `
+                    <h3 contenteditable="true" onblur="updateGroup(${group.id}, 'name', this.textContent)">${group.name}</h3>
+                    <button class="delete-group" onclick="deleteGroup(${group.id})">Delete</button>
+                    <div class="grid-row">
+                        <div>
+                            <label title="Password for the group.">Password:</label>
+                            <input type="text" value="${group.password}" oninput="updateGroup(${group.id}, 'password', this.value)">
+                        </div>
+                        <div>
+                            <label title="Allows kicking and banning players (true/false).">Can Kick/Ban:</label>
+                            <select onchange="updateGroup(${group.id}, 'canKickBan', this.value === 'true')">
+                                <option value="true" ${group.canKickBan ? 'selected' : ''}>true</option>
+                                <option value="false" ${!group.canKickBan ? 'selected' : ''}>false</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid-row">
+                        <div>
+                            <label title="Allows accessing other players' inventories (true/false).">Can Access Inventories:</label>
+                            <select onchange="updateGroup(${group.id}, 'canAccessInventories', this.value === 'true')">
+                                <option value="true" ${group.canAccessInventories ? 'selected' : ''}>true</option>
+                                <option value="false" ${!group.canAccessInventories ? 'selected' : ''}>false</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label title="Allows editing bases (true/false).">Can Edit Base:</label>
+                            <select onchange="updateGroup(${group.id}, 'canEditBase', this.value === 'true')">
+                                <option value="true" ${group.canEditBase ? 'selected' : ''}>true</option>
+                                <option value="false" ${!group.canEditBase ? 'selected' : ''}>false</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label title="Allows extending bases (true/false).">Can Extend Base:</label>
+                            <select onchange="updateGroup(${group.id}, 'canExtendBase', this.value === 'true')">
+                                <option value="true" ${group.canExtendBase ? 'selected' : ''}>true</option>
+                                <option value="false" ${!group.canExtendBase ? 'selected' : ''}>false</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label title="Number of reserved slots for this group.">Reserved Slots:</label>
+                        <input type="number" value="${group.reservedSlots}" min="0" oninput="updateGroup(${group.id}, 'reservedSlots', parseInt(this.value) || 0)">
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addGroup() {
+            userGroups.push({
+                id: nextId++,
+                name: 'New Group',
+                password: 'PasswordXXXXXXXX',
+                canKickBan: false,
+                canAccessInventories: false,
+                canEditBase: false,
+                canExtendBase: false,
+                reservedSlots: 0
+            });
+            renderGroups();
+        }
+
+        function deleteGroup(id) {
+            if (userGroups.length <= 1) {
+                alert('At least one user group is required.');
+                return;
+            }
+            userGroups = userGroups.filter(g => g.id !== id);
+            renderGroups();
+        }
+
+        function updateGroup(id, key, value) {
+            const group = userGroups.find(g => g.id === id);
+            if (group) {
+                group[key] = value;
+            }
+        }
+
+        function toggleCollapse(header) {
+            const content = header.nextElementSibling;
+            content.classList.toggle('active');
+        }
+
+        const presetSelect = document.getElementById('gameSettingsPreset');
+        const customSettings = document.getElementById('custom-settings');
+        const outputSection = document.getElementById('output');
+
+        // Helper: set percentage label (value * 100)
+        function setPctLabel(inputId, labelId, digits = 0) {
+            const el = document.getElementById(inputId);
+            const lbl = document.getElementById(labelId);
+            if (!el || !lbl) return;
+            const val = parseFloat(el.value);
+            if (isNaN(val)) return;
+            const pct = (val * 100).toFixed(digits);
+            lbl.textContent = `${pct}%`;
+        }
+
+        // Helper: set minute label from nanoseconds
+        function setMinutesLabel(inputId, labelId, digits = 1) {
+            const el = document.getElementById(inputId);
+            const lbl = document.getElementById(labelId);
+            if (!el || !lbl) return;
+            const ns = parseFloat(el.value);
+            if (isNaN(ns)) return;
+            const minutes = ns / 60000000000; // 60e9 ns per minute
+            lbl.textContent = `${minutes.toFixed(digits)} min`;
+        }
+
+        // IDs to wire for percent labels
+        const percentMappings = [
+            ['playerHealthFactor', 'playerHealthFactorPct'],
+            ['playerManaFactor', 'playerManaFactorPct'],
+            ['playerStaminaFactor', 'playerStaminaFactorPct'],
+            ['playerBodyHeatFactor', 'playerBodyHeatFactorPct'],
+            ['foodBuffDurationFactor', 'foodBuffDurationFactorPct'],
+            ['shroudTimeFactor', 'shroudTimeFactorPct'],
+            ['miningDamageFactor', 'miningDamageFactorPct'],
+            ['plantGrowthSpeedFactor', 'plantGrowthSpeedFactorPct'],
+            ['resourceDropStackAmountFactor', 'resourceDropStackAmountFactorPct'],
+            ['factoryProductionSpeedFactor', 'factoryProductionSpeedFactorPct'],
+            ['perkUpgradeRecyclingFactor', 'perkUpgradeRecyclingFactorPct'],
+            ['perkCostFactor', 'perkCostFactorPct'],
+            ['experienceCombatFactor', 'experienceCombatFactorPct'],
+            ['experienceMiningFactor', 'experienceMiningFactorPct'],
+            ['experienceExplorationQuestsFactor', 'experienceExplorationQuestsFactorPct'],
+            ['enemyDamageFactor', 'enemyDamageFactorPct'],
+            ['enemyHealthFactor', 'enemyHealthFactorPct'],
+            ['enemyStaminaFactor', 'enemyStaminaFactorPct'],
+            ['enemyPerceptionRangeFactor', 'enemyPerceptionRangeFactorPct'],
+            ['threatBonus', 'threatBonusPct'],
+            ['bossDamageFactor', 'bossDamageFactorPct'],
+            ['bossHealthFactor', 'bossHealthFactorPct']
+        ];
+
+        function updateAllPctLabels() {
+            percentMappings.forEach(([inputId, labelId]) => setPctLabel(inputId, labelId, 0));
+        }
+
+        // Wire inputs to update labels live
+        // Transform multiplier inputs into percentage controls (slider + numeric percent input)
+        function makePctControl(inputId, labelId) {
+            const orig = document.getElementById(inputId);
+            const pctLabel = document.getElementById(labelId);
+            if (!orig || !pctLabel) return;
+
+            // avoid double-wrap
+            if (orig.dataset.pctWrapped === 'true') return;
+
+            const tag = orig.tagName.toLowerCase();
+
+            // Determine numeric ranges from original element when possible
+            let origMin = parseFloat(orig.min);
+            let origMax = parseFloat(orig.max);
+            if (isNaN(origMin)) origMin = null;
+            if (isNaN(origMax)) origMax = null;
+
+            // For number inputs: create slider + percent numeric input
+            if (tag === 'input' && orig.type === 'number') {
+                // compute percent bounds from original min/max; fallback to sensible defaults
+                const percentMin = origMin !== null ? Math.round(origMin * 100) : 25;
+                const percentMax = origMax !== null ? Math.round(origMax * 100) : 500;
+
+                // Hide original decimal input but keep it for JSON serialization
+                orig.style.display = 'none';
+                orig.dataset.pctWrapped = 'true';
+
+                const container = document.createElement('div');
+                container.className = 'pct-control';
+
+                const slider = document.createElement('input');
+                slider.type = 'range';
+                // Accessibility: expose the slider as a range control with an accessible name
+                slider.setAttribute('role', 'slider');
+                slider.setAttribute('aria-label', pctLabel.previousElementSibling ? pctLabel.previousElementSibling.textContent || inputId : inputId);
+                slider.setAttribute('aria-controls', inputId);
+                slider.min = String(Math.max(0, percentMin));
+                slider.max = String(Math.max(percentMax, slider.min));
+                slider.step = '1';
+                slider.value = String(Math.round(parseFloat(orig.value) * 100));
+
+                function pctToDecimal(p) {
+                    return Math.max((parseFloat(p) / 100), origMin !== null ? origMin : 0);
+                }
+
+                // Throttle updates to avoid layout thrash: use requestAnimationFrame for continuous input
+                let rafScheduled = false;
+                let pendingValue = slider.value;
+
+                function updateFromPct(value) {
+                    const dec = pctToDecimal(value);
+                    orig.value = String(dec);
+                    setPctLabel(inputId, labelId, 0);
+                    // Announce to screen readers when significant change happens (not every pixel)
+                    const ariaStatus = document.getElementById('aria-status');
+                    if (ariaStatus) ariaStatus.textContent = `${labelId} set to ${value}%`;
+                }
+
+                slider.addEventListener('input', (e) => {
+                    pendingValue = e.target.value;
+                    if (!rafScheduled) {
+                        rafScheduled = true;
+                        window.requestAnimationFrame(() => {
+                            updateFromPct(pendingValue);
+                            rafScheduled = false;
+                        });
+                    }
+                });
+
+                // keyboard accessibility: allow arrow keys to nudge by step
+                slider.addEventListener('keydown', (e) => {
+                    const step = parseInt(slider.step) || 1;
+                    let val = parseInt(slider.value);
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+                        val = Math.max(parseInt(slider.min), val - step);
+                        slider.value = String(val);
+                        updateFromPct(val);
+                        e.preventDefault();
+                    } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+                        val = Math.min(parseInt(slider.max), val + step);
+                        slider.value = String(val);
+                        updateFromPct(val);
+                        e.preventDefault();
+                    }
+                });
+
+                const parent = orig.parentNode;
+                parent.appendChild(container);
+                container.appendChild(slider);
+
+                // set initial label and ARIA value
+                setPctLabel(inputId, labelId, 0);
+                slider.setAttribute('aria-valuemin', slider.min);
+                slider.setAttribute('aria-valuemax', slider.max);
+                slider.setAttribute('aria-valuenow', slider.value);
+            } else if (tag === 'select') {
+                // For select inputs (discrete choices), don't hide the select. Show a synced percent input (read-only) next to it.
+                orig.dataset.pctWrapped = 'true';
+                const parent = orig.parentNode;
+                const container = document.createElement('div');
+                container.className = 'pct-control';
+
+                // compute percent value from current selection and update label when it changes
+                orig.dataset.pctWrapped = 'true';
+                orig.addEventListener('change', () => setPctLabel(inputId, labelId, 0));
+                setPctLabel(inputId, labelId, 0);
+                // ensure select has accessible name if not present
+                if (!orig.hasAttribute('aria-label')) {
+                    const lbl = parent.querySelector('label');
+                    if (lbl) orig.setAttribute('aria-label', lbl.textContent || inputId);
+                }
+            } else {
+                // unknown type: fallback to label-only updates
+                orig.dataset.pctWrapped = 'true';
+                setPctLabel(inputId, labelId, 0);
+            }
+        }
+
+
+        function restoreDefaults() {
+            // Define reasonable defaults matching initial HTML values
+            const defaults = {
+                name: 'Enshrouded Server',
+                saveDirectory: './savegame',
+                logDirectory: './logs',
+                ip: '0.0.0.0',
+                queryPort: 15637,
+                slotCount: 16,
+                voiceChatMode: 'Proximity',
+                enableVoiceChat: 'false',
+                enableTextChat: 'false',
+                gameSettingsPreset: 'Default'
+            };
+
+            Object.keys(defaults).forEach(k => {
+                const el = document.getElementById(k);
+                if (!el) return;
+                el.value = defaults[k];
+            });
+
+            // Reset numeric custom fields back to their initial values as in the HTML above
+            const numericDefaults = {
+                playerHealthFactor: '1', playerManaFactor: '1', playerStaminaFactor: '1', playerBodyHeatFactor: '1',
+                foodBuffDurationFactor: '1', fromHungerToStarving: '600000000000', shroudTimeFactor: '1',
+                miningDamageFactor: '1', plantGrowthSpeedFactor: '1', resourceDropStackAmountFactor: '1',
+                factoryProductionSpeedFactor: '1', perkUpgradeRecyclingFactor: '0.5', perkCostFactor: '1',
+                experienceCombatFactor: '1', experienceMiningFactor: '1', experienceExplorationQuestsFactor: '1',
+                enemyDamageFactor: '1', enemyHealthFactor: '1', enemyStaminaFactor: '1', enemyPerceptionRangeFactor: '1',
+                bossDamageFactor: '1', bossHealthFactor: '1', threatBonus: '1', dayTimeDuration: '1800000000000', nightTimeDuration: '720000000000'
+            };
+            Object.keys(numericDefaults).forEach(k => {
+                const el = document.getElementById(k);
+                if (!el) return;
+                el.value = numericDefaults[k];
+            });
+
+            // reset selects where necessary with safe defaults
+            const selectDefaults = {
+                enableDurability: 'true', enableStarvingDebuff: 'false', enableGliderTurbulences: 'true',
+                weatherFrequency: 'Normal', randomSpawnerAmount: 'Normal', aggroPoolAmount: 'Normal',
+                pacifyAllEnemies: 'false', tamingStartleRepercussion: 'LoseSomeProgress', curseModifier: 'Normal', tombstoneMode: 'AddBackpackMaterials'
+            };
+            Object.keys(selectDefaults).forEach(k => {
+                const el = document.getElementById(k);
+                if (!el) return;
+                el.value = selectDefaults[k];
+            });
+
+            // Re-render groups to initial default set
+            userGroups = [
+                { id: 0, name: 'Admin', password: 'AdminXXXXXXXX', canKickBan: true, canAccessInventories: true, canEditBase: true, canExtendBase: true, reservedSlots: 0 },
+                { id: 1, name: 'Friend', password: 'FriendXXXXXXXX', canKickBan: false, canAccessInventories: true, canEditBase: true, canExtendBase: false, reservedSlots: 0 },
+                { id: 2, name: 'Guest', password: 'GuestXXXXXXXX', canKickBan: false, canAccessInventories: false, canEditBase: false, canExtendBase: false, reservedSlots: 0 }
+            ];
+            nextId = 3;
+            renderGroups();
+            // update labels
+            updateAllPctLabels();
+            setMinutesLabel('fromHungerToStarving', 'fromHungerToStarvingMin', 1);
+            setMinutesLabel('dayTimeDuration', 'dayTimeDurationMin', 1);
+            setMinutesLabel('nightTimeDuration', 'nightTimeDurationMin', 1);
+        }
+
+
+        function resetToDefaults() {
+            if (!confirm('Reset all settings to defaults and clear saved configuration? This cannot be undone.')) return;
+            localStorage.removeItem('enshroudedConfig');
+            restoreDefaults();
+            const ariaStatus = document.getElementById('aria-status');
+            if (ariaStatus) ariaStatus.textContent = 'Settings reset to defaults.';
+        }
+
+
+        function enhanceAccessibility() {
+            // Add keyboard focusable attributes to generated sliders and ensure labels are associated
+            percentMappings.forEach(([inputId, labelId]) => {
+                const lbl = document.getElementById(labelId);
+                const orig = document.getElementById(inputId);
+                if (!orig || !lbl) return;
+                // If a range slider was created, ensure it is reachable via keyboard and labelled
+                const slider = orig.parentNode.querySelector('input[type="range"]');
+                if (slider) {
+                    slider.tabIndex = 0;
+                    // If label text exists, use it for aria-describedby for screen readers
+                    const labelText = (orig.previousElementSibling && orig.previousElementSibling.tagName.toLowerCase() === 'label') ? orig.previousElementSibling.textContent : labelId;
+                    slider.setAttribute('aria-describedby', labelId);
+                    slider.addEventListener('focus', () => {
+                        slider.classList.add('focus-visible');
+                    });
+                    slider.addEventListener('blur', () => {
+                        slider.classList.remove('focus-visible');
+                    });
+                }
+            });
+        }
+
+        percentMappings.forEach(([inputId, labelId]) => {
+            makePctControl(inputId, labelId);
+        });
+
+        // Duration fields to show minutes
+        const durationMappings = [
+            ['fromHungerToStarving', 'fromHungerToStarvingMin'],
+            ['dayTimeDuration', 'dayTimeDurationMin'],
+            ['nightTimeDuration', 'nightTimeDurationMin']
+        ];
+
+        // create minute labels in DOM for day/night if missing
+        durationMappings.forEach(([inputId, labelId]) => {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            // If label element not present, insert a small label after the input's previous label
+            if (!document.getElementById(labelId)) {
+                const lbl = document.createElement('small');
+                lbl.id = labelId;
+                lbl.style.marginLeft = '6px';
+                const parentLabel = input.previousElementSibling;
+                if (parentLabel && parentLabel.tagName && parentLabel.tagName.toLowerCase() === 'label') {
+                    parentLabel.appendChild(document.createTextNode(' '));
+                    parentLabel.appendChild(lbl);
+                } else {
+                    // fallback: append next to input
+                    input.parentNode.insertBefore(lbl, input.nextSibling);
+                }
+            }
+            const eventName = input.tagName.toLowerCase() === 'select' ? 'change' : 'input';
+            input.addEventListener(eventName, () => setMinutesLabel(inputId, labelId, 1));
+        });
+
+        presetSelect.addEventListener('change', () => {
+            const isCustom = presetSelect.value === 'Custom';
+            customSettings.style.display = isCustom ? 'block' : 'none';
+            if (isCustom) {
+                customSettings.querySelector('.collapsible-content').classList.add('active');
+            }
+        });
+
+        function generateJSON() {
+            const config = {
+                name: document.getElementById('name').value,
+                saveDirectory: document.getElementById('saveDirectory').value,
+                logDirectory: document.getElementById('logDirectory').value,
+                ip: document.getElementById('ip').value,
+                queryPort: parseInt(document.getElementById('queryPort').value),
+                slotCount: parseInt(document.getElementById('slotCount').value),
+                voiceChatMode: document.getElementById('voiceChatMode').value,
+                enableVoiceChat: document.getElementById('enableVoiceChat').value === 'true',
+                enableTextChat: document.getElementById('enableTextChat').value === 'true',
+                gameSettingsPreset: document.getElementById('gameSettingsPreset').value,
+                gameSettings: {},
+                userGroups: userGroups.map(g => ({
+                    name: g.name,
+                    password: g.password,
+                    canKickBan: g.canKickBan,
+                    canAccessInventories: g.canAccessInventories,
+                    canEditBase: g.canEditBase,
+                    canExtendBase: g.canExtendBase,
+                    reservedSlots: g.reservedSlots
+                }))
+            };
+
+            if (config.gameSettingsPreset === 'Custom') {
+                config.gameSettings = {
+                    playerHealthFactor: parseFloat(document.getElementById('playerHealthFactor').value),
+                    playerManaFactor: parseFloat(document.getElementById('playerManaFactor').value),
+                    playerStaminaFactor: parseFloat(document.getElementById('playerStaminaFactor').value),
+                    playerBodyHeatFactor: parseFloat(document.getElementById('playerBodyHeatFactor').value),
+                    enableDurability: document.getElementById('enableDurability').value === 'true',
+                    enableStarvingDebuff: document.getElementById('enableStarvingDebuff').value === 'true',
+                    foodBuffDurationFactor: parseFloat(document.getElementById('foodBuffDurationFactor').value),
+                    fromHungerToStarving: document.getElementById('fromHungerToStarving').value,
+                    shroudTimeFactor: parseFloat(document.getElementById('shroudTimeFactor').value),
+                    tombstoneMode: document.getElementById('tombstoneMode').value,
+                    enableGliderTurbulences: document.getElementById('enableGliderTurbulences').value === 'true',
+                    weatherFrequency: document.getElementById('weatherFrequency').value,
+                    miningDamageFactor: parseFloat(document.getElementById('miningDamageFactor').value),
+                    plantGrowthSpeedFactor: parseFloat(document.getElementById('plantGrowthSpeedFactor').value),
+                    resourceDropStackAmountFactor: parseFloat(document.getElementById('resourceDropStackAmountFactor').value),
+                    factoryProductionSpeedFactor: parseFloat(document.getElementById('factoryProductionSpeedFactor').value),
+                    perkUpgradeRecyclingFactor: parseFloat(document.getElementById('perkUpgradeRecyclingFactor').value),
+                    perkCostFactor: parseFloat(document.getElementById('perkCostFactor').value),
+                    experienceCombatFactor: parseFloat(document.getElementById('experienceCombatFactor').value),
+                    experienceMiningFactor: parseFloat(document.getElementById('experienceMiningFactor').value),
+                    experienceExplorationQuestsFactor: parseFloat(document.getElementById('experienceExplorationQuestsFactor').value),
+                    randomSpawnerAmount: document.getElementById('randomSpawnerAmount').value,
+                    aggroPoolAmount: document.getElementById('aggroPoolAmount').value,
+                    enemyDamageFactor: parseFloat(document.getElementById('enemyDamageFactor').value),
+                    enemyHealthFactor: parseFloat(document.getElementById('enemyHealthFactor').value),
+                    enemyStaminaFactor: parseFloat(document.getElementById('enemyStaminaFactor').value),
+                    enemyPerceptionRangeFactor: parseFloat(document.getElementById('enemyPerceptionRangeFactor').value),
+                    bossDamageFactor: parseFloat(document.getElementById('bossDamageFactor').value),
+                    bossHealthFactor: parseFloat(document.getElementById('bossHealthFactor').value),
+                    threatBonus: parseFloat(document.getElementById('threatBonus').value),
+                    pacifyAllEnemies: document.getElementById('pacifyAllEnemies').value === 'true',
+                    tamingStartleRepercussion: document.getElementById('tamingStartleRepercussion').value,
+                    dayTimeDuration: document.getElementById('dayTimeDuration').value,
+                    nightTimeDuration: document.getElementById('nightTimeDuration').value,
+                    curseModifier: document.getElementById('curseModifier').value
+                };
+            } else {
+                config.gameSettings = {};
+            }
+
+            // Save to localStorage
+            localStorage.setItem('enshroudedConfig', JSON.stringify(config));
+
+            const jsonString = JSON.stringify(config, null, 4);
+            document.getElementById('jsonOutput').value = jsonString;
+
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.getElementById('download-link');
+            downloadLink.href = url;
+            downloadLink.download = 'enshrouded_server.json';
+
+            outputSection.style.display = 'block';
+        }
+
+        // Load from localStorage on page load
+        function loadConfig() {
+            const storedConfig = localStorage.getItem('enshroudedConfig');
+            if (storedConfig) {
+                const config = JSON.parse(storedConfig);
+
+                document.getElementById('name').value = config.name;
+                document.getElementById('saveDirectory').value = config.saveDirectory;
+                document.getElementById('logDirectory').value = config.logDirectory;
+                document.getElementById('ip').value = config.ip;
+                document.getElementById('queryPort').value = config.queryPort;
+                document.getElementById('slotCount').value = config.slotCount;
+                document.getElementById('voiceChatMode').value = config.voiceChatMode;
+                document.getElementById('enableVoiceChat').value = config.enableVoiceChat ? 'true' : 'false';
+                document.getElementById('enableTextChat').value = config.enableTextChat ? 'true' : 'false';
+                document.getElementById('gameSettingsPreset').value = config.gameSettingsPreset;
+
+                if (config.gameSettingsPreset === 'Custom') {
+                    const gs = config.gameSettings;
+                    document.getElementById('playerHealthFactor').value = gs.playerHealthFactor;
+                    document.getElementById('playerManaFactor').value = gs.playerManaFactor;
+                    document.getElementById('playerStaminaFactor').value = gs.playerStaminaFactor;
+                    document.getElementById('playerBodyHeatFactor').value = gs.playerBodyHeatFactor;
+                    document.getElementById('enableDurability').value = gs.enableDurability ? 'true' : 'false';
+                    document.getElementById('enableStarvingDebuff').value = gs.enableStarvingDebuff ? 'true' : 'false';
+                    document.getElementById('foodBuffDurationFactor').value = gs.foodBuffDurationFactor;
+                    document.getElementById('fromHungerToStarving').value = gs.fromHungerToStarving;
+                    document.getElementById('shroudTimeFactor').value = gs.shroudTimeFactor;
+                    document.getElementById('tombstoneMode').value = gs.tombstoneMode;
+                    document.getElementById('enableGliderTurbulences').value = gs.enableGliderTurbulences ? 'true' : 'false';
+                    document.getElementById('weatherFrequency').value = gs.weatherFrequency;
+                    document.getElementById('miningDamageFactor').value = gs.miningDamageFactor;
+                    document.getElementById('plantGrowthSpeedFactor').value = gs.plantGrowthSpeedFactor;
+                    document.getElementById('resourceDropStackAmountFactor').value = gs.resourceDropStackAmountFactor;
+                    document.getElementById('factoryProductionSpeedFactor').value = gs.factoryProductionSpeedFactor;
+                    document.getElementById('perkUpgradeRecyclingFactor').value = gs.perkUpgradeRecyclingFactor;
+                    document.getElementById('perkCostFactor').value = gs.perkCostFactor;
+                    document.getElementById('experienceCombatFactor').value = gs.experienceCombatFactor;
+                    document.getElementById('experienceMiningFactor').value = gs.experienceMiningFactor;
+                    document.getElementById('experienceExplorationQuestsFactor').value = gs.experienceExplorationQuestsFactor;
+                    document.getElementById('randomSpawnerAmount').value = gs.randomSpawnerAmount;
+                    document.getElementById('aggroPoolAmount').value = gs.aggroPoolAmount;
+                    document.getElementById('enemyDamageFactor').value = gs.enemyDamageFactor;
+                    document.getElementById('enemyHealthFactor').value = gs.enemyHealthFactor;
+                    document.getElementById('enemyStaminaFactor').value = gs.enemyStaminaFactor;
+                    document.getElementById('enemyPerceptionRangeFactor').value = gs.enemyPerceptionRangeFactor;
+                    document.getElementById('bossDamageFactor').value = gs.bossDamageFactor;
+                    document.getElementById('bossHealthFactor').value = gs.bossHealthFactor;
+                    document.getElementById('threatBonus').value = gs.threatBonus;
+                    document.getElementById('pacifyAllEnemies').value = gs.pacifyAllEnemies ? 'true' : 'false';
+                    document.getElementById('tamingStartleRepercussion').value = gs.tamingStartleRepercussion;
+                    document.getElementById('dayTimeDuration').value = gs.dayTimeDuration;
+                    document.getElementById('nightTimeDuration').value = gs.nightTimeDuration;
+                    document.getElementById('curseModifier').value = gs.curseModifier;
+
+                    customSettings.style.display = 'block';
+                    customSettings.querySelector('.collapsible-content').classList.add('active');
+                }
+
+                userGroups = config.userGroups.map((g, index) => ({ ...g, id: index }));
+                nextId = userGroups.length;
+                renderGroups();
+                // Update percent and duration labels to reflect loaded values
+                updateAllPctLabels();
+                percentMappings.forEach(([inputId, labelId]) => makePctControl(inputId, labelId));
+                setMinutesLabel('fromHungerToStarving', 'fromHungerToStarvingMin', 1);
+                setMinutesLabel('dayTimeDuration', 'dayTimeDurationMin', 1);
+                setMinutesLabel('nightTimeDuration', 'nightTimeDurationMin', 1);
+            } else {
+                renderGroups();
+                // ensure default labels show correct initial values
+                updateAllPctLabels();
+                percentMappings.forEach(([inputId, labelId]) => makePctControl(inputId, labelId));
+                setMinutesLabel('fromHungerToStarving', 'fromHungerToStarvingMin', 1);
+                setMinutesLabel('dayTimeDuration', 'dayTimeDurationMin', 1);
+                setMinutesLabel('nightTimeDuration', 'nightTimeDurationMin', 1);
+            }
+        }
+
+    // Load config on page load and enhance accessibility after setup
+    window.addEventListener('load', () => {
+            loadConfig();
+            try { enhanceAccessibility(); } catch (e) { console.warn('Accessibility setup failed', e); }
+        });
+
+    </script>
+</body>
+
+</html>
