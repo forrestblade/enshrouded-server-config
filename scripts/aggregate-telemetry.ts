@@ -86,7 +86,7 @@ async function run() {
       pageview_count = EXCLUDED.pageview_count,
       conversion_count = EXCLUDED.conversion_count,
       synced_at = NOW()
-  `, ['enshrouded-config', dateOnly, sessionCount[0].c, pageviewCount[0].c, conversionCount[0].c])
+  `, ['default', dateOnly, sessionCount[0].c, pageviewCount[0].c, conversionCount[0].c])
   console.log('  daily_summaries updated:', { sessions: sessionCount[0].c, pageviews: pageviewCount[0].c, conversions: conversionCount[0].c })
 
   await pool.end()
