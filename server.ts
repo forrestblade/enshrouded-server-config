@@ -201,7 +201,7 @@ async function getSessionUser (req: IncomingMessage): Promise<Record<string, unk
 const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => Promise<void>> = {
   'GET /sitemap.xml': async (_req, res) => {
     const configs = await pool.sql.unsafe(
-      'SELECT id, "updatedAt" FROM "server-configs" WHERE shared = true AND deleted_at IS NULL ORDER BY "updatedAt" DESC'
+      'SELECT id, updated_at FROM "server-configs" WHERE shared = true AND deleted_at IS NULL ORDER BY updated_at DESC'
     )
     const users = await pool.sql.unsafe(
       'SELECT username FROM users WHERE deleted_at IS NULL'
@@ -216,7 +216,7 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
       '  <url><loc>' + B + '/login</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>',
     ]
     for (const c of configs as any[]) {
-      const d = c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : ''
+      const d = c.updated_at ? new Date(c.updated_at).toISOString().split('T')[0] : ''
       lines.push('  <url><loc>' + B + '/browse/' + c.id + '</loc>' + (d ? '<lastmod>' + d + '</lastmod>' : '') + '<changefreq>weekly</changefreq><priority>0.7</priority></url>')
     }
     for (const u of users as any[]) {
