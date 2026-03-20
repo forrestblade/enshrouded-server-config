@@ -80,31 +80,72 @@ if (!res.ok) {
 
     // User groups
     const groupsDiv = document.getElementById('user-groups')
-    const groups = Array.isArray(config.userGroups) ? config.userGroups : []
-    for (const group of groups) {
-      const card = document.createElement('div')
-      card.className = 'detail-group-card'
-      const h3 = document.createElement('h3')
-      h3.textContent = group.name || 'Unnamed Group'
-      card.appendChild(h3)
+    const groups = typeof config.userGroups === 'string' ? JSON.parse(config.userGroups) : (config.userGroups || [])
+    if (groups.length === 0) {
+      const msg = document.createElement('p')
+      msg.className = 'preset-defaults-msg'
+      msg.textContent = 'No user groups configured'
+      groupsDiv.appendChild(msg)
+    } else {
+      for (const group of groups) {
+        const card = document.createElement('div')
+        card.className = 'detail-group-card'
 
-      const perms = []
-      if (group.canKickBan) perms.push('Kick/Ban')
-      if (group.canAccessInventories) perms.push('Inventories')
-      if (group.canEditBase) perms.push('Edit Base')
-      if (group.canExtendBase) perms.push('Extend Base')
-      const p = document.createElement('p')
-      p.className = 'group-perms'
-      p.textContent = perms.length ? perms.join(', ') : 'No special permissions'
-      card.appendChild(p)
+        const h3 = document.createElement('h3')
+        h3.style.fontWeight = 'bold'
+        h3.textContent = group.name || 'Unnamed Group'
+        card.appendChild(h3)
 
-      if (group.reservedSlots) {
-        const rs = document.createElement('p')
-        rs.className = 'group-reserved'
-        rs.textContent = 'Reserved slots: ' + group.reservedSlots
-        card.appendChild(rs)
+        const passwordField = document.createElement('div')
+        passwordField.className = 'detail-field'
+        const passwordLabel = document.createElement('div')
+        passwordLabel.className = 'detail-label'
+        passwordLabel.textContent = 'Password'
+        const passwordValue = document.createElement('div')
+        passwordValue.className = 'detail-value'
+        passwordValue.textContent = group.password ? 'Password protected' : 'No password'
+        passwordField.appendChild(passwordLabel)
+        passwordField.appendChild(passwordValue)
+        card.appendChild(passwordField)
+
+        const slotsField = document.createElement('div')
+        slotsField.className = 'detail-field'
+        const slotsLabel = document.createElement('div')
+        slotsLabel.className = 'detail-label'
+        slotsLabel.textContent = 'Reserved Slots'
+        const slotsValue = document.createElement('div')
+        slotsValue.className = 'detail-value'
+        slotsValue.textContent = group.reservedSlots != null ? String(group.reservedSlots) : '0'
+        slotsField.appendChild(slotsLabel)
+        slotsField.appendChild(slotsValue)
+        card.appendChild(slotsField)
+
+        const permDefs = [
+          { key: 'canKickBan', label: 'Can Kick/Ban' },
+          { key: 'canAccessInventories', label: 'Can Access Inventories' },
+          { key: 'canEditBase', label: 'Can Edit Base' },
+          { key: 'canExtendBase', label: 'Can Extend Base' }
+        ]
+        for (const { key, label } of permDefs) {
+          const permField = document.createElement('div')
+          permField.className = 'detail-field'
+          const permLabel = document.createElement('div')
+          permLabel.className = 'detail-label'
+          permLabel.textContent = label
+          const permValue = document.createElement('div')
+          permValue.className = 'detail-value'
+          if (group[key]) {
+            permValue.textContent = '\u2705'
+          } else {
+            permValue.textContent = '\u274c'
+          }
+          permField.appendChild(permLabel)
+          permField.appendChild(permValue)
+          card.appendChild(permField)
+        }
+
+        groupsDiv.appendChild(card)
       }
-      groupsDiv.appendChild(card)
     }
 
     // Clone button (logged-in users only)
