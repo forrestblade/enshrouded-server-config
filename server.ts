@@ -187,6 +187,11 @@ async function getSessionUser (req: IncomingMessage): Promise<Record<string, unk
       [sessionId]
     )
     if (!rows || rows.length === 0) return null
+    // Rolling session — extend expiry on each authenticated request (24 hours)
+    pool.sql.unsafe(
+      "UPDATE cms_sessions SET expires_at = NOW() + INTERVAL '24 hours' WHERE id = $1",
+      [sessionId]
+    ).catch(() => {})
     return rows[0] as Record<string, unknown>
   } catch { return null }
 }
