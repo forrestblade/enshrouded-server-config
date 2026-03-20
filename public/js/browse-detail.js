@@ -1,3 +1,5 @@
+import { presets, diffFromDefault } from './presets.js'
+
 const configId = window.location.pathname.split('/').pop()
 const toast = document.getElementById('toast')
 
@@ -34,6 +36,17 @@ if (!res.ok) {
     if (config.server?.slotCount) meta.push(config.server.slotCount + ' slots')
     if (config.updatedAt) meta.push('Updated ' + new Date(config.updatedAt).toLocaleDateString())
     document.getElementById('config-meta').textContent = meta.join(' · ')
+
+    // Diff-from-default summary
+    const settings = config.gameSettings || (presets[config.gameSettingsPreset] ? { ...presets[config.gameSettingsPreset] } : null)
+    const diff = diffFromDefault(settings, config.gameSettingsPreset)
+    if (diff) {
+      const diffEl = document.createElement('p')
+      diffEl.className = 'diff-summary'
+      diffEl.textContent = diff
+      const metaEl = document.getElementById('config-meta')
+      metaEl.parentNode.insertBefore(diffEl, metaEl.nextSibling)
+    }
 
     // Forked from attribution
     if (config.forkedFrom) {

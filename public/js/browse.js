@@ -1,3 +1,5 @@
+import { presets, diffFromDefault } from './presets.js'
+
 // Resolve owner UUIDs to user info
 const userCache = {}
 async function resolveUser (ownerId) {
@@ -151,6 +153,16 @@ function createTile (item, owner) {
   badge.textContent = item.gameSettingsPreset || 'Default'
   header.appendChild(badge)
   div.appendChild(header)
+
+  // Diff-from-default summary
+  const settings = item.gameSettings || (presets[item.gameSettingsPreset] ? { ...presets[item.gameSettingsPreset] } : null)
+  const diff = diffFromDefault(settings, item.gameSettingsPreset)
+  if (diff) {
+    const diffEl = document.createElement('p')
+    diffEl.className = 'diff-summary'
+    diffEl.textContent = diff
+    div.appendChild(diffEl)
+  }
 
   // Creator info
   if (owner) {

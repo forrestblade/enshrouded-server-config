@@ -333,3 +333,20 @@
   .detail-grid { grid-template-columns: 1fr; }
   .detail-header { flex-direction: column; }
 }
+
+/* Diff-from-default summary */
+.diff-summary {
+  font-size: var(--val-text-xs);
+  color: var(--val-color-text-muted);
+  font-style: italic;
+  margin: var(--val-space-1) 0 0;
+  line-height: var(--val-leading-relaxed);
+}
+
+/* On tiles, truncate long diffs */
+.config-tile .diff-summary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}

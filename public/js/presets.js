@@ -101,3 +101,89 @@ export const gameSettingsFields = [
   { id: 'waterOfTheWakeMode', label: 'Water of the Wake Mode', tip: '0 = disabled, 1 = enabled, 2 = distance-based', type: 'select', options: [{ v: 0, l: 'Disabled' }, { v: 1, l: 'Enabled' }, { v: 2, l: 'Distance-Based' }] },
   { id: 'waterOfTheWakeDistance', label: 'Water of the Wake Distance', tip: 'Distance for distance-based mode', type: 'number', min: 0 }
 ]
+
+// Human-readable labels for diff summaries
+const diffLabels = {
+  playerHealthFactor: 'health',
+  playerManaFactor: 'mana',
+  playerStaminaFactor: 'stamina',
+  playerBodyHeatFactor: 'body heat',
+  enableDurability: 'durability',
+  enableStarvingDebuff: 'starving debuff',
+  foodBuffDurationFactor: 'food buff duration',
+  miningDamageFactor: 'mining speed',
+  plantGrowthSpeedFactor: 'plant growth',
+  resourceDropStackAmountFactor: 'resource drops',
+  factoryProductionSpeedFactor: 'crafting speed',
+  perkUpgradeRecyclingFactor: 'perk recycling',
+  perkCostFactor: 'perk cost',
+  experienceCombatFactor: 'combat XP',
+  experienceMiningFactor: 'mining XP',
+  experienceExplorationQuestsFactor: 'quest XP',
+  skillDamageFactor: 'skill damage',
+  tombstoneMode: 'tombstone',
+  pacifiedEnemies: 'enemies',
+  enemyDamageFactor: 'enemy damage',
+  enemyHealthFactor: 'enemy health',
+  enemyStaminaFactor: 'enemy stamina',
+  enemyPerceptionRangeFactor: 'enemy perception',
+  bossDamageFactor: 'boss damage',
+  bossHealthFactor: 'boss health',
+  threatBonusFactor: 'threat bonus',
+  dayTimeDuration: 'day length',
+  nightTimeDuration: 'night length',
+  fromHungerToStarving: 'starvation timer',
+  shroudTimeFactor: 'shroud time',
+  aggroPoolAmount: 'aggro pool',
+  waterOfTheWakeMode: 'wake mode',
+  waterOfTheWakeDistance: 'wake distance'
+}
+
+function formatDiff (key, val, baseVal) {
+  // Special cases
+  if (key === 'pacifiedEnemies') {
+    return val === 1 ? 'enemies disabled' : 'enemies enabled'
+  }
+  if (key === 'enableDurability') {
+    return val === 0 ? 'no durability' : 'durability on'
+  }
+  if (key === 'enableStarvingDebuff') {
+    return val === 0 ? 'no starving debuff' : 'starving debuff on'
+  }
+  if (key === 'tombstoneMode') {
+    const modes = ['keep items', 'drop bag', 'drop all']
+    return 'tombstone: ' + (modes[val] || val)
+  }
+  if (key === 'waterOfTheWakeMode') {
+    const modes = ['wake disabled', 'wake enabled', 'wake distance-based']
+    return modes[val] || 'wake mode: ' + val
+  }
+  // Duration fields (nanoseconds)
+  if (['dayTimeDuration', 'nightTimeDuration', 'fromHungerToStarving'].includes(key)) {
+    const mins = Math.round(val / 60000000000)
+    const baseMins = Math.round(baseVal / 60000000000)
+    if (mins !== baseMins) {
+      return mins + 'min ' + (diffLabels[key] || key)
+    }
+    return null
+  }
+  // Factor fields - show as multiplier
+  const label = diffLabels[key] || key
+  if (typeof val === 'number' && typeof baseVal === 'number') {
+    return val + 'x ' + label
+  }
+  return label + ': ' + val
+}
+
+export function diffFromDefault (gameSettings, presetName) {
+  if (!gameSettings || presetName === 'Default') return null
+  const defaultBase = presets.Default
+  const diffs = []
+  for (const [key, val] of Object.entries(gameSettings)) {
+    if (val !== defaultBase[key]) {
+      const formatted = formatDiff(key, val, defaultBase[key])
+      if (formatted) diffs.push(formatted)
+    }
+  }
+  return diffs.length ? diffs.join(', ') : null
+}
