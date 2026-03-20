@@ -148,6 +148,32 @@ function render (items) {
   }
 }
 
+// Reactive like state — all tiles for the same config stay in sync
+const likeState = {}  // configId -> { liked, count, subscribers[] }
+
+function getLikeState (configId, initialCount) {
+  if (!likeState[configId]) {
+    likeState[configId] = {
+      liked: myLikedIds.has(configId),
+      count: initialCount || 0,
+      subscribers: []
+    }
+  }
+  return likeState[configId]
+}
+
+function subscribeLike (configId, callback) {
+  const state = getLikeState(configId, 0)
+  state.subscribers.push(callback)
+  return state
+}
+
+function notifyLikeChange (configId) {
+  const state = likeState[configId]
+  if (!state) return
+  for (const cb of state.subscribers) cb(state)
+}
+
 function createTile (item, owner) {
   const div = document.createElement('a')
   div.className = 'config-tile'
@@ -241,13 +267,21 @@ function createTile (item, owner) {
   const likeSpan = document.createElement('span')
   likeSpan.className = 'tile-stat like-btn'
   likeSpan.style.cursor = 'pointer'
-  let isLiked = myLikedIds.has(item.id)
-  let likeCount = item.likeCount || 0
-  likeSpan.textContent = (isLiked ? '\u2665' : '\u2661') + ' ' + likeCount
   likeSpan.setAttribute('role', 'button')
-  likeSpan.setAttribute('aria-label', isLiked ? 'Unlike' : 'Like')
-  likeSpan.setAttribute('aria-pressed', String(isLiked))
-  if (isLiked) likeSpan.classList.add('liked')
+
+  // Initialize from shared state
+  const state = getLikeState(item.id, item.likeCount || 0)
+  state.count = Math.max(state.count, item.likeCount || 0)
+
+  function updateLikeUI (s) {
+    likeSpan.textContent = (s.liked ? '\u2665' : '\u2661') + ' ' + s.count
+    likeSpan.classList.toggle('liked', s.liked)
+    likeSpan.setAttribute('aria-label', s.liked ? 'Unlike' : 'Like')
+    likeSpan.setAttribute('aria-pressed', String(s.liked))
+  }
+  updateLikeUI(state)
+  subscribeLike(item.id, updateLikeUI)
+
   likeSpan.addEventListener('click', async (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -256,13 +290,11 @@ function createTile (item, owner) {
       const res = await fetch('/api/server-configs/' + item.id + '/like', { method: 'POST' })
       if (res.ok) {
         const data = await res.json()
-        isLiked = data.liked
-        likeCount += isLiked ? 1 : -1
-        likeSpan.textContent = (isLiked ? '\u2665' : '\u2661') + ' ' + likeCount
-        likeSpan.classList.toggle('liked', isLiked)
-        likeSpan.setAttribute('aria-label', isLiked ? 'Unlike' : 'Like')
-        likeSpan.setAttribute('aria-pressed', String(isLiked))
-        if (isLiked) myLikedIds.add(item.id); else myLikedIds.delete(item.id)
+        const s = likeState[item.id]
+        s.liked = data.liked
+        s.count += s.liked ? 1 : -1
+        if (s.liked) myLikedIds.add(item.id); else myLikedIds.delete(item.id)
+        notifyLikeChange(item.id)
       }
     } catch { /* ignore */ }
   })
