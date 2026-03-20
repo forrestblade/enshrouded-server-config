@@ -6,16 +6,16 @@ if (!meRes.ok) {
 }
 const user = await meRes.json()
 
-// Populate fields
-document.getElementById('username').value = user.username || ''
-document.getElementById('email').value = user.email || ''
-document.getElementById('avatarUrl').value = user.avatarUrl || ''
-updatePreview()
-
 const form = document.getElementById('account-form')
 const message = document.getElementById('message')
 const avatarInput = document.getElementById('avatarUrl')
 const preview = document.getElementById('avatar-preview')
+
+// Populate fields
+document.getElementById('username').value = user.username || ''
+document.getElementById('email').value = user.email || ''
+avatarInput.value = user.avatarUrl || ''
+updatePreview()
 
 function updatePreview () {
   const url = document.getElementById('avatarUrl').value.trim()

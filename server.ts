@@ -169,6 +169,12 @@ async function getSessionUser (req: IncomingMessage): Promise<Record<string, unk
 
 // ── Custom routes ─────────────────────────────────────────
 const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => Promise<void>> = {
+  'GET /api/users/me': async (req, res) => {
+    const user = await getSessionUser(req)
+    if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
+    const { password_hash, ...safe } = user as Record<string, unknown>
+    sendJson(res, 200, safe)
+  },
   'POST /api/telemetry': async (req, res) => {
     const chunks: Buffer[] = []
     for await (const chunk of req) chunks.push(chunk as Buffer)
