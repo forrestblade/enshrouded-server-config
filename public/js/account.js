@@ -11,10 +11,13 @@ const message = document.getElementById('message')
 const avatarInput = document.getElementById('avatarUrl')
 const preview = document.getElementById('avatar-preview')
 
+const bioInput = document.getElementById('bio')
+
 // Populate fields
 document.getElementById('username').value = user.username || ''
 document.getElementById('email').value = user.email || ''
 avatarInput.value = user.avatarUrl || ''
+if (bioInput) bioInput.value = user.bio || ''
 updatePreview()
 
 function updatePreview () {
@@ -37,13 +40,16 @@ form.addEventListener('submit', async (e) => {
   message.textContent = ''
   message.className = 'form-message'
 
+  const payload = {
+    username: document.getElementById('username').value.trim(),
+    avatarUrl: avatarInput.value.trim()
+  }
+  if (bioInput) payload.bio = bioInput.value.trim()
+
   const res = await fetch('/api/account', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      username: document.getElementById('username').value.trim(),
-      avatarUrl: avatarInput.value.trim()
-    })
+    body: JSON.stringify(payload)
   })
 
   if (res.ok) {

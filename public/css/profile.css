@@ -1,0 +1,104 @@
+/* Profile page */
+.profile-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--val-space-8) var(--val-space-4);
+}
+
+.profile-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--val-space-6);
+  margin-bottom: var(--val-space-6);
+}
+
+.profile-avatar img {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--val-color-border);
+}
+
+.avatar-placeholder {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--val-color-bg-elevated);
+  border: 2px solid var(--val-color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: var(--val-weight-bold);
+  color: var(--val-color-text-muted);
+}
+
+.profile-info h1 {
+  font-size: var(--val-text-2xl);
+  font-weight: var(--val-weight-bold);
+  margin-bottom: var(--val-space-1);
+}
+
+.profile-bio {
+  font-size: var(--val-text-sm);
+  color: var(--val-color-text);
+  line-height: var(--val-leading-relaxed);
+  margin-bottom: var(--val-space-2);
+  max-width: 600px;
+}
+
+.profile-meta {
+  font-size: var(--val-text-xs);
+  color: var(--val-color-text-muted);
+}
+
+/* Stats */
+.profile-stats {
+  display: flex;
+  gap: var(--val-space-6);
+  margin-bottom: var(--val-space-8);
+  padding: var(--val-space-4);
+  border: 1px solid var(--val-color-border);
+  border-radius: var(--val-radius-lg);
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: var(--val-text-2xl);
+  font-weight: var(--val-weight-bold);
+  color: var(--val-color-text);
+}
+
+.stat-label {
+  font-size: var(--val-text-xs);
+  color: var(--val-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Config list */
+.profile-configs {
+  margin-top: var(--val-space-6);
+}
+
+.profile-configs h2 {
+  font-size: var(--val-text-xl);
+  font-weight: var(--val-weight-semibold);
+  margin-bottom: var(--val-space-4);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .profile-stats {
+    justify-content: center;
+  }
+}
