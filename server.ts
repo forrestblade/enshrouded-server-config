@@ -27,6 +27,13 @@ const MIME_TYPES: Record<string, string> = {
   '.ico': 'image/x-icon'
 }
 
+// ── Security headers ─────────────────────────────────────
+const SECURITY_HEADERS: Record<string, string> = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin'
+}
+
 // ── Database ──────────────────────────────────────────────
 const pool = createPool({
   host: config.db.host,
@@ -78,6 +85,11 @@ function matchRoute (pathname: string, routes: Map<string, unknown>): { entry: a
 
 // ── Page routes ───────────────────────────────────────────
 const rootDir = import.meta.dirname
+
+// ── Error pages ───────────────────────────────────────────
+const ERROR_404_HTML = readFileSync(join(rootDir, 'src/pages/error/ui/404.html'), 'utf-8')
+const ERROR_500_HTML = readFileSync(join(rootDir, 'src/pages/error/ui/500.html'), 'utf-8')
+
 const PAGES: Record<string, string> = {
   '/': join(rootDir, 'src/pages/home/ui/index.html'),
   '/config/new': join(rootDir, 'src/pages/config/ui/new.html'),
@@ -94,13 +106,13 @@ const PATTERN_PAGES = [
 
 function serveFile (res: ServerResponse, filePath: string): void {
   if (!existsSync(filePath)) {
-    res.writeHead(404, { 'Content-Type': 'text/plain' })
-    res.end('Not found')
+    res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS })
+    res.end(ERROR_404_HTML)
     return
   }
   const ext = extname(filePath)
   const mime = MIME_TYPES[ext] ?? 'application/octet-stream'
-  res.writeHead(200, { 'Content-Type': mime })
+  res.writeHead(200, { 'Content-Type': mime, ...SECURITY_HEADERS })
   res.end(readFileSync(filePath))
 }
 
@@ -145,7 +157,7 @@ function parseBody (req: IncomingMessage): ResultAsync<Record<string, unknown>, 
 }
 
 function sendJson (res: ServerResponse, status: number, data: unknown): void {
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' })
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', ...SECURITY_HEADERS })
   res.end(JSON.stringify(data))
 }
 
@@ -183,7 +195,7 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
     try {
       const events = JSON.parse(body)
       if (!Array.isArray(events) || events.length === 0) {
-        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.writeHead(200, { 'Content-Type': 'application/json', ...SECURITY_HEADERS })
         res.end(JSON.stringify({ ok: true, ingested: 0 }))
         return
       }
@@ -198,10 +210,10 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
           [sessionId, ev.type ?? '', ev.targetDOMNode ?? '', JSON.stringify(ev)]
         )
       }
-      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.writeHead(200, { 'Content-Type': 'application/json', ...SECURITY_HEADERS })
       res.end(JSON.stringify({ ok: true, ingested: events.length }))
     } catch {
-      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.writeHead(200, { 'Content-Type': 'application/json', ...SECURITY_HEADERS })
       res.end(JSON.stringify({ ok: true, ingested: 0 }))
     }
   },
@@ -350,7 +362,8 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
     // Clear session cookie
     res.writeHead(200, {
       'Content-Type': 'application/json; charset=utf-8',
-      'Set-Cookie': 'cms_session=; Path=/; HttpOnly; Max-Age=0'
+      'Set-Cookie': 'cms_session=; Path=/; HttpOnly; Max-Age=0',
+      ...SECURITY_HEADERS
     })
     res.end(JSON.stringify({ ok: true }))
   }
@@ -520,7 +533,8 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       (err) => err instanceof Error ? err : new Error(String(err))
     )
     if (result.isErr() && !res.headersSent) {
-      sendJson(res, 500, { error: 'Internal server error' })
+      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS })
+      res.end(ERROR_500_HTML)
     }
     return
   }
@@ -533,7 +547,8 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       (err) => err instanceof Error ? err : new Error(String(err))
     )
     if (result.isErr() && !res.headersSent) {
-      sendJson(res, 500, { error: 'Internal server error' })
+      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS })
+      res.end(ERROR_500_HTML)
     }
     return
   }
@@ -545,13 +560,13 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     if (!isPublicAdmin) {
       const user = await getSessionUser(req)
       if (!user) {
-        res.writeHead(302, { Location: '/admin/login' })
+        res.writeHead(302, { Location: '/admin/login', ...SECURITY_HEADERS })
         res.end()
         return
       }
       // Only admin role can access admin panel
       if (user.role !== 'admin') {
-        res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' })
+        res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS })
         res.end('<h1>403</h1><p>Admin access required</p>')
         return
       }
@@ -577,8 +592,8 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   }
 
   // 6. 404
-  res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' })
-  res.end('<h1>404</h1><p>Not found</p>')
+  res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS })
+  res.end(ERROR_404_HTML)
 })
 
 server.listen(port, () => {
