@@ -1,11 +1,9 @@
 // Check auth state and update nav accordingly
 const navActions = document.getElementById('nav-actions')
 if (navActions) {
-  const hasCookie = document.cookie.includes('cms_session')
-  if (hasCookie) {
-    try {
-      const res = await fetch('/api/users/me')
-      if (res.ok) {
+  try {
+    const res = await fetch('/api/users/me')
+    if (res.ok) {
         const user = await res.json()
         navActions.innerHTML = ''
 
@@ -39,8 +37,7 @@ if (navActions) {
         })
         navActions.appendChild(logoutBtn)
       }
-    } catch {
-      // Not logged in — keep default login/signup links
-    }
+  } catch {
+    // Not logged in — keep default login/signup links
   }
 }

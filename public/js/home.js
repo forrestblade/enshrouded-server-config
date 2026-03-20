@@ -1,12 +1,11 @@
 // Fetch current user (if logged in)
 let currentUser = null
-const hasCookie = document.cookie.includes('cms_session')
-if (hasCookie) {
+try {
   const meRes = await fetch('/api/users/me')
   if (meRes.ok) {
     currentUser = await meRes.json()
   }
-}
+} catch { /* not logged in */ }
 
 const list = document.getElementById('config-list')
 const empty = document.getElementById('empty')
