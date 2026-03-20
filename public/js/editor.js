@@ -264,6 +264,127 @@ const SERVER_DEFAULTS = {
   'server.enableTextChat': true
 }
 
+// ── Tags ──────────────────────────────────────────────────
+let selectedTags = []
+let availableTags = []
+
+async function initTagPicker () {
+  try {
+    const res = await fetch('/api/tags')
+    if (res.ok) availableTags = await res.json()
+  } catch { /* ignore */ }
+
+  const container = document.getElementById('tag-picker')
+  if (!container) return
+
+  const selectedDiv = document.createElement('div')
+  selectedDiv.className = 'selected-tags'
+  selectedDiv.id = 'selected-tags'
+  container.appendChild(selectedDiv)
+
+  const inputWrap = document.createElement('div')
+  inputWrap.className = 'tag-input-wrap'
+
+  const input = document.createElement('input')
+  input.type = 'text'
+  input.placeholder = 'Add tags...'
+  input.className = 'tag-input'
+  input.id = 'tag-search-input'
+
+  const dropdown = document.createElement('div')
+  dropdown.className = 'tag-dropdown'
+  dropdown.id = 'tag-dropdown'
+  dropdown.hidden = true
+
+  inputWrap.appendChild(input)
+  inputWrap.appendChild(dropdown)
+  container.appendChild(inputWrap)
+
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim()
+    dropdown.innerHTML = ''
+    if (!q) { dropdown.hidden = true; return }
+
+    const matches = availableTags.filter(t =>
+      t.name.toLowerCase().includes(q) && !selectedTags.includes(t.slug)
+    ).slice(0, 8)
+
+    for (const tag of matches) {
+      const opt = document.createElement('div')
+      opt.className = 'tag-option'
+      opt.textContent = tag.name
+      if (tag.isCurated) opt.classList.add('curated')
+      opt.addEventListener('click', () => {
+        addTag(tag.slug)
+        input.value = ''
+        dropdown.hidden = true
+      })
+      dropdown.appendChild(opt)
+    }
+
+    // Option to create new tag
+    const exactMatch = availableTags.find(t => t.name.toLowerCase() === q)
+    if (!exactMatch && q.length >= 2) {
+      const createOpt = document.createElement('div')
+      createOpt.className = 'tag-option tag-create'
+      createOpt.textContent = 'Create "' + input.value.trim() + '"'
+      createOpt.addEventListener('click', async () => {
+        const createRes = await fetch('/api/tags', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: input.value.trim() })
+        })
+        if (createRes.ok) {
+          const newTag = await createRes.json()
+          availableTags.push(newTag)
+          addTag(newTag.slug)
+        }
+        input.value = ''
+        dropdown.hidden = true
+      })
+      dropdown.appendChild(createOpt)
+    }
+
+    dropdown.hidden = matches.length === 0 && !(!exactMatch && q.length >= 2)
+  })
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { dropdown.hidden = true }
+  })
+
+  document.addEventListener('click', (e) => {
+    if (!container.contains(e.target)) dropdown.hidden = true
+  })
+}
+
+function addTag (slug) {
+  if (selectedTags.includes(slug)) return
+  selectedTags.push(slug)
+  renderSelectedTags()
+}
+
+function removeTag (slug) {
+  selectedTags = selectedTags.filter(s => s !== slug)
+  renderSelectedTags()
+}
+
+function renderSelectedTags () {
+  const div = document.getElementById('selected-tags')
+  if (!div) return
+  div.innerHTML = ''
+  for (const slug of selectedTags) {
+    const tag = document.createElement('span')
+    tag.className = 'tag selected'
+    tag.textContent = slug
+    const removeBtn = document.createElement('button')
+    removeBtn.className = 'tag-remove'
+    removeBtn.textContent = '\u00d7'
+    removeBtn.addEventListener('click', () => removeTag(slug))
+    tag.appendChild(removeBtn)
+    div.appendChild(tag)
+  }
+}
+
 // ── Load config ───────────────────────────────────────────
 async function loadConfig () {
   const res = await fetch('/api/server-configs/' + configId)
@@ -304,6 +425,12 @@ async function loadConfig () {
     ? rawGroups.map(g => ({ ...g }))
     : defaultUserGroups.map(g => ({ ...g }))
   renderGroups()
+
+  // Load tags
+  const rawTags = typeof config.tags === 'string' ? JSON.parse(config.tags) : (config.tags || [])
+  selectedTags = Array.isArray(rawTags) ? [...rawTags] : []
+  await initTagPicker()
+  renderSelectedTags()
 
   initPctControls()
   updateDurationLabels()
@@ -363,6 +490,7 @@ function collectFormData () {
   // The CMS REST API validates field.json as a JSON-encoded string (z.string().refine(...)),
   // so userGroups must be serialized to a string here before being sent in the PATCH body.
   data.userGroups = JSON.stringify(userGroups.map(g => ({ ...g })))
+  data.tags = JSON.stringify(selectedTags)
   return data
 }
 
