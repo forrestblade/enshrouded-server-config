@@ -9,23 +9,23 @@ importers:
   .:
     dependencies:
       '@valencets/cms':
-        specifier: ^0.6.1
-        version: 0.6.1
+        specifier: ^0.9.0
+        version: 0.9.0
       '@valencets/core':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.4.2
+        version: 0.4.2
       '@valencets/db':
-        specifier: ^0.1.2
-        version: 0.1.2
+        specifier: ^0.1.3
+        version: 0.1.3
       '@valencets/telemetry':
-        specifier: ^0.1.4
-        version: 0.1.4
-      '@valencets/ui':
         specifier: ^0.2.0
         version: 0.2.0
+      '@valencets/ui':
+        specifier: ^0.3.1
+        version: 0.3.1
       '@valencets/valence':
-        specifier: ^0.11.1
-        version: 0.11.1
+        specifier: ^0.14.0
+        version: 0.14.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -33,6 +33,9 @@ importers:
       '@playwright/test':
         specifier: ^1.58.2
         version: 1.58.2
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -402,27 +405,27 @@ packages:
     os: [linux]
     libc: [glibc]
 
-  '@valencets/cms@0.6.1':
-    resolution: {integrity: sha512-CtHMF9amzoEwV9EJLpQe3hJBjuQSgURkPza+xB7v765en3I0y2nAFbLtk9j+LzK/C3ZXU06C9D6lvF+/qs9O3g==}
+  '@types/node@25.5.0':
+    resolution: {integrity: sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw==}
+
+  '@valencets/cms@0.9.0':
+    resolution: {integrity: sha512-5apTdfOsjvrEcCm/oCGIqt91WqATcGDsDDkvz6/JOXi8JopUiGnBlej6R04U6lB2jDlqMP67RHSQSn2l3XebQg==}
     engines: {node: '>=22'}
 
-  '@valencets/core@0.2.0':
-    resolution: {integrity: sha512-rg97dTzGUca7+zZgborEzGzAI71fhjp7ZxUNbh+K/J+f8ME+4PvtJUj3EMAFV5g3nEitkuhRv0zFJ9jcHqFnow==}
+  '@valencets/core@0.4.2':
+    resolution: {integrity: sha512-E7SdhwXo9OBgXaCMJmJnXceriZV2bUBXFRCo30nqwsck88RLJcxHnzVTCvN+DvUnzL16grkeq1DubM7WFv3Nzw==}
     engines: {node: '>=22'}
 
-  '@valencets/core@0.4.0':
-    resolution: {integrity: sha512-PnlCMs/+de4aNGGB6986UnlF5tRLTWk6cFfsP79Z2Y8qiow12xDoOOdhyEpsvB8GOBoEDl/nxTBEXZj4gdArDw==}
+  '@valencets/db@0.1.3':
+    resolution: {integrity: sha512-gyFVeP9dqb3b+CgjQ1CkhLpN4pwCAQIHf2N6EAF3wha/7XrKww+jhlu5DIpwRN6BmeJmfbYF7h71pH0q/bs30Q==}
     engines: {node: '>=22'}
 
-  '@valencets/db@0.1.2':
-    resolution: {integrity: sha512-bFFHRJdDYdbrU7Yp1MzNYrZtJI3ecmhMQXv8EELEncgOiKdn4MVQcAMnVnV6sdqdlX3OjDfmRtOBvj02jJXExA==}
-
-  '@valencets/telemetry@0.1.4':
-    resolution: {integrity: sha512-wb+lba0dwxErUXBInahfAfFSIEU5KZnzNzNCiQ1CyvHzyivVtVBmwh8ABRbiztK/YrBUZmdYMscsfeWuTxNFLA==}
+  '@valencets/telemetry@0.2.0':
+    resolution: {integrity: sha512-E1wHyFs4nz9iQGcyMoV9ojjGgFcnxkvoHbTEhpfFMaMd+PL9NKakRdduiSGSUT3nFLWpZRbUX0FghRPRGCUuCw==}
     engines: {node: '>=22'}
 
-  '@valencets/ui@0.2.0':
-    resolution: {integrity: sha512-w3ay0BpIw33gx4gE9d4CJNMn2CKmlyBGHC9CqsJJn2z+hGW4kC28VPDj3z63vQGJ4b0XxYzhD+QwwUsex6Q12Q==}
+  '@valencets/ui@0.3.1':
+    resolution: {integrity: sha512-FVFwqA8ZoJWbS+/yblYqSqkX490VaW7WfjtB8AAPNUFWAUskvDd/vIhA0lf4BxBb567g0oTZQPem0iXdm5+oWQ==}
     engines: {node: '>=22'}
     peerDependencies:
       tailwindcss: '>=3.4.0'
@@ -430,8 +433,8 @@ packages:
       tailwindcss:
         optional: true
 
-  '@valencets/valence@0.11.1':
-    resolution: {integrity: sha512-La8arVf7MgK4V3S2WFInlIu3IXIjQ4K6jK8XsG+QRwEK1L35WRDEokYfPr7mwTR021igIxdyi6iago8wpkuFVQ==}
+  '@valencets/valence@0.14.0':
+    resolution: {integrity: sha512-Ssku86CHBt0wY2/wmVW7H+r5Rvg6+qMVOwjnlWPLbWUayUm0umqgSVf3tuBGQKzjcC3/kbPvllSkYl92tA6FGA==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -538,6 +541,9 @@ packages:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
     hasBin: true
+
+  undici-types@7.18.2:
+    resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
 
   which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
@@ -802,7 +808,11 @@ snapshots:
   '@rollup/rollup-linux-x64-gnu@4.59.0':
     optional: true
 
-  '@valencets/cms@0.6.1':
+  '@types/node@25.5.0':
+    dependencies:
+      undici-types: 7.18.2
+
+  '@valencets/cms@0.9.0':
     dependencies:
       '@lexical/history': 0.41.0
       '@lexical/html': 0.41.0
@@ -811,10 +821,10 @@ snapshots:
       '@lexical/rich-text': 0.41.0
       '@lexical/selection': 0.41.0
       '@lexical/utils': 0.41.0
-      '@valencets/core': 0.4.0
-      '@valencets/db': 0.1.2
-      '@valencets/telemetry': 0.1.4
-      '@valencets/ui': 0.2.0
+      '@valencets/core': 0.4.2
+      '@valencets/db': 0.1.3
+      '@valencets/telemetry': 0.2.0
+      '@valencets/ui': 0.3.1
       argon2: 0.44.0
       lexical: 0.41.0
       neverthrow: 8.2.0
@@ -823,35 +833,31 @@ snapshots:
     transitivePeerDependencies:
       - tailwindcss
 
-  '@valencets/core@0.2.0':
+  '@valencets/core@0.4.2':
     dependencies:
       neverthrow: 8.2.0
 
-  '@valencets/core@0.4.0':
-    dependencies:
-      neverthrow: 8.2.0
-
-  '@valencets/db@0.1.2':
+  '@valencets/db@0.1.3':
     dependencies:
       neverthrow: 8.2.0
       postgres: 3.4.8
       zod: 4.3.6
 
-  '@valencets/telemetry@0.1.4':
+  '@valencets/telemetry@0.2.0':
     dependencies:
-      '@valencets/core': 0.2.0
-      '@valencets/db': 0.1.2
+      '@valencets/core': 0.4.2
+      '@valencets/db': 0.1.3
       neverthrow: 8.2.0
       postgres: 3.4.8
 
-  '@valencets/ui@0.2.0': {}
+  '@valencets/ui@0.3.1': {}
 
-  '@valencets/valence@0.11.1':
+  '@valencets/valence@0.14.0':
     dependencies:
-      '@valencets/cms': 0.6.1
-      '@valencets/core': 0.4.0
-      '@valencets/db': 0.1.2
-      '@valencets/telemetry': 0.1.4
+      '@valencets/cms': 0.9.0
+      '@valencets/core': 0.4.2
+      '@valencets/db': 0.1.3
+      '@valencets/telemetry': 0.2.0
       neverthrow: 8.2.0
       tsx: 4.21.0
       zod: 4.3.6
@@ -993,6 +999,8 @@ snapshots:
       fsevents: 2.3.3
 
   typescript@5.9.3: {}
+
+  undici-types@7.18.2: {}
 
   which@2.0.2:
     dependencies:

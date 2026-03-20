@@ -6,7 +6,7 @@ import { ResultAsync } from 'neverthrow'
 import { buildCms } from '@valencets/cms'
 import { createPool } from '@valencets/db'
 import argon2 from 'argon2'
-import { startTelemetryScheduler } from '@valencets/cms'
+
 // Telemetry ingestion handler (inline to avoid @valencets/core DOMParser issue in Node)
 import configResult from './valence.config.js'
 
@@ -52,7 +52,7 @@ const cmsResult = buildCms({
   db: pool,
   secret: process.env.CMS_SECRET ?? 'change-me',
   uploadDir: './uploads',
-  collections: config.collections as any,
+  collections: config.collections as import("@valencets/cms").CmsConfig["collections"],
   telemetryPool: config.telemetry?.enabled ? pool : undefined
 })
 
@@ -65,7 +65,6 @@ const cms = cmsResult.value
 
 // Start telemetry aggregation (runs every 15 minutes)
 if (config.telemetry?.enabled) {
-  startTelemetryScheduler(pool, config.telemetry.siteId ?? 'default', 15 * 60_000)
   console.log('  Telemetry scheduler started (15 min interval)')
 }
 
@@ -82,7 +81,7 @@ function matchRoute (pathname: string, routes: Map<string, unknown>): { entry: a
     const params: Record<string, string> = {}
     let match = true
     for (let i = 0; i < pp.length; i++) {
-      if (pp[i].startsWith(':')) params[pp[i].slice(1)] = up[i]
+      if (pp[i]!.startsWith(':')) params[pp[i]!.slice(1)] = up[i]!
       else if (pp[i] !== up[i]) { match = false; break }
     }
     if (match) return { entry, params }
@@ -140,7 +139,7 @@ function matchPagePattern (pathname: string): string | null {
     if (pp.length !== up.length) continue
     let match = true
     for (let i = 0; i < pp.length; i++) {
-      if (pp[i].startsWith(':')) continue
+      if (pp[i]?.startsWith(':')) continue
       if (pp[i] !== up[i]) { match = false; break }
     }
     if (match) return file
@@ -186,7 +185,7 @@ async function getSessionUser (req: IncomingMessage): Promise<Record<string, unk
   const sessionMatch = cookieHeader.match(/cms_session=([^;]+)/)
   if (!sessionMatch) return null
 
-  const sessionId = sessionMatch[1]
+  const sessionId = sessionMatch[1]!
   try {
     const rows = await pool.sql.unsafe(
       `SELECT u.* FROM "cms_sessions" s
@@ -253,7 +252,7 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
     const users = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM users WHERE deleted_at IS NULL')
     const configs = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM "server-configs" WHERE deleted_at IS NULL')
     const shared = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM "server-configs" WHERE shared = true AND deleted_at IS NULL')
-    const sessions = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM sessions WHERE created_at >= $1', [weekAgo])
+    const sessions = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM sessions WHERE created_at >= $1', [weekAgo!])
 
     // Funnel
     const funnel = await pool.sql.unsafe(`
@@ -270,14 +269,14 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
       SELECT COALESCE(NULLIF(referrer, ''), 'Direct') as source, COUNT(*)::int as count
       FROM sessions WHERE created_at >= $1
       GROUP BY source ORDER BY count DESC LIMIT 10
-    `, [weekAgo])
+    `, [weekAgo!])
 
     // Top actions
     const actions = await pool.sql.unsafe(`
       SELECT dom_target as action, COUNT(*)::int as count
       FROM events WHERE created_at >= $1 AND dom_target != ''
       GROUP BY dom_target ORDER BY count DESC LIMIT 15
-    `, [weekAgo])
+    `, [weekAgo!])
 
     // Hourly activity (last 24h)
     const hourly = await pool.sql.unsafe(`
@@ -291,7 +290,7 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
       SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
       FROM sessions WHERE created_at >= $1
       GROUP BY day ORDER BY day
-    `, [weekAgo])
+    `, [weekAgo!])
 
     // Recent configs
     const recentConfigs = await pool.sql.unsafe(`
@@ -457,7 +456,7 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
     const updateResult = await cms.api.update({
       collection: 'users',
       id: user.id as string,
-      data: updates
+      data: updates as Record<string, string | number | boolean | null>
     })
 
     if (updateResult.isErr()) {
@@ -515,7 +514,7 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
 
     const rows = await pool.sql.unsafe(
       `SELECT "configId" FROM likes WHERE "userId" = $1`,
-      [user.id]
+      [String(user.id)]
     )
     sendJson(res, 200, rows.map((r: any) => r.configId))
   },
@@ -527,19 +526,19 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
     // Orphan configs owned by this user
     await pool.sql.unsafe(
       `UPDATE "server-configs" SET "owner" = NULL WHERE "owner" = $1`,
-      [user.id]
+      [String(user.id)]
     )
 
     // Soft-delete the user
     await pool.sql.unsafe(
       `UPDATE "users" SET "deleted_at" = NOW() WHERE "id" = $1`,
-      [user.id]
+      [String(user.id)]
     )
 
     // Destroy all sessions for this user
     await pool.sql.unsafe(
       `UPDATE "cms_sessions" SET "deleted_at" = NOW() WHERE "user_id" = $1`,
-      [user.id]
+      [String(user.id)]
     )
 
     // Clear session cookie
@@ -562,9 +561,9 @@ const CUSTOM_API_PATTERNS: PatternHandler[] = [
       const user = await getSessionUser(req)
       if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
 
-      const sourceResult = await cms.api.findById({
+      const sourceResult = await cms.api.findByID({
         collection: 'server-configs',
-        id: params.id
+        id: params.id!
       })
 
       if (sourceResult.isErr()) {
@@ -581,12 +580,12 @@ const CUSTOM_API_PATTERNS: PatternHandler[] = [
         data: {
           name: cloneName,
           slug: cloneSlug,
-          server: source.server,
-          gameSettingsPreset: source.gameSettingsPreset,
-          gameSettings: source.gameSettings,
-          userGroups: source.userGroups,
-          owner: user.id,
-          forkedFrom: params.id
+          server: JSON.stringify(source.server ?? {}) as string,
+          gameSettingsPreset: String(source.gameSettingsPreset ?? ''),
+          gameSettings: JSON.stringify(source.gameSettings ?? {}) as string,
+          userGroups: JSON.stringify(source.userGroups ?? []) as string,
+          owner: String(user.id),
+          forkedFrom: params.id! as string
         }
       })
 
@@ -598,7 +597,7 @@ const CUSTOM_API_PATTERNS: PatternHandler[] = [
       // Increment fork count on source config
       await pool.sql.unsafe(
         `UPDATE "server-configs" SET "forkCount" = COALESCE("forkCount", 0) + 1 WHERE id = $1`,
-        [params.id]
+        [params.id!]
       )
 
       sendJson(res, 201, createResult.value)
@@ -616,26 +615,26 @@ CUSTOM_API_PATTERNS.push({
 
     const existing = await pool.sql.unsafe(
       `SELECT id FROM likes WHERE "userId" = $1 AND "configId" = $2`,
-      [user.id, params.id]
+      [String(user.id), params.id!]
     )
 
     if (existing.length > 0) {
       // Unlike
-      await pool.sql.unsafe(`DELETE FROM likes WHERE id = $1`, [existing[0].id])
+      await pool.sql.unsafe(`DELETE FROM likes WHERE id = $1`, [String((existing[0] as unknown as {id:string}).id)])
       await pool.sql.unsafe(
         `UPDATE "server-configs" SET "likeCount" = GREATEST(COALESCE("likeCount", 0) - 1, 0) WHERE id = $1`,
-        [params.id]
+        [params.id!]
       )
       sendJson(res, 200, { liked: false })
     } else {
       // Like
       await pool.sql.unsafe(
         `INSERT INTO likes (id, "userId", "configId") VALUES (gen_random_uuid(), $1, $2)`,
-        [user.id, params.id]
+        [String(user.id), params.id!]
       )
       await pool.sql.unsafe(
         `UPDATE "server-configs" SET "likeCount" = COALESCE("likeCount", 0) + 1 WHERE id = $1`,
-        [params.id]
+        [params.id!]
       )
       sendJson(res, 200, { liked: true })
     }
@@ -652,7 +651,7 @@ CUSTOM_API_PATTERNS.push({
 
     const rows = await pool.sql.unsafe(
       `SELECT id FROM likes WHERE "userId" = $1 AND "configId" = $2`,
-      [user.id, params.id]
+      [String(user.id), params.id!]
     )
     sendJson(res, 200, { liked: rows.length > 0 })
   }
@@ -665,7 +664,7 @@ CUSTOM_API_PATTERNS.push({
   handler: async (_req, res, params) => {
     const rows = await pool.sql.unsafe(
       `SELECT id, username, "avatarUrl", bio, created_at FROM users WHERE username = $1 AND deleted_at IS NULL`,
-      [params.username]
+      [params.username!]
     )
     if (rows.length === 0) { sendJson(res, 404, { error: 'User not found' }); return }
 
@@ -675,7 +674,7 @@ CUSTOM_API_PATTERNS.push({
        FROM "server-configs"
        WHERE owner = $1 AND shared = true AND deleted_at IS NULL
        ORDER BY updated_at DESC`,
-      [user.id]
+      [String(user.id)]
     )
 
     sendJson(res, 200, { ...user, configs })
@@ -691,7 +690,7 @@ function matchCustomPattern (method: string, pathname: string): { handler: Patte
     const params: Record<string, string> = {}
     let match = true
     for (let i = 0; i < pp.length; i++) {
-      if (pp[i].startsWith(':')) params[pp[i].slice(1)] = up[i]
+      if (pp[i]!.startsWith(':')) params[pp[i]!.slice(1)] = up[i]!
       else if (pp[i] !== up[i]) { match = false; break }
     }
     if (match) return { handler: route.handler, params }

@@ -123,7 +123,7 @@ export default defineConfig({
               canExtendBase: false,
               reservedSlots: 0
             }
-          ]
+          ] as unknown as string
         }),
 
         // Ownership
@@ -134,7 +134,7 @@ export default defineConfig({
         field.number({ name: 'forkCount', defaultValue: 0, label: 'Fork Count' }),
 
         // Tags
-        field.json({ name: 'tags', label: 'Tags', defaultValue: [] }),
+        field.json({ name: 'tags', label: 'Tags', defaultValue: [] as unknown as string }),
 
         // Likes
         field.number({ name: 'likeCount', defaultValue: 0, label: 'Like Count' }),
