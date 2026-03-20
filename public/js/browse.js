@@ -77,12 +77,21 @@ if (featuredRes.ok) {
   }
 }
 
-// Fetch all shared configs
+// Fetch all shared configs (retry once on failure)
 let allConfigs = []
-const res = await fetch('/api/server-configs?shared=true')
-if (res.ok) {
-  allConfigs = await res.json()
-  // Pre-resolve all owners
+async function fetchConfigs () {
+  const res = await fetch('/api/server-configs?shared=true')
+  if (!res.ok) throw new Error('Failed: ' + res.status)
+  return res.json()
+}
+try {
+  allConfigs = await fetchConfigs()
+} catch {
+  // Retry once after a short delay
+  await new Promise(r => setTimeout(r, 500))
+  try { allConfigs = await fetchConfigs() } catch { /* give up */ }
+}
+if (allConfigs.length > 0) {
   const ownerIds = [...new Set(allConfigs.map(c => c.owner).filter(Boolean))]
   await Promise.all(ownerIds.map(id => resolveUser(id)))
 }
