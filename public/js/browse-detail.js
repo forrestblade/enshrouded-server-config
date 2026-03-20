@@ -35,6 +35,91 @@ if (!res.ok) {
     if (config.updatedAt) meta.push('Updated ' + new Date(config.updatedAt).toLocaleDateString())
     document.getElementById('config-meta').textContent = meta.join(' · ')
 
+    // Forked from attribution
+    if (config.forkedFrom) {
+      try {
+        const sourceRes = await fetch('/api/server-configs/' + config.forkedFrom)
+        if (sourceRes.ok) {
+          const source = await sourceRes.json()
+          const forkInfo = document.createElement('p')
+          forkInfo.className = 'fork-info'
+          const forkLink = document.createElement('a')
+          forkLink.href = '/browse/' + source.id
+          forkLink.textContent = source.name || 'Untitled'
+          forkInfo.textContent = 'Forked from '
+          forkInfo.appendChild(forkLink)
+          document.getElementById('config-meta').after(forkInfo)
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Fork count
+    if (config.forkCount > 0) {
+      const forkCount = document.createElement('span')
+      forkCount.className = 'fork-count-badge'
+      forkCount.textContent = config.forkCount + (config.forkCount === 1 ? ' fork' : ' forks')
+      document.getElementById('config-meta').appendChild(document.createTextNode(' · '))
+      document.getElementById('config-meta').appendChild(forkCount)
+    }
+
+    // Tags display
+    const tagsArr = typeof config.tags === 'string' ? JSON.parse(config.tags) : (config.tags || [])
+    if (tagsArr.length > 0) {
+      const tagsDiv = document.createElement('div')
+      tagsDiv.className = 'detail-tags'
+      for (const slug of tagsArr) {
+        const tag = document.createElement('span')
+        tag.className = 'tag'
+        tag.textContent = slug
+        tagsDiv.appendChild(tag)
+      }
+      document.getElementById('config-meta').after(tagsDiv)
+    }
+
+    // Like button
+    const likeBtn = document.createElement('button')
+    likeBtn.className = 'like-btn'
+    likeBtn.innerHTML = '<span class="like-icon">♡</span> <span class="like-count">' + (config.likeCount || 0) + '</span>'
+    let isLiked = false
+    let likeCount = config.likeCount || 0
+
+    if (currentUser) {
+      try {
+        const likedRes = await fetch('/api/server-configs/' + configId + '/liked')
+        if (likedRes.ok) {
+          const likedData = await likedRes.json()
+          isLiked = likedData.liked
+          if (isLiked) {
+            likeBtn.classList.add('liked')
+            likeBtn.querySelector('.like-icon').textContent = '♥'
+          }
+        }
+      } catch { /* ignore */ }
+    }
+
+    likeBtn.addEventListener('click', async () => {
+      if (!currentUser) { showToast('Log in to like configs', 'error'); return }
+      likeBtn.disabled = true
+      try {
+        const likeRes = await fetch('/api/server-configs/' + configId + '/like', { method: 'POST' })
+        if (likeRes.ok) {
+          const data = await likeRes.json()
+          isLiked = data.liked
+          likeCount += isLiked ? 1 : -1
+          likeBtn.querySelector('.like-icon').textContent = isLiked ? '♥' : '♡'
+          likeBtn.querySelector('.like-count').textContent = likeCount
+          likeBtn.classList.toggle('liked', isLiked)
+          if (isLiked) {
+            likeBtn.style.transform = 'scale(1.2)'
+            setTimeout(() => { likeBtn.style.transform = '' }, 200)
+          }
+        }
+      } catch { showToast('Failed to like', 'error') }
+      likeBtn.disabled = false
+    })
+
+    document.querySelector('.detail-actions').prepend(likeBtn)
+
     // Server settings
     const serverGrid = document.getElementById('server-settings')
     if (config.server) {

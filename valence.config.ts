@@ -128,9 +128,30 @@ export default defineConfig({
         // Ownership
         field.relation({ name: 'owner', relationTo: 'users' }),
 
+        // Forking
+        field.relation({ name: 'forkedFrom', relationTo: 'server-configs', label: 'Forked From' }),
+        field.number({ name: 'forkCount', defaultValue: 0, label: 'Fork Count' }),
+
+        // Tags
+        field.json({ name: 'tags', label: 'Tags', defaultValue: [] }),
+
+        // Likes
+        field.number({ name: 'likeCount', defaultValue: 0, label: 'Like Count' }),
+
         // Sharing
         field.boolean({ name: 'shared', defaultValue: false, label: 'Share Publicly' }),
         field.boolean({ name: 'featured', defaultValue: false, label: 'Featured' })
+      ]
+    }),
+
+    collection({
+      slug: 'tags',
+      labels: { singular: 'Tag', plural: 'Tags' },
+      fields: [
+        field.text({ name: 'name', required: true, label: 'Tag Name' }),
+        field.slug({ name: 'slug', required: true, unique: true, slugFrom: 'name' }),
+        field.boolean({ name: 'isCurated', defaultValue: false, label: 'Curated' }),
+        field.number({ name: 'usageCount', defaultValue: 0, label: 'Usage Count' })
       ]
     }),
 
@@ -140,6 +161,7 @@ export default defineConfig({
       fields: [
         field.text({ name: 'username', required: true, label: 'Username' }),
         field.text({ name: 'avatarUrl', label: 'Avatar URL' }),
+        field.textarea({ name: 'bio', label: 'Bio', maxLength: 500 }),
         field.select({
           name: 'role',
           defaultValue: 'user',

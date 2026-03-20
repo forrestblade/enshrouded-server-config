@@ -228,6 +228,104 @@
   text-align: center;
 }
 
+/* Tag filters */
+.tag-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--val-space-2);
+  margin-bottom: var(--val-space-4);
+}
+.tag-filter-btn {
+  padding: var(--val-space-1) var(--val-space-3);
+  border-radius: 1rem;
+  font-size: var(--val-text-xs);
+  background: var(--val-color-bg-elevated);
+  color: var(--val-color-text-muted);
+  border: 1px solid var(--val-color-border);
+  cursor: pointer;
+  transition: all var(--val-duration-fast);
+}
+.tag-filter-btn:hover {
+  border-color: var(--val-color-primary);
+  color: var(--val-color-text);
+}
+.tag-filter-btn.active {
+  background: var(--val-color-primary);
+  color: #fff;
+  border-color: var(--val-color-primary);
+}
+
+/* Tags */
+.tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  background: var(--val-color-bg-elevated);
+  color: var(--val-color-text-muted);
+  border: 1px solid var(--val-color-border);
+}
+.tag.curated { border-color: var(--val-color-primary); }
+.tile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--val-space-1);
+  margin-top: var(--val-space-2);
+}
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--val-space-1);
+  margin-top: var(--val-space-2);
+  margin-bottom: var(--val-space-2);
+}
+
+/* Fork info */
+.fork-info {
+  font-size: var(--val-text-sm);
+  color: var(--val-color-text-muted);
+  margin-top: var(--val-space-1);
+}
+.fork-info a {
+  color: var(--val-color-primary);
+  text-decoration: none;
+}
+.fork-info a:hover { text-decoration: underline; }
+.fork-count-badge {
+  font-size: var(--val-text-sm);
+  color: var(--val-color-text-muted);
+}
+
+/* Tile footer with stats */
+.tile-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--val-space-3);
+  margin-top: auto;
+  padding-top: var(--val-space-2);
+}
+.tile-stat {
+  font-size: var(--val-text-xs);
+  color: var(--val-color-text-muted);
+}
+.tile-stat.liked { color: #e74c3c; }
+
+/* Like button */
+.like-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: var(--val-color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: color var(--val-duration-fast), transform var(--val-duration-fast);
+}
+.like-btn.liked { color: #e74c3c; }
+.like-btn:hover { color: #e74c3c; }
+.like-count { font-size: 0.85rem; }
+
 /* Responsive */
 @media (max-width: 640px) {
   .browse-controls { flex-direction: column; }

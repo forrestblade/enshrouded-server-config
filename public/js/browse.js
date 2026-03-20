@@ -14,6 +14,52 @@ async function resolveUser (ownerId) {
   return null
 }
 
+// Fetch current user
+let currentUser = null
+const hasCookie = document.cookie.includes('cms_session')
+if (hasCookie) {
+  try {
+    const meRes = await fetch('/api/users/me')
+    if (meRes.ok) currentUser = await meRes.json()
+  } catch { /* ignore */ }
+}
+
+// Fetch user's liked config IDs
+let myLikedIds = new Set()
+if (currentUser) {
+  try {
+    const likesRes = await fetch('/api/likes/mine')
+    if (likesRes.ok) {
+      const ids = await likesRes.json()
+      myLikedIds = new Set(ids)
+    }
+  } catch { /* ignore */ }
+}
+
+// Fetch tags for filter
+let allTags = []
+try {
+  const tagsRes = await fetch('/api/tags')
+  if (tagsRes.ok) allTags = await tagsRes.json()
+} catch { /* ignore */ }
+
+// Build tag filter UI
+const tagFilterDiv = document.getElementById('tag-filters')
+if (tagFilterDiv && allTags.length > 0) {
+  const curatedTags = allTags.filter(t => t.isCurated)
+  for (const tag of curatedTags) {
+    const btn = document.createElement('button')
+    btn.className = 'tag-filter-btn'
+    btn.textContent = tag.name
+    btn.dataset.slug = tag.slug
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active')
+      render(allConfigs)
+    })
+    tagFilterDiv.appendChild(btn)
+  }
+}
+
 // Fetch featured configs
 const featuredRes = await fetch('/api/server-configs?shared=true&featured=true')
 if (featuredRes.ok) {
@@ -44,15 +90,43 @@ const empty = document.getElementById('empty')
 const search = document.getElementById('search')
 const filterPreset = document.getElementById('filter-preset')
 
+const sortSelect = document.getElementById('sort-by')
+
+function getActiveTagSlugs () {
+  const btns = document.querySelectorAll('.tag-filter-btn.active')
+  return [...btns].map(b => b.dataset.slug)
+}
+
 function render (items) {
   grid.innerHTML = ''
+  const activeTags = getActiveTagSlugs()
+
   const filtered = items.filter(item => {
     const q = search.value.toLowerCase()
     const preset = filterPreset.value
     const nameMatch = !q || (item.name || '').toLowerCase().includes(q)
     const presetMatch = !preset || item.gameSettingsPreset === preset
-    return nameMatch && presetMatch
+
+    // Tag filter
+    let tagMatch = true
+    if (activeTags.length > 0) {
+      const itemTags = typeof item.tags === 'string' ? JSON.parse(item.tags) : (item.tags || [])
+      tagMatch = activeTags.every(slug => itemTags.includes(slug))
+    }
+
+    return nameMatch && presetMatch && tagMatch
   })
+
+  // Sorting
+  const sortBy = sortSelect ? sortSelect.value : 'newest'
+  if (sortBy === 'most-liked') {
+    filtered.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0))
+  } else if (sortBy === 'most-forked') {
+    filtered.sort((a, b) => (b.forkCount || 0) - (a.forkCount || 0))
+  } else {
+    filtered.sort((a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime())
+  }
+
   empty.hidden = filtered.length > 0
   for (const item of filtered) {
     const owner = userCache[item.owner] || null
@@ -97,12 +171,54 @@ function createTile (item, owner) {
     div.appendChild(creator)
   }
 
+  // Tags
+  const tagsArr = typeof item.tags === 'string' ? JSON.parse(item.tags) : (item.tags || [])
+  if (tagsArr.length > 0) {
+    const tagsDiv = document.createElement('div')
+    tagsDiv.className = 'tile-tags'
+    for (const slug of tagsArr.slice(0, 3)) {
+      const tag = document.createElement('span')
+      tag.className = 'tag'
+      tag.textContent = slug
+      tagsDiv.appendChild(tag)
+    }
+    if (tagsArr.length > 3) {
+      const more = document.createElement('span')
+      more.className = 'tag'
+      more.textContent = '+' + (tagsArr.length - 3)
+      tagsDiv.appendChild(more)
+    }
+    div.appendChild(tagsDiv)
+  }
+
   const meta = document.createElement('div')
   meta.className = 'tile-meta'
   const slots = item.server?.slotCount ?? 16
   const date = item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : ''
-  meta.textContent = [slots + ' slots', date].filter(Boolean).join(' \u00b7 ')
+  const parts = [slots + ' slots', date]
+  meta.textContent = parts.filter(Boolean).join(' \u00b7 ')
   div.appendChild(meta)
+
+  // Footer with fork count and like count
+  const footer = document.createElement('div')
+  footer.className = 'tile-footer'
+
+  if (item.forkCount > 0) {
+    const forkSpan = document.createElement('span')
+    forkSpan.className = 'tile-stat'
+    forkSpan.textContent = '\u2442 ' + item.forkCount
+    forkSpan.title = item.forkCount + (item.forkCount === 1 ? ' fork' : ' forks')
+    footer.appendChild(forkSpan)
+  }
+
+  const likeSpan = document.createElement('span')
+  likeSpan.className = 'tile-stat'
+  const isLiked = myLikedIds.has(item.id)
+  likeSpan.textContent = (isLiked ? '\u2665' : '\u2661') + ' ' + (item.likeCount || 0)
+  if (isLiked) likeSpan.classList.add('liked')
+  footer.appendChild(likeSpan)
+
+  div.appendChild(footer)
 
   return div
 }
@@ -110,3 +226,4 @@ function createTile (item, owner) {
 render(allConfigs)
 search.addEventListener('input', () => render(allConfigs))
 filterPreset.addEventListener('change', () => render(allConfigs))
+if (sortSelect) sortSelect.addEventListener('change', () => render(allConfigs))

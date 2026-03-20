@@ -88,7 +88,8 @@ const PAGES: Record<string, string> = {
 }
 const PATTERN_PAGES = [
   { pattern: '/config/:id', file: join(rootDir, 'src/pages/config/ui/editor.html') },
-  { pattern: '/browse/:id', file: join(rootDir, 'src/pages/browse/ui/detail.html') }
+  { pattern: '/browse/:id', file: join(rootDir, 'src/pages/browse/ui/detail.html') },
+  { pattern: '/users/:username', file: join(rootDir, 'src/pages/users/ui/profile.html') }
 ]
 
 function serveFile (res: ServerResponse, filePath: string): void {
@@ -251,10 +252,11 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
     const bodyResult = await parseBody(req)
     if (bodyResult.isErr()) { sendJson(res, 400, { error: 'Invalid JSON body' }); return }
 
-    const { username, avatarUrl } = bodyResult.value as { username?: string, avatarUrl?: string }
+    const { username, avatarUrl, bio } = bodyResult.value as { username?: string, avatarUrl?: string, bio?: string }
     const updates: Record<string, unknown> = {}
     if (username !== undefined) updates.username = username
     if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl
+    if (bio !== undefined) updates.bio = bio
 
     if (Object.keys(updates).length === 0) {
       sendJson(res, 400, { error: 'No fields to update' })
@@ -273,6 +275,54 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
     }
 
     sendJson(res, 200, updateResult.value)
+  },
+
+  'GET /api/tags': async (_req, res) => {
+    const rows = await pool.sql.unsafe(
+      `SELECT * FROM tags ORDER BY "usageCount" DESC, name ASC`
+    )
+    sendJson(res, 200, rows)
+  },
+
+  'POST /api/tags': async (req, res) => {
+    const user = await getSessionUser(req)
+    if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
+
+    const bodyResult = await parseBody(req)
+    if (bodyResult.isErr()) { sendJson(res, 400, { error: 'Invalid JSON body' }); return }
+
+    const { name } = bodyResult.value as { name?: string }
+    if (!name || !name.trim()) { sendJson(res, 400, { error: 'Tag name is required' }); return }
+
+    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+    try {
+      const existing = await pool.sql.unsafe(
+        `SELECT * FROM tags WHERE slug = $1`, [slug]
+      )
+      if (existing.length > 0) {
+        sendJson(res, 200, existing[0])
+        return
+      }
+      const rows = await pool.sql.unsafe(
+        `INSERT INTO tags (id, name, slug) VALUES (gen_random_uuid(), $1, $2) RETURNING *`,
+        [name.trim(), slug]
+      )
+      sendJson(res, 201, rows[0])
+    } catch (err: any) {
+      sendJson(res, 400, { error: err.message ?? 'Failed to create tag' })
+    }
+  },
+
+  'GET /api/likes/mine': async (req, res) => {
+    const user = await getSessionUser(req)
+    if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
+
+    const rows = await pool.sql.unsafe(
+      `SELECT "configId" FROM likes WHERE "userId" = $1`,
+      [user.id]
+    )
+    sendJson(res, 200, rows.map((r: any) => r.configId))
   },
 
   'DELETE /api/account': async (req, res) => {
@@ -339,7 +389,8 @@ const CUSTOM_API_PATTERNS: PatternHandler[] = [
           gameSettingsPreset: source.gameSettingsPreset,
           gameSettings: source.gameSettings,
           userGroups: source.userGroups,
-          owner: user.id
+          owner: user.id,
+          forkedFrom: params.id
         }
       })
 
@@ -348,10 +399,92 @@ const CUSTOM_API_PATTERNS: PatternHandler[] = [
         return
       }
 
+      // Increment fork count on source config
+      await pool.sql.unsafe(
+        `UPDATE "server-configs" SET "forkCount" = COALESCE("forkCount", 0) + 1 WHERE id = $1`,
+        [params.id]
+      )
+
       sendJson(res, 201, createResult.value)
     }
   }
 ]
+
+// Like toggle
+CUSTOM_API_PATTERNS.push({
+  pattern: '/api/server-configs/:id/like',
+  method: 'POST',
+  handler: async (req, res, params) => {
+    const user = await getSessionUser(req)
+    if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
+
+    const existing = await pool.sql.unsafe(
+      `SELECT id FROM likes WHERE "userId" = $1 AND "configId" = $2`,
+      [user.id, params.id]
+    )
+
+    if (existing.length > 0) {
+      // Unlike
+      await pool.sql.unsafe(`DELETE FROM likes WHERE id = $1`, [existing[0].id])
+      await pool.sql.unsafe(
+        `UPDATE "server-configs" SET "likeCount" = GREATEST(COALESCE("likeCount", 0) - 1, 0) WHERE id = $1`,
+        [params.id]
+      )
+      sendJson(res, 200, { liked: false })
+    } else {
+      // Like
+      await pool.sql.unsafe(
+        `INSERT INTO likes (id, "userId", "configId") VALUES (gen_random_uuid(), $1, $2)`,
+        [user.id, params.id]
+      )
+      await pool.sql.unsafe(
+        `UPDATE "server-configs" SET "likeCount" = COALESCE("likeCount", 0) + 1 WHERE id = $1`,
+        [params.id]
+      )
+      sendJson(res, 200, { liked: true })
+    }
+  }
+})
+
+// Check if user liked a config
+CUSTOM_API_PATTERNS.push({
+  pattern: '/api/server-configs/:id/liked',
+  method: 'GET',
+  handler: async (req, res, params) => {
+    const user = await getSessionUser(req)
+    if (!user) { sendJson(res, 200, { liked: false }); return }
+
+    const rows = await pool.sql.unsafe(
+      `SELECT id FROM likes WHERE "userId" = $1 AND "configId" = $2`,
+      [user.id, params.id]
+    )
+    sendJson(res, 200, { liked: rows.length > 0 })
+  }
+})
+
+// Public user profile API
+CUSTOM_API_PATTERNS.push({
+  pattern: '/api/users/profile/:username',
+  method: 'GET',
+  handler: async (_req, res, params) => {
+    const rows = await pool.sql.unsafe(
+      `SELECT id, username, "avatarUrl", bio, "createdAt" FROM users WHERE username = $1 AND deleted_at IS NULL`,
+      [params.username]
+    )
+    if (rows.length === 0) { sendJson(res, 404, { error: 'User not found' }); return }
+
+    const user = rows[0] as Record<string, unknown>
+    const configs = await pool.sql.unsafe(
+      `SELECT id, name, slug, "gameSettingsPreset", "forkCount", "likeCount", tags, "updatedAt", server
+       FROM "server-configs"
+       WHERE owner = $1 AND shared = true AND deleted_at IS NULL
+       ORDER BY "updatedAt" DESC`,
+      [user.id]
+    )
+
+    sendJson(res, 200, { ...user, configs })
+  }
+})
 
 function matchCustomPattern (method: string, pathname: string): { handler: PatternHandler['handler'], params: Record<string, string> } | null {
   for (const route of CUSTOM_API_PATTERNS) {
