@@ -89,7 +89,7 @@ async function run() {
   `, ['default', dateOnly, sessionCount[0].c, pageviewCount[0].c, conversionCount[0].c])
   console.log('  daily_summaries updated:', { sessions: sessionCount[0].c, pageviews: pageviewCount[0].c, conversions: conversionCount[0].c })
 
-  await pool.end()
+  process.exit(0)
   console.log('Done')
 }
 

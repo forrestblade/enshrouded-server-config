@@ -350,3 +350,105 @@
   white-space: nowrap;
   max-width: 100%;
 }
+
+/* ── Mobile responsive ─────────────────────────────────── */
+@media (max-width: 640px) {
+  .browse-hero h1 { font-size: var(--val-text-xl); }
+  .browse-hero p { font-size: var(--val-text-sm); }
+
+  /* Filters: stack vertically */
+  .browse-filters {
+    flex-direction: column;
+    gap: var(--val-space-2);
+  }
+  .browse-filters input,
+  .browse-filters select {
+    width: 100%;
+    font-size: 16px; /* prevents iOS zoom */
+  }
+
+  /* Tag filter buttons: wrap and scroll */
+  .tag-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--val-space-1);
+    gap: var(--val-space-1);
+  }
+  .tag-filter-btn { flex-shrink: 0; font-size: var(--val-text-xs); }
+
+  /* Config grid: single column */
+  .config-grid {
+    grid-template-columns: 1fr;
+    gap: var(--val-space-3);
+  }
+
+  /* Config tile: fix overflow */
+  .config-tile {
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  /* Diff summary: MUST wrap on mobile — this was the main overflow culprit */
+  .diff-summary {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    font-size: var(--val-text-xs);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden !important;
+  }
+
+  /* Tile header: prevent badge from pushing title off-screen */
+  .tile-header {
+    flex-wrap: wrap;
+    gap: var(--val-space-1);
+  }
+  .tile-header h3 {
+    font-size: var(--val-text-sm);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .preset-badge { flex-shrink: 0; font-size: var(--val-text-xs); }
+
+  /* Tile footer */
+  .tile-footer { font-size: var(--val-text-xs); }
+  .tile-meta { font-size: var(--val-text-xs); }
+
+  /* Tags on tiles */
+  .tile-tags { flex-wrap: wrap; gap: 0.2rem; }
+  .tag { font-size: 0.65rem; padding: 0.1rem 0.35rem; }
+}
+
+/* Detail page mobile */
+@media (max-width: 640px) {
+  .detail-header {
+    flex-direction: column;
+    gap: var(--val-space-3);
+  }
+  .detail-actions {
+    flex-wrap: wrap;
+    gap: var(--val-space-2);
+  }
+  .detail-actions .btn { font-size: var(--val-text-xs); flex: 1; text-align: center; }
+
+  /* Diff summary on detail page wraps */
+  .detail-header .diff-summary {
+    white-space: normal !important;
+    -webkit-line-clamp: unset;
+    font-size: var(--val-text-xs);
+    line-height: 1.5;
+  }
+
+  /* Settings grid: single column on mobile */
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Section titles */
+  .detail-section h2 { font-size: var(--val-text-lg); }
+}

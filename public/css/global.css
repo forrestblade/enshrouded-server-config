@@ -251,3 +251,19 @@ a:hover { color: var(--val-color-primary-hover); }
 .site-footer a:hover {
   color: var(--val-color-text);
 }
+
+/* ── Mobile-first responsive fixes ─────────────────────── */
+@media (max-width: 640px) {
+  /* Nav: compact on mobile */
+  .top-nav {
+    padding: var(--val-space-2) var(--val-space-3);
+    gap: var(--val-space-2);
+  }
+  .nav-brand { font-size: var(--val-text-sm); }
+  .nav-actions { gap: var(--val-space-1); }
+  .nav-actions .btn { font-size: var(--val-text-xs); padding: var(--val-space-1) var(--val-space-2); }
+
+  /* Prevent horizontal overflow globally */
+  body { overflow-x: hidden; }
+  main, .page { overflow-wrap: break-word; word-wrap: break-word; }
+}

@@ -223,3 +223,41 @@ details[open] > summary::after { transform: rotate(90deg); }
   color: var(--val-color-text);
   font-size: var(--val-text-xs);
 }
+
+/* ── Editor mobile responsive ──────────────────────────── */
+@media (max-width: 640px) {
+  .page { padding: var(--val-space-4) var(--val-space-3); }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--val-space-2);
+  }
+  .page-header h1 { font-size: var(--val-text-lg); }
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: var(--val-space-2);
+  }
+  .header-actions .btn { flex: 1; text-align: center; font-size: var(--val-text-xs); }
+
+  /* Publishing bar: stack vertically */
+  .publishing-bar {
+    flex-direction: column;
+    gap: var(--val-space-2);
+  }
+
+  /* Grid: single column */
+  .grid { grid-template-columns: 1fr; }
+
+  /* Pct controls: stack */
+  .pct-control { flex-wrap: wrap; }
+  .pct-control input[type="number"] { width: 100%; }
+
+  /* Section body padding */
+  .section-body { padding: 0 var(--val-space-2) var(--val-space-3); }
+  summary { padding: var(--val-space-3); font-size: var(--val-text-base); }
+
+  /* Group cards */
+  .group-fields { grid-template-columns: 1fr; }
+}

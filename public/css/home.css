@@ -132,3 +132,16 @@
 .welcome-cta .btn {
   margin-right: var(--val-space-1);
 }
+
+/* ── Home mobile responsive ────────────────────────────── */
+@media (max-width: 640px) {
+  .hero h1 { font-size: var(--val-text-xl); }
+  .hero p { font-size: var(--val-text-sm); }
+  .hero-actions { flex-direction: column; gap: var(--val-space-2); }
+  .hero-actions .btn { width: 100%; text-align: center; }
+
+  .welcome-grid { grid-template-columns: 1fr; }
+
+  .config-card { padding: var(--val-space-3); }
+  .config-card h3 { font-size: var(--val-text-sm); }
+}

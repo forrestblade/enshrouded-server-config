@@ -141,3 +141,9 @@
   gap: var(--val-space-3);
   justify-content: flex-end;
 }
+
+/* ── Account mobile responsive ─────────────────────────── */
+@media (max-width: 640px) {
+  .account-page { padding: var(--val-space-4) var(--val-space-3); }
+  .account-page h1 { font-size: var(--val-text-xl); }
+}
