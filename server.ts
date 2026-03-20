@@ -6,6 +6,7 @@ import { ResultAsync } from 'neverthrow'
 import { buildCms } from '@valencets/cms'
 import { createPool } from '@valencets/db'
 import argon2 from 'argon2'
+import { startTelemetryScheduler } from '@valencets/cms'
 // Telemetry ingestion handler (inline to avoid @valencets/core DOMParser issue in Node)
 import configResult from './valence.config.js'
 
@@ -61,6 +62,12 @@ if (cmsResult.isErr()) {
 }
 
 const cms = cmsResult.value
+
+// Start telemetry aggregation (runs every 15 minutes)
+if (config.telemetry?.enabled) {
+  startTelemetryScheduler(pool, config.telemetry.siteId ?? 'default', 15 * 60_000)
+  console.log('  Telemetry scheduler started (15 min interval)')
+}
 
 // ── Route matching ────────────────────────────────────────
 function matchRoute (pathname: string, routes: Map<string, unknown>): { entry: any, params: Record<string, string> } | null {

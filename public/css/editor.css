@@ -189,3 +189,37 @@ details[open] > summary::after { transform: rotate(90deg); }
   flex: 1;
   min-width: 0;
 }
+
+/* Draft/Publish status */
+.status-field {
+  display: flex;
+  align-items: center;
+  gap: var(--val-space-2);
+  flex-shrink: 0;
+}
+.status-badge {
+  font-size: var(--val-text-xs);
+  font-weight: var(--val-weight-semibold);
+  padding: 0.15rem 0.5rem;
+  border-radius: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.status-badge.published {
+  background: #16a34a22;
+  color: #4ade80;
+  border: 1px solid #16a34a44;
+}
+.status-badge.draft {
+  background: #eab30822;
+  color: #facc15;
+  border: 1px solid #eab30844;
+}
+.status-field select {
+  padding: var(--val-space-1) var(--val-space-2);
+  background: var(--val-color-bg-elevated);
+  border: 1px solid var(--val-color-border);
+  border-radius: var(--val-radius-md);
+  color: var(--val-color-text);
+  font-size: var(--val-text-xs);
+}

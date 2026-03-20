@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@valencets/cms':
-        specifier: ^0.6.0
-        version: 0.6.0
+        specifier: ^0.6.1
+        version: 0.6.1
       '@valencets/core':
         specifier: ^0.4.0
         version: 0.4.0
@@ -24,8 +24,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       '@valencets/valence':
-        specifier: ^0.11.0
-        version: 0.11.0
+        specifier: ^0.11.1
+        version: 0.11.1
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -402,8 +402,8 @@ packages:
     os: [linux]
     libc: [glibc]
 
-  '@valencets/cms@0.6.0':
-    resolution: {integrity: sha512-98n7FB7+CEYJcOfl5J6t2N7VzvOrBqjTbdVzcDSEhQIcpM31YkMIW9uQviSr+Bx091MvXQ/uuB9FUFe+Yg0iYg==}
+  '@valencets/cms@0.6.1':
+    resolution: {integrity: sha512-CtHMF9amzoEwV9EJLpQe3hJBjuQSgURkPza+xB7v765en3I0y2nAFbLtk9j+LzK/C3ZXU06C9D6lvF+/qs9O3g==}
     engines: {node: '>=22'}
 
   '@valencets/core@0.2.0':
@@ -430,8 +430,8 @@ packages:
       tailwindcss:
         optional: true
 
-  '@valencets/valence@0.11.0':
-    resolution: {integrity: sha512-9esB60RDA29m2xvSS6OITzuCv8MaVHEp704lZQh2eHmFzT4F5xEhYeZ3iD0vTjDgTABKCHbdt91RAL6c24PSjw==}
+  '@valencets/valence@0.11.1':
+    resolution: {integrity: sha512-La8arVf7MgK4V3S2WFInlIu3IXIjQ4K6jK8XsG+QRwEK1L35WRDEokYfPr7mwTR021igIxdyi6iago8wpkuFVQ==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -802,7 +802,7 @@ snapshots:
   '@rollup/rollup-linux-x64-gnu@4.59.0':
     optional: true
 
-  '@valencets/cms@0.6.0':
+  '@valencets/cms@0.6.1':
     dependencies:
       '@lexical/history': 0.41.0
       '@lexical/html': 0.41.0
@@ -846,9 +846,9 @@ snapshots:
 
   '@valencets/ui@0.2.0': {}
 
-  '@valencets/valence@0.11.0':
+  '@valencets/valence@0.11.1':
     dependencies:
-      '@valencets/cms': 0.6.0
+      '@valencets/cms': 0.6.1
       '@valencets/core': 0.4.0
       '@valencets/db': 0.1.2
       '@valencets/telemetry': 0.1.4

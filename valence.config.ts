@@ -15,6 +15,7 @@ export default defineConfig({
     collection({
       slug: 'server-configs',
       labels: { singular: 'Server Config', plural: 'Server Configs' },
+      versions: { drafts: true },
       fields: [
         field.text({ name: 'name', required: true, label: 'Config Name' }),
         field.slug({ name: 'slug', required: true, unique: true, slugFrom: 'name' }),
@@ -141,7 +142,8 @@ export default defineConfig({
         // Sharing
         field.boolean({ name: 'shared', defaultValue: false, label: 'Share Publicly' }),
         field.boolean({ name: 'featured', defaultValue: false, label: 'Featured' })
-      ]
+      ],
+      search: { fields: ['name'] }
     }),
 
     collection({

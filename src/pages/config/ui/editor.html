@@ -40,6 +40,13 @@
 
       <!-- Publishing -->
       <div class="publishing-bar">
+        <div class="status-field">
+          <span class="status-badge" id="status-badge">Published</span>
+          <select id="config-status" aria-label="Config status">
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+          </select>
+        </div>
         <div class="toggle-field">
           <input type="checkbox" id="shared" data-path="shared" data-telemetry-type="CLICK" data-telemetry-target="editor.share-toggle">
           <label for="shared">Share Publicly</label>

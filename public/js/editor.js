@@ -448,6 +448,22 @@ async function loadConfig () {
   await initTagPicker()
   renderSelectedTags()
 
+
+  // Load draft/publish status
+  const statusSelect = document.getElementById('config-status')
+  const statusBadge = document.getElementById('status-badge')
+  if (statusSelect && statusBadge) {
+    const status = config._status || 'published'
+    statusSelect.value = status
+    statusBadge.textContent = status === 'draft' ? 'Draft' : 'Published'
+    statusBadge.className = 'status-badge ' + status
+    statusSelect.addEventListener('change', () => {
+      statusBadge.textContent = statusSelect.value === 'draft' ? 'Draft' : 'Published'
+      statusBadge.className = 'status-badge ' + statusSelect.value
+      scheduleDraftSave()
+    })
+  }
+
   initPctControls()
   updateDurationLabels()
   initPresetSwitching()
@@ -507,6 +523,8 @@ function collectFormData () {
   // so userGroups must be serialized to a string here before being sent in the PATCH body.
   data.userGroups = JSON.stringify(userGroups.map(g => ({ ...g })))
   data.tags = JSON.stringify(selectedTags)
+  const statusEl = document.getElementById('config-status')
+  if (statusEl) data._status = statusEl.value
   return data
 }
 
