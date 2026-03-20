@@ -77,6 +77,8 @@ if (!res.ok) {
       tile.href = '/browse/' + item.id
       tile.setAttribute('role', 'article')
       tile.setAttribute('aria-label', item.name || 'Untitled')
+      tile.dataset.telemetryType = 'CLICK'
+      tile.dataset.telemetryTarget = 'profile.config-tile'
 
       const header = document.createElement('div')
       header.className = 'tile-header'

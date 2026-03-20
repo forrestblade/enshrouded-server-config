@@ -7,7 +7,7 @@
   text-align: center;
   padding: var(--val-space-8);
   background: linear-gradient(to bottom, oklch(0.13 0.027 261.7 / 0.6), oklch(0.13 0.027 261.7 / 0.95)),
-              url('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1203620/page_bg_raw.jpg') center/cover no-repeat;
+              url('/hero-bg.webp') center/cover no-repeat;
 }
 .hero h1 {
   font-size: var(--val-text-4xl);

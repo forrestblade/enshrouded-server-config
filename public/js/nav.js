@@ -23,6 +23,14 @@ if (navActions) {
         navActions.appendChild(userSpan)
 
         const accountLink = document.createElement('a')
+        const myConfigsLink = document.createElement('a')
+        myConfigsLink.className = 'btn btn-outline'
+        myConfigsLink.href = '/my-configs'
+        myConfigsLink.dataset.telemetryType = 'CLICK'
+        myConfigsLink.dataset.telemetryTarget = 'nav.my-configs'
+        myConfigsLink.textContent = 'My Configs'
+        navActions.appendChild(myConfigsLink)
+
         accountLink.className = 'btn btn-outline'
         accountLink.href = '/account'
         accountLink.dataset.telemetryType = 'CLICK'

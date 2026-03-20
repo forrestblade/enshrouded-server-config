@@ -12,6 +12,39 @@ try {
   }
 } catch { /* not logged in */ }
 
+// Handle ?from= parameter: copy an existing config directly into a new one
+const fromId = new URLSearchParams(location.search).get('from')
+if (fromId) {
+  const sourceRes = await fetch('/api/server-configs/' + encodeURIComponent(fromId))
+  if (sourceRes.ok) {
+    const source = await sourceRes.json()
+    if (source && typeof source === 'object') {
+      const body = {
+        name: (source.name || 'Untitled') + ' (Copy)',
+        gameSettingsPreset: source.gameSettingsPreset || source.preset || 'Default',
+        gameSettings: source.gameSettings,
+        server: source.server,
+        userGroups: source.userGroups,
+        tags: source.tags
+      }
+      if (currentUser) {
+        body.owner = currentUser.id
+      }
+      const createRes = await fetch('/api/server-configs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      if (createRes.ok) {
+        const newConfig = await createRes.json()
+        location.href = '/config/' + newConfig.id + '/edit'
+        // Redirect is in progress; do not continue initializing the form
+      }
+    }
+  }
+  // If fetch fails or create fails, fall through to normal form
+}
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault()
   errorEl.style.display = 'none'

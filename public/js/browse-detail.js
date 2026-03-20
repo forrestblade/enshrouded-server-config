@@ -146,7 +146,17 @@ if (!res.ok) {
       likeBtn.disabled = false
     })
 
-    document.querySelector('.detail-actions').prepend(likeBtn)
+    const detailActions = document.querySelector('.detail-actions')
+    detailActions.prepend(likeBtn)
+
+    // Use This Config button (always visible, no auth required) — primary action
+    const useBtn = document.createElement('a')
+    useBtn.className = 'btn btn-primary btn-block-mobile'
+    useBtn.textContent = 'Use This Config'
+    useBtn.href = '/config/new?from=' + configId
+    useBtn.setAttribute('data-telemetry-type', 'CLICK')
+    useBtn.setAttribute('data-telemetry-target', 'detail.use-config')
+    detailActions.prepend(useBtn)
 
     // Server settings
     const serverGrid = document.getElementById('server-settings')
@@ -248,10 +258,10 @@ if (!res.ok) {
           const permValue = document.createElement('div')
           permValue.className = 'detail-value'
           if (group[key]) {
-            permValue.textContent = '\u2705'
+            permValue.textContent = '✅'
             permValue.setAttribute('aria-label', label + ': yes')
           } else {
-            permValue.textContent = '\u274c'
+            permValue.textContent = '❌'
             permValue.setAttribute('aria-label', label + ': no')
           }
           permField.appendChild(permLabel)
@@ -281,6 +291,30 @@ if (!res.ok) {
     }
 
     // Export JSON
+
+    // Delete button (owner only)
+    if (currentUser && config.owner === currentUser.id) {
+      const actions = document.querySelector('.detail-actions')
+      const deleteBtn = document.createElement('button')
+      deleteBtn.className = 'btn btn-danger'
+      deleteBtn.textContent = 'Delete'
+      deleteBtn.dataset.telemetryType = 'CLICK'
+      deleteBtn.dataset.telemetryTarget = 'browse.delete-config'
+      actions.appendChild(deleteBtn)
+      deleteBtn.addEventListener('click', async () => {
+        if (!confirm('Delete this config? This cannot be undone.')) return
+        deleteBtn.disabled = true
+        deleteBtn.textContent = 'Deleting...'
+        const delRes = await fetch('/api/server-configs/' + configId + '/delete', { method: 'POST' })
+        if (delRes.ok) {
+          window.location.href = '/my-configs'
+        } else {
+          showToast('Failed to delete config', 'error')
+          deleteBtn.disabled = false
+          deleteBtn.textContent = 'Delete'
+        }
+      })
+    }
     document.getElementById('btn-export').addEventListener('click', () => {
       const presetName = config.gameSettingsPreset || 'Default'
       // Merge full preset defaults with any stored custom overrides so the

@@ -53,6 +53,8 @@ if (tagFilterDiv && allTags.length > 0) {
     btn.textContent = tag.name
     btn.dataset.slug = tag.slug
     btn.setAttribute('aria-pressed', 'false')
+    btn.dataset.telemetryType = 'CLICK'
+    btn.dataset.telemetryTarget = 'browse.tag-filter'
     btn.addEventListener('click', () => {
       btn.classList.toggle('active')
       btn.setAttribute('aria-pressed', String(btn.classList.contains('active')))
@@ -268,6 +270,8 @@ function createTile (item, owner) {
   likeSpan.className = 'tile-stat like-btn'
   likeSpan.style.cursor = 'pointer'
   likeSpan.setAttribute('role', 'button')
+  likeSpan.dataset.telemetryType = 'CLICK'
+  likeSpan.dataset.telemetryTarget = 'browse.like'
 
   // Initialize from shared state
   const state = getLikeState(item.id, item.likeCount || 0)

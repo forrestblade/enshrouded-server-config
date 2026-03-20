@@ -251,7 +251,7 @@
 }
 .tag-filter-btn.active {
   background: var(--val-color-primary);
-  color: #fff;
+  color: var(--val-color-text);
   border-color: var(--val-color-primary);
 }
 
@@ -308,7 +308,7 @@
   font-size: var(--val-text-xs);
   color: var(--val-color-text-muted);
 }
-.tile-stat.liked { color: #e74c3c; }
+.tile-stat.liked { color: var(--val-color-error); }
 
 /* Like button */
 .like-btn {
@@ -322,8 +322,8 @@
   gap: 0.25rem;
   transition: color var(--val-duration-fast), transform var(--val-duration-fast);
 }
-.like-btn.liked { color: #e74c3c; }
-.like-btn:hover { color: #e74c3c; }
+.like-btn.liked { color: var(--val-color-error); }
+.like-btn:hover { color: var(--val-color-error); }
 .like-count { font-size: 0.85rem; }
 
 /* Responsive */
@@ -451,4 +451,13 @@
 
   /* Section titles */
   .detail-section h2 { font-size: var(--val-text-lg); }
+}
+
+/* ── btn-block-mobile: full-width on small screens ───────── */
+@media (max-width: 600px) {
+  .btn-block-mobile {
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
 }

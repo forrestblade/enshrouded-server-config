@@ -5,6 +5,21 @@ const ENDPOINT = '/api/telemetry'
 const FLUSH_INTERVAL = 10_000
 const buffer = []
 
+// Pageview tracking
+buffer.push({
+  id: crypto.randomUUID(),
+  timestamp: Date.now(),
+  type: 'PAGEVIEW',
+  targetDOMNode: 'page.view',
+  referrer: document.referrer,
+  path: location.pathname,
+  schema_version: 1,
+  site_id: 'enshrouded-config',
+  business_type: 'pageview',
+  x_coord: 0,
+  y_coord: 0
+})
+
 function capture (type, target, x, y) {
   buffer.push({
     id: crypto.randomUUID(),

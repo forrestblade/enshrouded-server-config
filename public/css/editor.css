@@ -115,13 +115,13 @@ details[open] > summary::after { transform: rotate(90deg); }
   padding: 0.15rem 0.5rem;
   border-radius: 1rem;
   font-size: 0.75rem;
-  background: var(--val-color-bg-elevated, #2a2a2a);
-  color: var(--val-color-text-muted, #a0a0a0);
-  border: 1px solid var(--val-color-border, #333);
+  background: var(--val-color-bg-elevated);
+  color: var(--val-color-text-muted);
+  border: 1px solid var(--val-color-border);
 }
 .tag.selected {
   background: var(--val-color-primary);
-  color: #fff;
+  color: var(--val-color-text);
   border-color: var(--val-color-primary);
 }
 .tag-remove {
@@ -206,14 +206,14 @@ details[open] > summary::after { transform: rotate(90deg); }
   letter-spacing: 0.05em;
 }
 .status-badge.published {
-  background: #16a34a22;
-  color: #4ade80;
-  border: 1px solid #16a34a44;
+  background: color-mix(in srgb, var(--val-color-success) 13%, transparent);
+  color: var(--val-color-success);
+  border: 1px solid color-mix(in srgb, var(--val-color-success) 27%, transparent);
 }
 .status-badge.draft {
-  background: #eab30822;
-  color: #facc15;
-  border: 1px solid #eab30844;
+  background: color-mix(in srgb, var(--val-color-warning) 13%, transparent);
+  color: var(--val-color-warning);
+  border: 1px solid color-mix(in srgb, var(--val-color-warning) 27%, transparent);
 }
 .status-field select {
   padding: var(--val-space-1) var(--val-space-2);

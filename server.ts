@@ -1,14 +1,52 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
-import crypto from 'node:crypto'
-import { readFileSync, existsSync, statSync } from 'node:fs'
-import { join, extname } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { ResultAsync } from 'neverthrow'
 import { buildCms } from '@valencets/cms'
+import type { CmsConfig } from '@valencets/cms'
 import { createPool } from '@valencets/db'
 import argon2 from 'argon2'
-import { startTelemetryScheduler } from '@valencets/cms'
-// Telemetry ingestion handler (inline to avoid @valencets/core DOMParser issue in Node)
+import {
+  createServerRouter,
+  createAuthGuard,
+  createRateLimitMiddleware,
+  serveStaticFile,
+  resolveStaticPath,
+  resolveMimeType,
+  sendJson,
+  sendHtml,
+  readBody
+} from '@valencets/core/server'
+import type { RequestContext, Middleware } from '@valencets/core/server'
+import { createIngestionHandler, createServerEventLogger } from '@valencets/telemetry'
 import configResult from './valence.config.js'
+
+// ── Types ─────────────────────────────────────────────────
+interface SessionUser {
+  readonly id: string
+  readonly username: string
+  readonly email: string
+  readonly role: string
+  readonly avatarUrl: string | null
+  readonly bio: string | null
+  readonly password_hash: string
+  readonly created_at: string
+  readonly deleted_at: string | null
+}
+
+interface SitemapRow {
+  readonly id: string
+  readonly updated_at: string | null
+}
+
+interface UsernameRow {
+  readonly username: string
+}
+
+interface LikeRow {
+  readonly id: string
+  readonly configId: string
+}
 
 // ── Resolve config ────────────────────────────────────────
 if (configResult.isErr()) {
@@ -16,24 +54,6 @@ if (configResult.isErr()) {
   process.exit(1)
 }
 const config = configResult.value
-
-const MIME_TYPES: Record<string, string> = {
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon'
-}
-
-// ── Security headers ─────────────────────────────────────
-const SECURITY_HEADERS: Record<string, string> = {
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'Referrer-Policy': 'strict-origin-when-cross-origin'
-}
 
 // ── Database ──────────────────────────────────────────────
 const pool = createPool({
@@ -47,14 +67,17 @@ const pool = createPool({
   connect_timeout: config.db.connect_timeout
 })
 
+// ── Server-side event logging (framework) ─────────────────
+const serverLog = createServerEventLogger(pool)
+
 // ── CMS ───────────────────────────────────────────────────
 const cmsResult = buildCms({
   db: pool,
   secret: process.env.CMS_SECRET ?? 'change-me',
   uploadDir: './uploads',
-  collections: config.collections as any,
+  collections: config.collections,
   telemetryPool: config.telemetry?.enabled ? pool : undefined
-})
+} as CmsConfig)
 
 if (cmsResult.isErr()) {
   console.error('CMS init failed:', cmsResult.error.message)
@@ -63,731 +86,449 @@ if (cmsResult.isErr()) {
 
 const cms = cmsResult.value
 
-// Start telemetry aggregation (runs every 15 minutes)
-if (config.telemetry?.enabled) {
-  startTelemetryScheduler(pool, config.telemetry.siteId ?? 'default', 15 * 60_000)
-  console.log('  Telemetry scheduler started (15 min interval)')
-}
-
-// ── Route matching ────────────────────────────────────────
-function matchRoute (pathname: string, routes: Map<string, unknown>): { entry: any, params: Record<string, string> } | null {
-  const exact = routes.get(pathname)
-  if (exact) return { entry: exact, params: {} }
-
-  for (const [pattern, entry] of routes) {
-    if (!pattern.includes(':')) continue
-    const pp = pattern.split('/')
-    const up = pathname.split('/')
-    if (pp.length !== up.length) continue
-    const params: Record<string, string> = {}
-    let match = true
-    for (let i = 0; i < pp.length; i++) {
-      if (pp[i].startsWith(':')) params[pp[i].slice(1)] = up[i]
-      else if (pp[i] !== up[i]) { match = false; break }
-    }
-    if (match) return { entry, params }
-  }
-  return null
-}
-
-// ── Page routes ───────────────────────────────────────────
+// ── Paths ─────────────────────────────────────────────────
 const rootDir = import.meta.dirname
-
-// ── Error pages ───────────────────────────────────────────
+const publicDir = join(rootDir, 'public')
 const ERROR_404_HTML = readFileSync(join(rootDir, 'src/pages/error/ui/404.html'), 'utf-8')
 const ERROR_500_HTML = readFileSync(join(rootDir, 'src/pages/error/ui/500.html'), 'utf-8')
 
-const PAGES: Record<string, string> = {
-  
-  '/': join(rootDir, 'src/pages/home/ui/index.html'),
-  '/config/new': join(rootDir, 'src/pages/config/ui/new.html'),
-  '/login': join(rootDir, 'src/pages/auth/ui/login.html'),
-  '/signup': join(rootDir, 'src/pages/auth/ui/signup.html'),
-  '/account': join(rootDir, 'src/pages/account/ui/index.html'),
-  '/browse': join(rootDir, 'src/pages/browse/ui/index.html')
-}
-const PATTERN_PAGES = [
-  { pattern: '/config/:id', file: join(rootDir, 'src/pages/config/ui/editor.html') },
-  { pattern: '/browse/:id', file: join(rootDir, 'src/pages/browse/ui/detail.html') },
-  { pattern: '/users/:username', file: join(rootDir, 'src/pages/users/ui/profile.html') }
-]
-
-function serveFile (res: ServerResponse, filePath: string): void {
-  if (!existsSync(filePath)) {
-    res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS })
-    res.end(ERROR_404_HTML)
-    return
-  }
-  const ext = extname(filePath)
-  const mime = MIME_TYPES[ext] ?? 'application/octet-stream'
-  res.writeHead(200, { 'Content-Type': mime, ...SECURITY_HEADERS })
-  res.end(readFileSync(filePath))
-}
-
-function serveStatic (pathname: string, res: ServerResponse): boolean {
-  const filePath = join(rootDir, 'public', pathname)
-  if (!existsSync(filePath)) return false
-  const stat = statSync(filePath)
-  if (!stat.isFile()) return false
-  serveFile(res, filePath)
-  return true
-}
-
-function matchPagePattern (pathname: string): string | null {
-  for (const { pattern, file } of PATTERN_PAGES) {
-    const pp = pattern.split('/')
-    const up = pathname.split('/')
-    if (pp.length !== up.length) continue
-    let match = true
-    for (let i = 0; i < pp.length; i++) {
-      if (pp[i].startsWith(':')) continue
-      if (pp[i] !== up[i]) { match = false; break }
-    }
-    if (match) return file
-  }
-  return null
-}
-
-// ── Helpers ───────────────────────────────────────────────
-const MAX_BODY_SIZE = 1024 * 1024 // 1 MB
-
-function parseBody (req: IncomingMessage): ResultAsync<Record<string, unknown>, Error> {
-  return ResultAsync.fromPromise(
-    new Promise<Record<string, unknown>>((resolve, reject) => {
-      const chunks: Buffer[] = []
-      let totalSize = 0
-      req.on('data', (chunk: Buffer) => {
-        totalSize += chunk.length
-        if (totalSize > MAX_BODY_SIZE) {
-          req.destroy()
-          reject(new Error('Request body too large'))
-          return
-        }
-        chunks.push(chunk)
-      })
-      req.on('end', () => {
-        const parsed = JSON.parse(Buffer.concat(chunks).toString())
-        resolve(parsed)
-      })
-      req.on('error', reject)
-    }),
-    (err) => err instanceof Error ? err : new Error(String(err))
-  )
-}
-
-function sendJson (res: ServerResponse, status: number, data: unknown): void {
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', ...SECURITY_HEADERS })
-  res.end(JSON.stringify(data))
-}
-
-/** Extract session user from cookie. Returns the user record or null. */
-async function getSessionUser (req: IncomingMessage): Promise<Record<string, unknown> | null> {
+// ── Auth helpers ──────────────────────────────────────────
+function getSessionUser (req: IncomingMessage): ResultAsync<SessionUser | null, Error> {
   const cookieHeader = req.headers.cookie ?? ''
   const sessionMatch = cookieHeader.match(/cms_session=([^;]+)/)
-  if (!sessionMatch) return null
+  if (!sessionMatch) return ResultAsync.fromSafePromise(Promise.resolve(null))
 
-  const sessionId = sessionMatch[1]
-  try {
-    const rows = await pool.sql.unsafe(
+  const sessionId = sessionMatch[1]!
+  return ResultAsync.fromPromise(
+    pool.sql.unsafe<SessionUser[]>(
       `SELECT u.* FROM "cms_sessions" s
        JOIN "users" u ON u.id = s.user_id
        WHERE s.id = $1 AND s.expires_at > NOW() AND s.deleted_at IS NULL AND u.deleted_at IS NULL`,
       [sessionId]
-    )
+    ),
+    (err) => err instanceof Error ? err : new Error(String(err))
+  ).map((rows) => {
     if (!rows || rows.length === 0) return null
-    // Rolling session — extend expiry on each authenticated request (24 hours)
     pool.sql.unsafe(
       "UPDATE cms_sessions SET expires_at = NOW() + INTERVAL '24 hours' WHERE id = $1",
       [sessionId]
     ).catch(() => {})
-    return rows[0] as Record<string, unknown>
-  } catch { return null }
+    return rows[0] ?? null
+  }).orElse(() => ResultAsync.fromSafePromise(Promise.resolve(null)))
 }
 
-// ── Custom routes ─────────────────────────────────────────
-// RATE LIMITING (handled by nginx in production):
-//   - POST /api/users/register  — limit to prevent spam account creation
-//   - POST /api/tags            — limit to prevent tag flood
-//   - POST /api/server-configs/:id/like — limit to prevent like spam
-//   - POST /api/server-configs/:id/clone — limit to prevent clone abuse
-//   - POST /api/telemetry       — limit to prevent telemetry flood
-const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => Promise<void>> = {
-  'GET /sitemap.xml': async (_req, res) => {
-    const configs = await pool.sql.unsafe(
+async function resolveSessionUser (req: IncomingMessage): Promise<SessionUser | null> {
+  const result = await getSessionUser(req)
+  return result.match((user) => user, () => null)
+}
+
+// ── Middleware ─────────────────────────────────────────────
+const validateAuth = async (req: IncomingMessage) => {
+  const user = await resolveSessionUser(req)
+  if (!user) return { authenticated: false as const }
+  return { authenticated: true as const, user: { id: user.id, role: user.role ?? 'user' } }
+}
+
+const requireAuth = createAuthGuard({ validate: validateAuth, redirectTo: '/login' })
+const requireAdmin = createAuthGuard({ validate: validateAuth, redirectTo: '/admin/login', role: 'admin' })
+const authRateLimit = createRateLimitMiddleware({ maxRequests: 10, windowMs: 60_000, trustProxy: true })
+const apiRateLimit = createRateLimitMiddleware({ maxRequests: 30, windowMs: 60_000, trustProxy: true })
+
+// ── Body parsing helper ───────────────────────────────────
+function parseBody (req: IncomingMessage): ResultAsync<Record<string, string | number | boolean | null>, Error> {
+  return ResultAsync.fromPromise(
+    readBody(req).then(body => JSON.parse(body) as Record<string, string | number | boolean | null>),
+    (err) => err instanceof Error ? err : new Error(String(err))
+  )
+}
+
+// ── Telemetry ingestion (framework) ───────────────────────
+const telemetryHandler = createIngestionHandler({ pool })
+
+// ── Router ────────────────────────────────────────────────
+const router = createServerRouter()
+
+// ── Static files ──────────────────────────────────────────
+router.register('/public/*', {
+  GET: async (req, res) => {
+    const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`)
+    const pathResult = resolveStaticPath(url.pathname.replace(/^\/public/, ''), publicDir)
+    if (pathResult.isErr()) { sendHtml(res, ERROR_404_HTML, 404); return }
+    const mime = resolveMimeType(pathResult.value)
+    await serveStaticFile(pathResult.value, mime, req.headers.range, res)
+  }
+})
+
+const serveStaticMiddleware: Middleware = (req, res, _ctx, next) => {
+  const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`)
+  const pathname = url.pathname
+  const isStaticPath = req.method === 'GET' && (
+    pathname.startsWith('/css/') || pathname.startsWith('/js/') ||
+    pathname.startsWith('/favicon') || pathname.endsWith('.svg') ||
+    pathname.endsWith('.ico') || pathname.endsWith('.png') ||
+    pathname.endsWith('.jpg') || pathname.endsWith('.webp') ||
+    pathname.endsWith('.webmanifest')
+  )
+  if (isStaticPath) {
+    const pathResult = resolveStaticPath(pathname, publicDir)
+    if (pathResult.isOk()) {
+      return serveStaticFile(pathResult.value, resolveMimeType(pathResult.value), req.headers.range, res)
+    }
+  }
+  return next()
+}
+router.use(serveStaticMiddleware)
+
+// ── Sitemap ───────────────────────────────────────────────
+router.register('/sitemap.xml', {
+  GET: async (_req, res) => {
+    const configs = await pool.sql.unsafe<SitemapRow[]>(
       'SELECT id, updated_at FROM "server-configs" WHERE shared = true AND deleted_at IS NULL ORDER BY updated_at DESC'
     )
-    const users = await pool.sql.unsafe(
+    const users = await pool.sql.unsafe<UsernameRow[]>(
       'SELECT username FROM users WHERE deleted_at IS NULL'
     )
     const B = 'https://enshroudedserverconfig.com'
     const lines = [
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-      '  <url><loc>' + B + '/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>',
-      '  <url><loc>' + B + '/browse</loc><changefreq>daily</changefreq><priority>0.9</priority></url>',
-      '  <url><loc>' + B + '/signup</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
-      '  <url><loc>' + B + '/login</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>',
+      `  <url><loc>${B}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>`,
+      `  <url><loc>${B}/browse</loc><changefreq>daily</changefreq><priority>0.9</priority></url>`,
+      `  <url><loc>${B}/signup</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>`,
+      `  <url><loc>${B}/login</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>`,
     ]
-    for (const c of configs as any[]) {
+    for (const c of configs) {
       const d = c.updated_at ? new Date(c.updated_at).toISOString().split('T')[0] : ''
-      lines.push('  <url><loc>' + B + '/browse/' + c.id + '</loc>' + (d ? '<lastmod>' + d + '</lastmod>' : '') + '<changefreq>weekly</changefreq><priority>0.7</priority></url>')
+      lines.push(`  <url><loc>${B}/browse/${c.id}</loc>${d ? `<lastmod>${d}</lastmod>` : ''}<changefreq>weekly</changefreq><priority>0.7</priority></url>`)
     }
-    for (const u of users as any[]) {
-      lines.push('  <url><loc>' + B + '/users/' + encodeURIComponent(u.username) + '</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>')
+    for (const u of users) {
+      lines.push(`  <url><loc>${B}/users/${encodeURIComponent(u.username)}</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>`)
     }
     lines.push('</urlset>')
-    res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8', ...SECURITY_HEADERS })
+    res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8' })
     res.end(lines.join('\n'))
-  },
+  }
+})
 
-  
-  'GET /api/admin/analytics': async (req, res) => {
-    const user = await getSessionUser(req)
-    if (!user || (user as any).role !== 'admin') { sendJson(res, 403, { error: 'Admin only' }); return }
+// ── API: Auth ─────────────────────────────────────────────
+router.register('/api/users/me', {
+  GET: async (req, res) => {
+    const user = await resolveSessionUser(req)
+    if (!user) { sendJson(res, { error: 'Not authenticated' }, 401); return }
+    const { password_hash: _, ...safe } = user
+    sendJson(res, safe)
+  }
+})
 
-    const now = new Date()
-    const today = now.toISOString().split('T')[0]
-    const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString().split('T')[0]
+router.register('/api/users/me/configs', {
+  GET: async (req, res) => {
+    const user = await resolveSessionUser(req)
+    if (!user) { sendJson(res, { error: 'Not authenticated' }, 401); return }
+    const rows = await pool.sql.unsafe(
+      `SELECT id, name, slug, "gameSettingsPreset", "forkCount", "likeCount", tags, shared, status, updated_at, server
+       FROM "server-configs" WHERE owner = $1 AND deleted_at IS NULL ORDER BY updated_at DESC`,
+      [user.id]
+    )
+    sendJson(res, rows)
+  }
+}, { middleware: [requireAuth] })
 
-    // Core metrics
-    const users = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM users WHERE deleted_at IS NULL')
-    const configs = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM "server-configs" WHERE deleted_at IS NULL')
-    const shared = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM "server-configs" WHERE shared = true AND deleted_at IS NULL')
-    const sessions = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM sessions WHERE created_at >= $1', [weekAgo])
-
-    // Funnel
-    const funnel = await pool.sql.unsafe(`
-      SELECT
-        (SELECT COUNT(DISTINCT session_id)::int FROM events WHERE dom_target IN ('home.browse', 'home.new-config')) as home_engaged,
-        (SELECT COUNT(DISTINCT session_id)::int FROM events WHERE dom_target = 'browse.config-tile') as browsed_configs,
-        (SELECT COUNT(DISTINCT session_id)::int FROM events WHERE event_category = 'LEAD_FORM') as attempted_auth,
-        (SELECT COUNT(DISTINCT session_id)::int FROM events WHERE dom_target = 'editor.save') as saved_config,
-        (SELECT COUNT(DISTINCT session_id)::int FROM events WHERE dom_target = 'editor.export') as exported
-    `)
-
-    // Top referrers
-    const referrers = await pool.sql.unsafe(`
-      SELECT COALESCE(NULLIF(referrer, ''), 'Direct') as source, COUNT(*)::int as count
-      FROM sessions WHERE created_at >= $1
-      GROUP BY source ORDER BY count DESC LIMIT 10
-    `, [weekAgo])
-
-    // Top actions
-    const actions = await pool.sql.unsafe(`
-      SELECT dom_target as action, COUNT(*)::int as count
-      FROM events WHERE created_at >= $1 AND dom_target != ''
-      GROUP BY dom_target ORDER BY count DESC LIMIT 15
-    `, [weekAgo])
-
-    // Hourly activity (last 24h)
-    const hourly = await pool.sql.unsafe(`
-      SELECT date_trunc('hour', created_at) as hour, COUNT(*)::int as count
-      FROM events WHERE created_at >= NOW() - INTERVAL '24 hours'
-      GROUP BY hour ORDER BY hour
-    `)
-
-    // Daily sessions (last 7 days)
-    const daily = await pool.sql.unsafe(`
-      SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
-      FROM sessions WHERE created_at >= $1
-      GROUP BY day ORDER BY day
-    `, [weekAgo])
-
-    // Recent configs
-    const recentConfigs = await pool.sql.unsafe(`
-      SELECT name, slug, "gameSettingsPreset", shared, created_at
-      FROM "server-configs" WHERE deleted_at IS NULL
-      ORDER BY created_at DESC LIMIT 10
-    `)
-
-    sendJson(res, 200, {
-      overview: {
-        totalUsers: (users[0] as any)?.c ?? 0,
-        totalConfigs: (configs[0] as any)?.c ?? 0,
-        sharedConfigs: (shared[0] as any)?.c ?? 0,
-        weekSessions: (sessions[0] as any)?.c ?? 0,
-      },
-      funnel: funnel[0] ?? {},
-      referrers,
-      actions,
-      hourly,
-      daily,
-      recentConfigs,
-    })
-  },
-
-  'GET /api/users/me': async (req, res) => {
-    const user = await getSessionUser(req)
-    if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
-    const { password_hash, ...safe } = user as Record<string, unknown>
-    sendJson(res, 200, safe)
-  },
-  'POST /api/telemetry': async (req, res) => {
-    const chunks: Buffer[] = []
-    let totalSize = 0
-    for await (const chunk of req) {
-      totalSize += (chunk as Buffer).length
-      if (totalSize > MAX_BODY_SIZE) {
-        sendJson(res, 413, { error: 'Request body too large' })
-        return
-      }
-      chunks.push(chunk as Buffer)
-    }
-    const body = Buffer.concat(chunks).toString()
-    try {
-      const events = JSON.parse(body)
-      if (!Array.isArray(events) || events.length === 0) {
-        res.writeHead(200, { 'Content-Type': 'application/json', ...SECURITY_HEADERS })
-        res.end(JSON.stringify({ ok: true, ingested: 0 }))
-        return
-      }
-      const sessionId = crypto.randomUUID()
-      await pool.sql.unsafe(
-        'INSERT INTO sessions (session_id, referrer, device_type) VALUES ($1, $2, $3)',
-        [sessionId, events[0]?.referrer ?? '', 'beacon']
-      )
-      for (const ev of events) {
-        await pool.sql.unsafe(
-          'INSERT INTO events (session_id, event_category, dom_target, payload) VALUES ($1, $2, $3, $4)',
-          [sessionId, ev.type ?? '', ev.targetDOMNode ?? '', JSON.stringify(ev)]
-        )
-      }
-      res.writeHead(200, { 'Content-Type': 'application/json', ...SECURITY_HEADERS })
-      res.end(JSON.stringify({ ok: true, ingested: events.length }))
-    } catch {
-      res.writeHead(200, { 'Content-Type': 'application/json', ...SECURITY_HEADERS })
-      res.end(JSON.stringify({ ok: true, ingested: 0 }))
-    }
-  },
-  'POST /api/users/register': async (req, res) => {
+router.register('/api/users/register', {
+  POST: async (req, res) => {
     const bodyResult = await parseBody(req)
-    if (bodyResult.isErr()) {
-      sendJson(res, 400, { error: 'Invalid JSON body' })
-      return
-    }
+    if (bodyResult.isErr()) { sendJson(res, { error: 'Invalid JSON body' }, 400); return }
     const { username, email, password } = bodyResult.value as { username?: string, email?: string, password?: string }
 
-    if (!username || !email || !password) {
-      sendJson(res, 400, { error: 'Username, email, and password are required' })
-      return
-    }
-    if (typeof username !== 'string' || username.length < 1 || username.length > 64) {
-      sendJson(res, 400, { error: 'Username must be between 1 and 64 characters' })
-      return
-    }
-    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-      sendJson(res, 400, { error: 'Username may only contain letters, numbers, hyphens, and underscores' })
-      return
-    }
-    if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      sendJson(res, 400, { error: 'Invalid email format' })
-      return
-    }
-    if (email.length > 254) {
-      sendJson(res, 400, { error: 'Email address is too long' })
-      return
-    }
-    if (password.length < 8) {
-      sendJson(res, 400, { error: 'Password must be at least 8 characters' })
-      return
-    }
+    if (!username || !email || !password) { sendJson(res, { error: 'Username, email, and password are required' }, 400); return }
+    if (typeof username !== 'string' || username.length < 1 || username.length > 64) { sendJson(res, { error: 'Username must be between 1 and 64 characters' }, 400); return }
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) { sendJson(res, { error: 'Username may only contain letters, numbers, hyphens, and underscores' }, 400); return }
+    if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { sendJson(res, { error: 'Invalid email format' }, 400); return }
+    if (email.length > 254) { sendJson(res, { error: 'Email address is too long' }, 400); return }
+    if (password.length < 8) { sendJson(res, { error: 'Password must be at least 8 characters' }, 400); return }
 
     const hashResult = await ResultAsync.fromPromise(
       argon2.hash(password),
       (err) => err instanceof Error ? err : new Error(String(err))
     )
-    if (hashResult.isErr()) {
-      sendJson(res, 500, { error: 'Failed to hash password' })
-      return
-    }
+    if (hashResult.isErr()) { sendJson(res, { error: 'Failed to hash password' }, 500); return }
 
     const createResult = await cms.api.create({
       collection: 'users',
       data: { username, email, password_hash: hashResult.value, role: 'user' }
     })
+    if (createResult.isErr()) { sendJson(res, { error: createResult.error.message }, 400); return }
 
-    if (createResult.isErr()) {
-      sendJson(res, 400, { error: createResult.error.message })
-      return
-    }
+    const created = createResult.value
+    serverLog.log('ACCOUNT', 'auth.register', { userId: String(created.id), email: String(created.email) })
+    sendJson(res, { id: created.id, username: String(created.username), email: String(created.email) }, 201)
+  }
+}, { middleware: [authRateLimit.middleware] })
 
-    const user = createResult.value as Record<string, unknown>
-    sendJson(res, 201, { id: user.id, username: (user as any).username, email: user.email })
-  },
-
-  'PATCH /api/account': async (req, res) => {
-    const user = await getSessionUser(req)
-    if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
-
+// ── API: Account ──────────────────────────────────────────
+router.register('/api/account', {
+  PATCH: async (req, res) => {
+    const user = await resolveSessionUser(req)
+    if (!user) { sendJson(res, { error: 'Not authenticated' }, 401); return }
     const bodyResult = await parseBody(req)
-    if (bodyResult.isErr()) { sendJson(res, 400, { error: 'Invalid JSON body' }); return }
+    if (bodyResult.isErr()) { sendJson(res, { error: 'Invalid JSON body' }, 400); return }
 
-    const { username, avatarUrl, bio } = bodyResult.value as { username?: string, avatarUrl?: string, bio?: string }
-    const updates: Record<string, unknown> = {}
+    const body = bodyResult.value
+    const username = body.username as string | undefined
+    const avatarUrl = body.avatarUrl as string | undefined
+    const bio = body.bio as string | undefined
+    const updates: Record<string, string | number | boolean | null> = {}
+
     if (username !== undefined) {
-      if (typeof username !== 'string' || username.length < 1 || username.length > 64) {
-        sendJson(res, 400, { error: 'Username must be between 1 and 64 characters' }); return
-      }
-      if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-        sendJson(res, 400, { error: 'Username may only contain letters, numbers, hyphens, and underscores' }); return
-      }
+      if (typeof username !== 'string' || username.length < 1 || username.length > 64) { sendJson(res, { error: 'Username must be between 1 and 64 characters' }, 400); return }
+      if (!/^[a-zA-Z0-9_-]+$/.test(username)) { sendJson(res, { error: 'Username may only contain letters, numbers, hyphens, and underscores' }, 400); return }
       updates.username = username
     }
     if (avatarUrl !== undefined) {
-      if (typeof avatarUrl !== 'string' || avatarUrl.length > 2048) {
-        sendJson(res, 400, { error: 'Invalid avatar URL' }); return
-      }
-      if (avatarUrl !== '' && !/^https?:\/\/.+/.test(avatarUrl)) {
-        sendJson(res, 400, { error: 'Avatar URL must be a valid HTTP(S) URL' }); return
-      }
+      if (typeof avatarUrl !== 'string' || avatarUrl.length > 2048) { sendJson(res, { error: 'Invalid avatar URL' }, 400); return }
+      if (avatarUrl !== '' && !/^https?:\/\/.+/.test(avatarUrl)) { sendJson(res, { error: 'Avatar URL must be a valid HTTP(S) URL' }, 400); return }
       updates.avatarUrl = avatarUrl
     }
     if (bio !== undefined) {
-      if (typeof bio !== 'string' || bio.length > 500) {
-        sendJson(res, 400, { error: 'Bio must be 500 characters or fewer' }); return
-      }
+      if (typeof bio !== 'string' || bio.length > 500) { sendJson(res, { error: 'Bio must be 500 characters or fewer' }, 400); return }
       updates.bio = bio
     }
+    if (Object.keys(updates).length === 0) { sendJson(res, { error: 'No fields to update' }, 400); return }
 
-    if (Object.keys(updates).length === 0) {
-      sendJson(res, 400, { error: 'No fields to update' })
-      return
-    }
+    const updateResult = await cms.api.update({ collection: 'users', id: user.id, data: updates })
+    if (updateResult.isErr()) { sendJson(res, { error: updateResult.error.message }, 400); return }
 
-    const updateResult = await cms.api.update({
-      collection: 'users',
-      id: user.id as string,
-      data: updates
-    })
-
-    if (updateResult.isErr()) {
-      sendJson(res, 400, { error: updateResult.error.message })
-      return
-    }
-
-    const { password_hash: _, ...safeUser } = updateResult.value as Record<string, unknown>
-    sendJson(res, 200, safeUser)
+    const { password_hash: _, ...safeUser } = updateResult.value as unknown as SessionUser
+    sendJson(res, safeUser)
   },
 
-  'GET /api/tags': async (_req, res) => {
-    const rows = await pool.sql.unsafe(
-      `SELECT * FROM tags ORDER BY "usageCount" DESC, name ASC`
-    )
-    sendJson(res, 200, rows)
-  },
+  DELETE: async (req, res) => {
+    const user = await resolveSessionUser(req)
+    if (!user) { sendJson(res, { error: 'Not authenticated' }, 401); return }
 
-  'POST /api/tags': async (req, res) => {
-    const user = await getSessionUser(req)
-    if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
+    await pool.sql.unsafe(`UPDATE "server-configs" SET "owner" = NULL WHERE "owner" = $1`, [user.id])
+    await pool.sql.unsafe(`UPDATE "users" SET "deleted_at" = NOW() WHERE "id" = $1`, [user.id])
+    await pool.sql.unsafe(`UPDATE "cms_sessions" SET "deleted_at" = NOW() WHERE "user_id" = $1`, [user.id])
+    serverLog.log('ACCOUNT', 'account.delete', { userId: user.id })
 
-    const bodyResult = await parseBody(req)
-    if (bodyResult.isErr()) { sendJson(res, 400, { error: 'Invalid JSON body' }); return }
-
-    const { name } = bodyResult.value as { name?: string }
-    if (!name || !name.trim()) { sendJson(res, 400, { error: 'Tag name is required' }); return }
-    if (typeof name !== 'string' || name.trim().length > 64) {
-      sendJson(res, 400, { error: 'Tag name must be 64 characters or fewer' }); return
-    }
-
-    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-
-    try {
-      const existing = await pool.sql.unsafe(
-        `SELECT * FROM tags WHERE slug = $1`, [slug]
-      )
-      if (existing.length > 0) {
-        sendJson(res, 200, existing[0])
-        return
-      }
-      const rows = await pool.sql.unsafe(
-        `INSERT INTO tags (id, name, slug) VALUES (gen_random_uuid(), $1, $2) RETURNING *`,
-        [name.trim(), slug]
-      )
-      sendJson(res, 201, rows[0])
-    } catch {
-      sendJson(res, 400, { error: 'Failed to create tag' })
-    }
-  },
-
-  'GET /api/likes/mine': async (req, res) => {
-    const user = await getSessionUser(req)
-    if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
-
-    const rows = await pool.sql.unsafe(
-      `SELECT "configId" FROM likes WHERE "userId" = $1`,
-      [user.id]
-    )
-    sendJson(res, 200, rows.map((r: any) => r.configId))
-  },
-
-  'DELETE /api/account': async (req, res) => {
-    const user = await getSessionUser(req)
-    if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
-
-    // Orphan configs owned by this user
-    await pool.sql.unsafe(
-      `UPDATE "server-configs" SET "owner" = NULL WHERE "owner" = $1`,
-      [user.id]
-    )
-
-    // Soft-delete the user
-    await pool.sql.unsafe(
-      `UPDATE "users" SET "deleted_at" = NOW() WHERE "id" = $1`,
-      [user.id]
-    )
-
-    // Destroy all sessions for this user
-    await pool.sql.unsafe(
-      `UPDATE "cms_sessions" SET "deleted_at" = NOW() WHERE "user_id" = $1`,
-      [user.id]
-    )
-
-    // Clear session cookie
     res.writeHead(200, {
       'Content-Type': 'application/json; charset=utf-8',
-      'Set-Cookie': 'cms_session=; Path=/; HttpOnly; Max-Age=0',
-      ...SECURITY_HEADERS
+      'Set-Cookie': 'cms_session=; Path=/; HttpOnly; Max-Age=0'
     })
     res.end(JSON.stringify({ ok: true }))
   }
-}
+}, { middleware: [requireAuth] })
 
-// Pattern-based custom API routes (for routes with :params)
-type PatternHandler = { pattern: string, method: string, handler: (req: IncomingMessage, res: ServerResponse, params: Record<string, string>) => Promise<void> }
-const CUSTOM_API_PATTERNS: PatternHandler[] = [
-  {
-    pattern: '/api/server-configs/:id/clone',
-    method: 'POST',
-    handler: async (req, res, params) => {
-      const user = await getSessionUser(req)
-      if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
+// ── API: Tags ─────────────────────────────────────────────
+router.register('/api/tags', {
+  GET: async (_req, res) => {
+    const rows = await pool.sql.unsafe(`SELECT * FROM tags ORDER BY "usageCount" DESC, name ASC`)
+    sendJson(res, rows)
+  },
 
-      const sourceResult = await cms.api.findById({
-        collection: 'server-configs',
-        id: params.id
-      })
+  POST: async (req, res) => {
+    const user = await resolveSessionUser(req)
+    if (!user) { sendJson(res, { error: 'Not authenticated' }, 401); return }
+    const bodyResult = await parseBody(req)
+    if (bodyResult.isErr()) { sendJson(res, { error: 'Invalid JSON body' }, 400); return }
 
-      if (sourceResult.isErr()) {
-        sendJson(res, 404, { error: 'Config not found' })
-        return
-      }
+    const name = bodyResult.value.name
+    if (!name || typeof name !== 'string' || !name.trim()) { sendJson(res, { error: 'Tag name is required' }, 400); return }
+    if (name.trim().length > 64) { sendJson(res, { error: 'Tag name must be 64 characters or fewer' }, 400); return }
 
-      const source = sourceResult.value as Record<string, unknown>
-      const cloneName = (source.name as string || 'Untitled') + ' (Copy)'
-      const cloneSlug = (source.slug as string || 'copy') + '-' + Date.now()
+    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
-      const createResult = await cms.api.create({
-        collection: 'server-configs',
-        data: {
-          name: cloneName,
-          slug: cloneSlug,
-          server: source.server,
-          gameSettingsPreset: source.gameSettingsPreset,
-          gameSettings: source.gameSettings,
-          userGroups: source.userGroups,
-          owner: user.id,
-          forkedFrom: params.id
-        }
-      })
-
-      if (createResult.isErr()) {
-        sendJson(res, 400, { error: createResult.error.message })
-        return
-      }
-
-      // Increment fork count on source config
-      await pool.sql.unsafe(
-        `UPDATE "server-configs" SET "forkCount" = COALESCE("forkCount", 0) + 1 WHERE id = $1`,
-        [params.id]
-      )
-
-      sendJson(res, 201, createResult.value)
-    }
-  }
-]
-
-// Like toggle
-CUSTOM_API_PATTERNS.push({
-  pattern: '/api/server-configs/:id/like',
-  method: 'POST',
-  handler: async (req, res, params) => {
-    const user = await getSessionUser(req)
-    if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
-
-    const existing = await pool.sql.unsafe(
-      `SELECT id FROM likes WHERE "userId" = $1 AND "configId" = $2`,
-      [user.id, params.id]
+    const existing = await ResultAsync.fromPromise(
+      pool.sql.unsafe<Array<{ id: string; name: string; slug: string }>>(`SELECT * FROM tags WHERE slug = $1`, [slug]),
+      (err) => err instanceof Error ? err : new Error(String(err))
     )
+    if (existing.isOk() && existing.value.length > 0) { sendJson(res, existing.value[0]); return }
 
+    const insertResult = await ResultAsync.fromPromise(
+      pool.sql.unsafe<Array<{ id: string; name: string; slug: string }>>(
+        `INSERT INTO tags (id, name, slug) VALUES (gen_random_uuid(), $1, $2) RETURNING *`,
+        [name.trim(), slug]
+      ),
+      (err) => err instanceof Error ? err : new Error(String(err))
+    )
+    if (insertResult.isErr()) { sendJson(res, { error: 'Failed to create tag' }, 400); return }
+    sendJson(res, insertResult.value[0], 201)
+  }
+}, { middleware: [apiRateLimit.middleware] })
+
+// ── API: Likes ────────────────────────────────────────────
+router.register('/api/likes/mine', {
+  GET: async (req, res) => {
+    const user = await resolveSessionUser(req)
+    if (!user) { sendJson(res, { error: 'Not authenticated' }, 401); return }
+    const rows = await pool.sql.unsafe<LikeRow[]>(`SELECT "configId" FROM likes WHERE "userId" = $1`, [user.id])
+    sendJson(res, rows.map((r) => r.configId))
+  }
+}, { middleware: [requireAuth] })
+
+// ── API: Config actions ───────────────────────────────────
+router.register('/api/server-configs/:id/delete', {
+  POST: async (req, res, ctx) => {
+    const user = await resolveSessionUser(req)
+    if (!user) { sendJson(res, { error: 'Not authenticated' }, 401); return }
+    const configId = ctx.params.id ?? ''
+
+    const ownerCheck = await pool.sql.unsafe<Array<{ id: string; owner: string | null }>>(
+      `SELECT id, owner FROM "server-configs" WHERE id = $1 AND deleted_at IS NULL`, [configId]
+    )
+    if (ownerCheck.length === 0) { sendJson(res, { error: 'Config not found' }, 404); return }
+    if (ownerCheck[0]!.owner !== user.id) { sendJson(res, { error: 'Not authorized to delete this config' }, 403); return }
+
+    const deleteResult = await cms.api.delete({ collection: 'server-configs', id: configId })
+    if (deleteResult.isErr()) { sendJson(res, { error: deleteResult.error.message }, 400); return }
+
+    serverLog.log('CONFIG', 'config.delete', { configId, userId: user.id })
+    sendJson(res, { ok: true })
+  }
+}, { middleware: [requireAuth] })
+
+router.register('/api/server-configs/:id/clone', {
+  POST: async (req, res, ctx) => {
+    const user = await resolveSessionUser(req)
+    if (!user) { sendJson(res, { error: 'Not authenticated' }, 401); return }
+    const configId = ctx.params.id ?? ''
+
+    const sourceResult = await cms.api.findByID({ collection: 'server-configs', id: configId })
+    if (sourceResult.isErr()) { sendJson(res, { error: 'Config not found' }, 404); return }
+    const source = sourceResult.value
+    if (!source) { sendJson(res, { error: 'Config not found' }, 404); return }
+
+    const createResult = await cms.api.create({
+      collection: 'server-configs',
+      data: {
+        name: String(source.name ?? 'Untitled') + ' (Copy)',
+        slug: String(source.slug ?? 'copy') + '-' + Date.now(),
+        server: source.server ?? null,
+        gameSettingsPreset: source.gameSettingsPreset ?? null,
+        gameSettings: source.gameSettings ?? null,
+        userGroups: source.userGroups ?? null,
+        owner: user.id,
+        forkedFrom: configId as string | null
+      }
+    })
+    if (createResult.isErr()) { sendJson(res, { error: createResult.error.message }, 400); return }
+
+    await pool.sql.unsafe(
+      `UPDATE "server-configs" SET "forkCount" = COALESCE("forkCount", 0) + 1 WHERE id = $1`, [configId]
+    )
+    serverLog.log('CONFIG', 'config.clone', { sourceId: configId, newId: String(createResult.value.id ?? '') })
+    sendJson(res, createResult.value, 201)
+  }
+}, { middleware: [requireAuth, apiRateLimit.middleware] })
+
+router.register('/api/server-configs/:id/like', {
+  POST: async (req, res, ctx) => {
+    const user = await resolveSessionUser(req)
+    if (!user) { sendJson(res, { error: 'Not authenticated' }, 401); return }
+    const configId = ctx.params.id ?? ''
+
+    const existing = await pool.sql.unsafe<LikeRow[]>(
+      `SELECT id FROM likes WHERE "userId" = $1 AND "configId" = $2`, [user.id, configId]
+    )
     if (existing.length > 0) {
-      // Unlike
-      await pool.sql.unsafe(`DELETE FROM likes WHERE id = $1`, [existing[0].id])
-      await pool.sql.unsafe(
-        `UPDATE "server-configs" SET "likeCount" = GREATEST(COALESCE("likeCount", 0) - 1, 0) WHERE id = $1`,
-        [params.id]
-      )
-      sendJson(res, 200, { liked: false })
+      await pool.sql.unsafe(`DELETE FROM likes WHERE id = $1`, [existing[0]!.id])
+      await pool.sql.unsafe(`UPDATE "server-configs" SET "likeCount" = GREATEST(COALESCE("likeCount", 0) - 1, 0) WHERE id = $1`, [configId])
+      serverLog.log('ENGAGEMENT', 'config.like', { configId, liked: 'false' })
+      sendJson(res, { liked: false })
     } else {
-      // Like
-      await pool.sql.unsafe(
-        `INSERT INTO likes (id, "userId", "configId") VALUES (gen_random_uuid(), $1, $2)`,
-        [user.id, params.id]
-      )
-      await pool.sql.unsafe(
-        `UPDATE "server-configs" SET "likeCount" = COALESCE("likeCount", 0) + 1 WHERE id = $1`,
-        [params.id]
-      )
-      sendJson(res, 200, { liked: true })
+      await pool.sql.unsafe(`INSERT INTO likes (id, "userId", "configId") VALUES (gen_random_uuid(), $1, $2)`, [user.id, configId])
+      await pool.sql.unsafe(`UPDATE "server-configs" SET "likeCount" = COALESCE("likeCount", 0) + 1 WHERE id = $1`, [configId])
+      serverLog.log('ENGAGEMENT', 'config.like', { configId, liked: 'true' })
+      sendJson(res, { liked: true })
     }
   }
-})
+}, { middleware: [requireAuth, apiRateLimit.middleware] })
 
-// Check if user liked a config
-CUSTOM_API_PATTERNS.push({
-  pattern: '/api/server-configs/:id/liked',
-  method: 'GET',
-  handler: async (req, res, params) => {
-    const user = await getSessionUser(req)
-    if (!user) { sendJson(res, 200, { liked: false }); return }
-
-    const rows = await pool.sql.unsafe(
-      `SELECT id FROM likes WHERE "userId" = $1 AND "configId" = $2`,
-      [user.id, params.id]
+router.register('/api/server-configs/:id/liked', {
+  GET: async (req, res, ctx) => {
+    const user = await resolveSessionUser(req)
+    if (!user) { sendJson(res, { liked: false }); return }
+    const configId = ctx.params.id ?? ''
+    const rows = await pool.sql.unsafe<LikeRow[]>(
+      `SELECT id FROM likes WHERE "userId" = $1 AND "configId" = $2`, [user.id, configId]
     )
-    sendJson(res, 200, { liked: rows.length > 0 })
+    sendJson(res, { liked: rows.length > 0 })
   }
 })
 
-// Public user profile API
-CUSTOM_API_PATTERNS.push({
-  pattern: '/api/users/profile/:username',
-  method: 'GET',
-  handler: async (_req, res, params) => {
-    const rows = await pool.sql.unsafe(
-      `SELECT id, username, "avatarUrl", bio, created_at FROM users WHERE username = $1 AND deleted_at IS NULL`,
-      [params.username]
+// ── API: User profiles ────────────────────────────────────
+router.register('/api/users/profile/:username', {
+  GET: async (_req, res, ctx) => {
+    const username = ctx.params.username ?? ''
+    const rows = await pool.sql.unsafe<Array<{ id: string; username: string; avatarUrl: string | null; bio: string | null; created_at: string }>>(
+      `SELECT id, username, "avatarUrl", bio, created_at FROM users WHERE username = $1 AND deleted_at IS NULL`, [username]
     )
-    if (rows.length === 0) { sendJson(res, 404, { error: 'User not found' }); return }
-
-    const user = rows[0] as Record<string, unknown>
+    if (rows.length === 0) { sendJson(res, { error: 'User not found' }, 404); return }
+    const user = rows[0]!
     const configs = await pool.sql.unsafe(
       `SELECT id, name, slug, "gameSettingsPreset", "forkCount", "likeCount", tags, updated_at, server
-       FROM "server-configs"
-       WHERE owner = $1 AND shared = true AND deleted_at IS NULL
-       ORDER BY updated_at DESC`,
+       FROM "server-configs" WHERE owner = $1 AND shared = true AND deleted_at IS NULL ORDER BY updated_at DESC`,
       [user.id]
     )
-
-    sendJson(res, 200, { ...user, configs })
+    sendJson(res, { ...user, configs })
   }
 })
 
-function matchCustomPattern (method: string, pathname: string): { handler: PatternHandler['handler'], params: Record<string, string> } | null {
-  for (const route of CUSTOM_API_PATTERNS) {
-    if (route.method !== method) continue
-    const pp = route.pattern.split('/')
-    const up = pathname.split('/')
-    if (pp.length !== up.length) continue
-    const params: Record<string, string> = {}
-    let match = true
-    for (let i = 0; i < pp.length; i++) {
-      if (pp[i].startsWith(':')) params[pp[i].slice(1)] = up[i]
-      else if (pp[i] !== up[i]) { match = false; break }
-    }
-    if (match) return { handler: route.handler, params }
-  }
-  return null
+// ── Telemetry ingestion ───────────────────────────────────
+router.register('/api/telemetry', {
+  POST: async (req, res) => { await telemetryHandler(req, res) }
+}, { middleware: [apiRateLimit.middleware] })
+
+// ── CMS admin + REST routes ───────────────────────────────
+for (const [path, entry] of cms.adminRoutes) {
+  const isPublic = path === '/admin/login' || path === '/admin/logout' || path.startsWith('/admin/_assets/')
+  router.register(path, entry as Record<string, Function>, isPublic ? undefined : { middleware: [requireAdmin] })
 }
+for (const [path, entry] of cms.restRoutes) {
+  router.register(path, entry as Record<string, Function>, { middleware: [requireAuth] })
+}
+
+// ── Page routes ───────────────────────────────────────────
+function servePage (filePath: string) {
+  return async (_req: IncomingMessage, res: ServerResponse) => {
+    sendHtml(res, readFileSync(filePath, 'utf-8'))
+  }
+}
+
+const publicPages: Record<string, string> = {
+  '/': join(rootDir, 'src/pages/home/ui/index.html'),
+  '/config/new': join(rootDir, 'src/pages/config/ui/new.html'),
+  '/login': join(rootDir, 'src/pages/auth/ui/login.html'),
+  '/signup': join(rootDir, 'src/pages/auth/ui/signup.html'),
+  '/browse': join(rootDir, 'src/pages/browse/ui/index.html')
+}
+const authPages: Record<string, string> = {
+  '/account': join(rootDir, 'src/pages/account/ui/index.html'),
+  '/my-configs': join(rootDir, 'src/pages/my-configs/ui/index.html')
+}
+
+for (const [path, file] of Object.entries(publicPages)) {
+  router.register(path, { GET: servePage(file) })
+}
+for (const [path, file] of Object.entries(authPages)) {
+  router.register(path, { GET: servePage(file) }, { middleware: [requireAuth] })
+}
+
+router.register('/config/:id', { GET: servePage(join(rootDir, 'src/pages/config/ui/editor.html')) })
+router.register('/browse/:id', { GET: servePage(join(rootDir, 'src/pages/browse/ui/detail.html')) })
+router.register('/users/:username', { GET: servePage(join(rootDir, 'src/pages/users/ui/profile.html')) })
+
+// ── 404 fallback ──────────────────────────────────────────
+router.register('/404', { GET: async (_req, res) => { sendHtml(res, ERROR_404_HTML, 404) } })
+
+// ── Error handler ─────────────────────────────────────────
+router.onError(async (error, _req, res) => {
+  console.error('[server] unhandled error:', error.message)
+  if (!res.headersSent) { sendHtml(res, ERROR_500_HTML, 500) }
+})
 
 // ── HTTP Server ───────────────────────────────────────────
 const port = config.server.port
-const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-  const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`)
-  const method = req.method ?? 'GET'
-
-  // 1. Static files from public/
-  if (method === 'GET' && serveStatic(url.pathname, res)) return
-
-  // 2. Custom API routes (before CMS so we can override)
-  const customKey = `${method} ${url.pathname}`
-  if (CUSTOM_API[customKey]) {
-    const result = await ResultAsync.fromPromise(
-      CUSTOM_API[customKey](req, res),
-      (err) => err instanceof Error ? err : new Error(String(err))
-    )
-    if (result.isErr() && !res.headersSent) {
-      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS })
-      res.end(ERROR_500_HTML)
-    }
-    return
-  }
-
-  // 2b. Pattern-based custom API routes
-  const customPatternMatch = matchCustomPattern(method, url.pathname)
-  if (customPatternMatch) {
-    const result = await ResultAsync.fromPromise(
-      customPatternMatch.handler(req, res, customPatternMatch.params),
-      (err) => err instanceof Error ? err : new Error(String(err))
-    )
-    if (result.isErr() && !res.headersSent) {
-      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS })
-      res.end(ERROR_500_HTML)
-    }
-    return
-  }
-
-  // 3. Admin routes (auth-protected except login/logout)
-  const adminMatch = matchRoute(url.pathname, cms.adminRoutes as any)
-  if (adminMatch) {
-    const isPublicAdmin = url.pathname === '/admin/login' || url.pathname === '/admin/logout' || url.pathname.startsWith('/admin/_assets/')
-    if (!isPublicAdmin) {
-      const user = await getSessionUser(req)
-      if (!user) {
-        res.writeHead(302, { Location: '/admin/login', ...SECURITY_HEADERS })
-        res.end()
-        return
-      }
-      // Only admin role can access admin panel
-      if (user.role !== 'admin') {
-        res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS })
-        res.end(ERROR_404_HTML.replace('404', '403').replace("The page you're looking for doesn't exist.", 'Admin access required.'))
-        return
-      }
-    }
-    const handler = adminMatch.entry[method]
-    if (handler) { await handler(req, res, adminMatch.params); return }
-  }
-
-  // 4. REST API routes (CMS framework handles auth + ownership enforcement
-  //    for PATCH/DELETE on collections via its built-in middleware)
-  const restMatch = matchRoute(url.pathname, cms.restRoutes as any)
-  if (restMatch) {
-    const handler = restMatch.entry[method]
-    if (handler) { await handler(req, res, restMatch.params); return }
-  }
-
-  // 5. Protected pages
-  if (method === 'GET' && url.pathname === '/analytics') {
-    const user = await getSessionUser(req)
-    if (!user) { res.writeHead(302, { Location: '/login', ...SECURITY_HEADERS }); res.end(); return }
-    if ((user as any).role !== 'admin') { res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS }); res.end(ERROR_404_HTML.replace('404', '403').replace("The page you're looking for doesn't exist.", 'Admin access required.')); return }
-    serveFile(res, join(rootDir, 'src/pages/analytics/ui/index.html'))
-    return
-  }
-
-  // 6. Page routes (GET only)
-  if (method === 'GET') {
-    const exactPage = PAGES[url.pathname]
-    if (exactPage) { serveFile(res, exactPage); return }
-
-    const patternPage = matchPagePattern(url.pathname)
-    if (patternPage) { serveFile(res, patternPage); return }
-  }
-
-  // 6. 404
-  res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS })
-  res.end(ERROR_404_HTML)
-})
+const server = createServer((req, res) => router.handle(req, res))
 
 server.listen(port, () => {
   console.log(`\n  Enshrouded Server Config running.\n`)

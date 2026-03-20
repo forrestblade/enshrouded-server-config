@@ -330,6 +330,8 @@ async function initTagPicker () {
       opt.className = 'tag-option'
       opt.textContent = tag.name
       if (tag.isCurated) opt.classList.add('curated')
+      opt.dataset.telemetryType = 'CLICK'
+      opt.dataset.telemetryTarget = 'editor.tag-add'
       opt.addEventListener('click', () => {
         addTag(tag.slug)
         input.value = ''
@@ -344,6 +346,8 @@ async function initTagPicker () {
       const createOpt = document.createElement('div')
       createOpt.className = 'tag-option tag-create'
       createOpt.textContent = 'Create "' + input.value.trim() + '"'
+      createOpt.dataset.telemetryType = 'CLICK'
+      createOpt.dataset.telemetryTarget = 'editor.tag-add'
       createOpt.addEventListener('click', async () => {
         const createRes = await fetch('/api/tags', {
           method: 'POST',
@@ -395,6 +399,8 @@ function renderSelectedTags () {
     const removeBtn = document.createElement('button')
     removeBtn.className = 'tag-remove'
     removeBtn.textContent = '\u00d7'
+    removeBtn.dataset.telemetryType = 'CLICK'
+    removeBtn.dataset.telemetryTarget = 'editor.tag-remove'
     removeBtn.addEventListener('click', () => removeTag(slug))
     tag.appendChild(removeBtn)
     div.appendChild(tag)
@@ -457,6 +463,8 @@ async function loadConfig () {
     statusSelect.value = status
     statusBadge.textContent = status === 'draft' ? 'Draft' : 'Published'
     statusBadge.className = 'status-badge ' + status
+    statusSelect.dataset.telemetryType = 'FORM_INPUT'
+    statusSelect.dataset.telemetryTarget = 'editor.status-change'
     statusSelect.addEventListener('change', () => {
       statusBadge.textContent = statusSelect.value === 'draft' ? 'Draft' : 'Published'
       statusBadge.className = 'status-badge ' + statusSelect.value
@@ -589,6 +597,39 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     config = await res.json()
     clearDraft()
     showToast(t('editor.saved'))
+
+    // Signup prompt for anonymous users — shown once per session after a successful save
+    if (!currentUser && !sessionStorage.getItem('signup-prompt-shown')) {
+      sessionStorage.setItem('signup-prompt-shown', '1')
+      const banner = document.createElement('div')
+      banner.className = 'signup-banner'
+      banner.innerHTML = [
+        '<p>Your config is saved! Sign up to keep it in your library and share it.</p>',
+        '<div class="signup-banner-actions">',
+        '  <a href="/register" class="btn btn-primary" data-telemetry-type="CLICK" data-telemetry-target="editor.signup-prompt-clicked">Sign Up Free</a>',
+        '  <button class="btn btn-ghost" data-telemetry-type="CLICK" data-telemetry-target="editor.signup-prompt-dismissed">Maybe Later</button>',
+        '</div>'
+      ].join('')
+      document.querySelector('.editor-header, .editor-actions, main')?.prepend(banner)
+
+      // Track prompt shown
+      const telBuf = window.__telemetryBuffer || []
+      telBuf.push({
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        type: 'CLICK',
+        targetDOMNode: 'editor.signup-prompt-shown',
+        x_coord: 0, y_coord: 0,
+        schema_version: 1,
+        site_id: 'enshrouded-config',
+        business_type: 'conversion',
+        path: location.pathname,
+        referrer: document.referrer
+      })
+
+      // Dismiss handler
+      banner.querySelector('.btn-ghost').addEventListener('click', () => banner.remove())
+    }
   } catch (err) {
     showToast(err.message, 'error')
   } finally {
@@ -674,3 +715,23 @@ btnAddGroup.addEventListener('click', () => {
 // ── Init ──────────────────────────────────────────────────
 buildGameSettingsGrid()
 loadConfig()
+
+// ── Signup banner styles ──────────────────────────────────
+const signupBannerStyle = document.createElement('style')
+signupBannerStyle.textContent = `
+  .signup-banner {
+    background: var(--surface-accent, #1a3a5c);
+    border: 1px solid var(--border-accent, #2a5a8c);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px 0;
+    text-align: center;
+  }
+  .signup-banner p { margin: 0 0 12px; }
+  .signup-banner-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  @media (max-width: 600px) {
+    .signup-banner { padding: 12px; margin: 8px 0; }
+    .signup-banner-actions { flex-direction: column; }
+  }
+`
+document.head.appendChild(signupBannerStyle)
