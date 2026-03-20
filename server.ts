@@ -98,7 +98,7 @@ const ERROR_404_HTML = readFileSync(join(rootDir, 'src/pages/error/ui/404.html')
 const ERROR_500_HTML = readFileSync(join(rootDir, 'src/pages/error/ui/500.html'), 'utf-8')
 
 const PAGES: Record<string, string> = {
-  '/analytics': join(rootDir, 'src/pages/analytics/ui/index.html'),
+  
   '/': join(rootDir, 'src/pages/home/ui/index.html'),
   '/config/new': join(rootDir, 'src/pages/config/ui/new.html'),
   '/login': join(rootDir, 'src/pages/auth/ui/login.html'),
@@ -766,7 +766,16 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     if (handler) { await handler(req, res, restMatch.params); return }
   }
 
-  // 5. Page routes (GET only)
+  // 5. Protected pages
+  if (method === 'GET' && url.pathname === '/analytics') {
+    const user = await getSessionUser(req)
+    if (!user) { res.writeHead(302, { Location: '/login', ...SECURITY_HEADERS }); res.end(); return }
+    if ((user as any).role !== 'admin') { res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS }); res.end(ERROR_404_HTML.replace('404', '403').replace("The page you're looking for doesn't exist.", 'Admin access required.')); return }
+    serveFile(res, join(rootDir, 'src/pages/analytics/ui/index.html'))
+    return
+  }
+
+  // 6. Page routes (GET only)
   if (method === 'GET') {
     const exactPage = PAGES[url.pathname]
     if (exactPage) { serveFile(res, exactPage); return }
