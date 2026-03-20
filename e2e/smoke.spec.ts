@@ -231,3 +231,20 @@ test.describe('account', () => {
     await expect(page.locator('#delete-modal')).toBeHidden()
   })
 })
+
+// ── Production regression: browse page loads configs ─────
+test('browse page renders config tiles (no JS errors)', async ({ page }) => {
+  await page.goto('/browse')
+  // Wait for JS to execute and tiles to render
+  await page.waitForSelector('.config-tile', { timeout: 10000 })
+  const tileCount = await page.locator('.config-tile').count()
+  expect(tileCount).toBeGreaterThan(0)
+  
+  // No JS errors should have occurred
+  const errors: string[] = []
+  page.on('pageerror', (err) => errors.push(err.message))
+  // Reload to catch any init errors
+  await page.reload()
+  await page.waitForSelector('.config-tile', { timeout: 10000 })
+  expect(errors).toEqual([])
+})

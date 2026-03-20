@@ -62,6 +62,32 @@ if (tagFilterDiv && allTags.length > 0) {
   }
 }
 
+// Reactive like state — all tiles for the same config stay in sync
+const likeState = {}  // configId -> { liked, count, subscribers[] }
+
+function getLikeState (configId, initialCount) {
+  if (!likeState[configId]) {
+    likeState[configId] = {
+      liked: myLikedIds.has(configId),
+      count: initialCount || 0,
+      subscribers: []
+    }
+  }
+  return likeState[configId]
+}
+
+function subscribeLike (configId, callback) {
+  const state = getLikeState(configId, 0)
+  state.subscribers.push(callback)
+  return state
+}
+
+function notifyLikeChange (configId) {
+  const state = likeState[configId]
+  if (!state) return
+  for (const cb of state.subscribers) cb(state)
+}
+
 // Fetch featured configs
 const featuredRes = await fetch('/api/server-configs?shared=true&featured=true')
 if (featuredRes.ok) {
@@ -146,32 +172,6 @@ function render (items) {
     const owner = userCache[item.owner] || null
     grid.appendChild(createTile(item, owner))
   }
-}
-
-// Reactive like state — all tiles for the same config stay in sync
-const likeState = {}  // configId -> { liked, count, subscribers[] }
-
-function getLikeState (configId, initialCount) {
-  if (!likeState[configId]) {
-    likeState[configId] = {
-      liked: myLikedIds.has(configId),
-      count: initialCount || 0,
-      subscribers: []
-    }
-  }
-  return likeState[configId]
-}
-
-function subscribeLike (configId, callback) {
-  const state = getLikeState(configId, 0)
-  state.subscribers.push(callback)
-  return state
-}
-
-function notifyLikeChange (configId) {
-  const state = likeState[configId]
-  if (!state) return
-  for (const cb of state.subscribers) cb(state)
 }
 
 function createTile (item, owner) {
