@@ -201,31 +201,30 @@ async function getSessionUser (req: IncomingMessage): Promise<Record<string, unk
 const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => Promise<void>> = {
   'GET /sitemap.xml': async (_req, res) => {
     const configs = await pool.sql.unsafe(
-      `SELECT slug, "updatedAt" FROM "server-configs" WHERE shared = true AND deleted_at IS NULL ORDER BY "updatedAt" DESC`
+      'SELECT id, "updatedAt" FROM "server-configs" WHERE shared = true AND deleted_at IS NULL ORDER BY "updatedAt" DESC'
     )
     const users = await pool.sql.unsafe(
-      `SELECT username, "createdAt" FROM users WHERE deleted_at IS NULL`
+      'SELECT username FROM users WHERE deleted_at IS NULL'
     )
-    const base = 'https://enshroudedserverconfig.com'
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    // Static pages
-    xml += `  <url><loc>\${base}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n`
-    xml += `  <url><loc>\${base}/browse</loc><changefreq>daily</changefreq><priority>0.9</priority></url>\n`
-    xml += `  <url><loc>\${base}/signup</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>\n`
-    xml += `  <url><loc>\${base}/login</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>\n`
-    // Shared configs
-    for (const c of configs) {
-      const date = c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : ''
-      xml += `  <url><loc>\${base}/browse/\${c.id}</loc>\${date ? `<lastmod>\${date}</lastmod>` : ''}<changefreq>weekly</changefreq><priority>0.7</priority></url>\n`
+    const B = 'https://enshroudedserverconfig.com'
+    const lines = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      '  <url><loc>' + B + '/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>',
+      '  <url><loc>' + B + '/browse</loc><changefreq>daily</changefreq><priority>0.9</priority></url>',
+      '  <url><loc>' + B + '/signup</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>',
+      '  <url><loc>' + B + '/login</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>',
+    ]
+    for (const c of configs as any[]) {
+      const d = c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : ''
+      lines.push('  <url><loc>' + B + '/browse/' + c.id + '</loc>' + (d ? '<lastmod>' + d + '</lastmod>' : '') + '<changefreq>weekly</changefreq><priority>0.7</priority></url>')
     }
-    // User profiles
-    for (const u of users) {
-      xml += `  <url><loc>\${base}/users/\${encodeURIComponent(u.username)}</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>\n`
+    for (const u of users as any[]) {
+      lines.push('  <url><loc>' + B + '/users/' + encodeURIComponent(u.username) + '</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>')
     }
-    xml += '</urlset>'
+    lines.push('</urlset>')
     res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8', ...SECURITY_HEADERS })
-    res.end(xml)
+    res.end(lines.join('\n'))
   },
 
   'GET /api/users/me': async (req, res) => {
