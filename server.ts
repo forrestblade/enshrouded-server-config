@@ -580,17 +580,17 @@ CUSTOM_API_PATTERNS.push({
   method: 'GET',
   handler: async (_req, res, params) => {
     const rows = await pool.sql.unsafe(
-      `SELECT id, username, "avatarUrl", bio, "createdAt" FROM users WHERE username = $1 AND deleted_at IS NULL`,
+      `SELECT id, username, "avatarUrl", bio, created_at FROM users WHERE username = $1 AND deleted_at IS NULL`,
       [params.username]
     )
     if (rows.length === 0) { sendJson(res, 404, { error: 'User not found' }); return }
 
     const user = rows[0] as Record<string, unknown>
     const configs = await pool.sql.unsafe(
-      `SELECT id, name, slug, "gameSettingsPreset", "forkCount", "likeCount", tags, "updatedAt", server
+      `SELECT id, name, slug, "gameSettingsPreset", "forkCount", "likeCount", tags, updated_at, server
        FROM "server-configs"
        WHERE owner = $1 AND shared = true AND deleted_at IS NULL
-       ORDER BY "updatedAt" DESC`,
+       ORDER BY updated_at DESC`,
       [user.id]
     )
 
