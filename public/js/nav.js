@@ -1,0 +1,46 @@
+// Check auth state and update nav accordingly
+const navActions = document.getElementById('nav-actions')
+if (navActions) {
+  const hasCookie = document.cookie.includes('cms_session')
+  if (hasCookie) {
+    try {
+      const res = await fetch('/api/users/me')
+      if (res.ok) {
+        const user = await res.json()
+        navActions.innerHTML = ''
+
+        if (user.avatarUrl) {
+          const avatar = document.createElement('img')
+          avatar.className = 'nav-avatar'
+          avatar.src = user.avatarUrl
+          avatar.alt = user.username || user.name || 'Avatar'
+          avatar.width = 28
+          avatar.height = 28
+          navActions.appendChild(avatar)
+        }
+
+        const userSpan = document.createElement('span')
+        userSpan.className = 'nav-user'
+        userSpan.textContent = user.username || user.name || user.email
+        navActions.appendChild(userSpan)
+
+        const accountLink = document.createElement('a')
+        accountLink.className = 'btn btn-outline'
+        accountLink.href = '/account'
+        accountLink.textContent = 'Account'
+        navActions.appendChild(accountLink)
+
+        const logoutBtn = document.createElement('button')
+        logoutBtn.className = 'btn btn-outline'
+        logoutBtn.textContent = 'Log Out'
+        logoutBtn.addEventListener('click', async () => {
+          await fetch('/api/users/logout', { method: 'POST' })
+          window.location.href = '/'
+        })
+        navActions.appendChild(logoutBtn)
+      }
+    } catch {
+      // Not logged in — keep default login/signup links
+    }
+  }
+}

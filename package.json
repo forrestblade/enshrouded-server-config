@@ -1,0 +1,21 @@
+{
+  "name": ".",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "valence dev",
+    "build": "valence build",
+    "migrate": "valence migrate",
+    "user:create": "valence user:create",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@valencets/valence": "^0.7.1",
+    "@valencets/cms": "^0.2.1",
+    "@valencets/db": "^0.1.2",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
