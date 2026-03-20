@@ -1,0 +1,27 @@
+[Unit]
+Description=Enshrouded Config Hub
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=enshrouded
+Group=enshrouded
+WorkingDirectory=/opt/enshrouded-config
+EnvironmentFile=/opt/enshrouded-config/.env
+ExecStart=/usr/bin/node --import /opt/enshrouded-config/node_modules/tsx/dist/loader.mjs server.ts
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=enshrouded-config
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/enshrouded-config
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

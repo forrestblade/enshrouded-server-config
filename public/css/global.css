@@ -233,3 +233,21 @@ a:hover { color: var(--val-color-primary-hover); }
   object-fit: cover;
   border: 1px solid var(--val-color-border);
 }
+
+/* Site footer */
+.site-footer {
+  text-align: center;
+  padding: var(--val-space-6) var(--val-space-4);
+  margin-top: var(--val-space-8);
+  border-top: 1px solid var(--val-color-border);
+  font-size: var(--val-text-xs);
+  color: var(--val-color-text-muted);
+}
+.site-footer a {
+  color: var(--val-color-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.site-footer a:hover {
+  color: var(--val-color-text);
+}

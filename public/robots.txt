@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /browse
+Allow: /browse/
+Disallow: /admin
+Disallow: /api/
+Disallow: /config/
+Disallow: /account
+
+Sitemap: https://enshroudedserverconfig.com/sitemap.xml

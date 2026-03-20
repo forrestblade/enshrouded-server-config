@@ -633,7 +633,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       // Only admin role can access admin panel
       if (user.role !== 'admin') {
         res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8', ...SECURITY_HEADERS })
-        res.end('<h1>403</h1><p>Admin access required</p>')
+        res.end(ERROR_404_HTML.replace('404', '403').replace("The page you're looking for doesn't exist.", 'Admin access required.'))
         return
       }
     }
