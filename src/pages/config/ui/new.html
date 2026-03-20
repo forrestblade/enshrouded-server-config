@@ -38,7 +38,7 @@
 
       <div class="form-group">
         <label for="preset">Game Settings Preset</label>
-        <select id="preset" name="gameSettingsPreset">
+        <select id="preset" name="gameSettingsPreset" data-telemetry-type="FORM_INPUT" data-telemetry-target="config.preset-select">
           <option value="Default">Default</option>
           <option value="Relaxed">Relaxed</option>
           <option value="Hard">Hard</option>
@@ -47,7 +47,7 @@
         </select>
       </div>
 
-      <button type="submit" class="btn-create" id="btn-submit">Create Config</button>
+      <button type="submit" class="btn-create" id="btn-submit" data-telemetry-type="CLICK" data-telemetry-target="config.create">Create Config</button>
       <p class="error" id="error" role="alert"></p>
     </form>
   </main>
@@ -58,5 +58,6 @@
 
   <script type="module" src="/js/nav.js"></script>
   <script type="module" src="/js/config-new.js"></script>
+  <script type="module" src="/js/telemetry-init.js"></script>
 </body>
 </html>

@@ -98,6 +98,7 @@ const ERROR_404_HTML = readFileSync(join(rootDir, 'src/pages/error/ui/404.html')
 const ERROR_500_HTML = readFileSync(join(rootDir, 'src/pages/error/ui/500.html'), 'utf-8')
 
 const PAGES: Record<string, string> = {
+  '/analytics': join(rootDir, 'src/pages/analytics/ui/index.html'),
   '/': join(rootDir, 'src/pages/home/ui/index.html'),
   '/config/new': join(rootDir, 'src/pages/config/ui/new.html'),
   '/login': join(rootDir, 'src/pages/auth/ui/login.html'),
@@ -237,6 +238,82 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
     lines.push('</urlset>')
     res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8', ...SECURITY_HEADERS })
     res.end(lines.join('\n'))
+  },
+
+  
+  'GET /api/admin/analytics': async (req, res) => {
+    const user = await getSessionUser(req)
+    if (!user || (user as any).role !== 'admin') { sendJson(res, 403, { error: 'Admin only' }); return }
+
+    const now = new Date()
+    const today = now.toISOString().split('T')[0]
+    const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString().split('T')[0]
+
+    // Core metrics
+    const users = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM users WHERE deleted_at IS NULL')
+    const configs = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM "server-configs" WHERE deleted_at IS NULL')
+    const shared = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM "server-configs" WHERE shared = true AND deleted_at IS NULL')
+    const sessions = await pool.sql.unsafe('SELECT COUNT(*)::int as c FROM sessions WHERE created_at >= $1', [weekAgo])
+
+    // Funnel
+    const funnel = await pool.sql.unsafe(`
+      SELECT
+        (SELECT COUNT(DISTINCT session_id)::int FROM events WHERE dom_target IN ('home.browse', 'home.new-config')) as home_engaged,
+        (SELECT COUNT(DISTINCT session_id)::int FROM events WHERE dom_target = 'browse.config-tile') as browsed_configs,
+        (SELECT COUNT(DISTINCT session_id)::int FROM events WHERE event_category = 'LEAD_FORM') as attempted_auth,
+        (SELECT COUNT(DISTINCT session_id)::int FROM events WHERE dom_target = 'editor.save') as saved_config,
+        (SELECT COUNT(DISTINCT session_id)::int FROM events WHERE dom_target = 'editor.export') as exported
+    `)
+
+    // Top referrers
+    const referrers = await pool.sql.unsafe(`
+      SELECT COALESCE(NULLIF(referrer, ''), 'Direct') as source, COUNT(*)::int as count
+      FROM sessions WHERE created_at >= $1
+      GROUP BY source ORDER BY count DESC LIMIT 10
+    `, [weekAgo])
+
+    // Top actions
+    const actions = await pool.sql.unsafe(`
+      SELECT dom_target as action, COUNT(*)::int as count
+      FROM events WHERE created_at >= $1 AND dom_target != ''
+      GROUP BY dom_target ORDER BY count DESC LIMIT 15
+    `, [weekAgo])
+
+    // Hourly activity (last 24h)
+    const hourly = await pool.sql.unsafe(`
+      SELECT date_trunc('hour', created_at) as hour, COUNT(*)::int as count
+      FROM events WHERE created_at >= NOW() - INTERVAL '24 hours'
+      GROUP BY hour ORDER BY hour
+    `)
+
+    // Daily sessions (last 7 days)
+    const daily = await pool.sql.unsafe(`
+      SELECT date_trunc('day', created_at)::date as day, COUNT(*)::int as count
+      FROM sessions WHERE created_at >= $1
+      GROUP BY day ORDER BY day
+    `, [weekAgo])
+
+    // Recent configs
+    const recentConfigs = await pool.sql.unsafe(`
+      SELECT name, slug, "gameSettingsPreset", shared, created_at
+      FROM "server-configs" WHERE deleted_at IS NULL
+      ORDER BY created_at DESC LIMIT 10
+    `)
+
+    sendJson(res, 200, {
+      overview: {
+        totalUsers: (users[0] as any)?.c ?? 0,
+        totalConfigs: (configs[0] as any)?.c ?? 0,
+        sharedConfigs: (shared[0] as any)?.c ?? 0,
+        weekSessions: (sessions[0] as any)?.c ?? 0,
+      },
+      funnel: funnel[0] ?? {},
+      referrers,
+      actions,
+      hourly,
+      daily,
+      recentConfigs,
+    })
   },
 
   'GET /api/users/me': async (req, res) => {

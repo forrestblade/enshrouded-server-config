@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analytics — Enshrouded Config Hub</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/css/global.css">
+  <style>
+    .analytics { max-width: 1100px; margin: 0 auto; padding: var(--val-space-6) var(--val-space-4); }
+    .analytics h1 { margin-bottom: var(--val-space-6); }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--val-space-3); margin-bottom: var(--val-space-6); }
+    .kpi { background: var(--val-color-bg-elevated); border: 1px solid var(--val-color-border); border-radius: var(--val-radius-lg); padding: var(--val-space-4); text-align: center; }
+    .kpi-value { font-size: 2rem; font-weight: var(--val-weight-bold); color: var(--val-color-text); }
+    .kpi-label { font-size: var(--val-text-xs); color: var(--val-color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: var(--val-space-1); }
+
+    .section { margin-bottom: var(--val-space-6); }
+    .section h2 { font-size: var(--val-text-lg); margin-bottom: var(--val-space-3); }
+
+    .funnel { display: flex; gap: var(--val-space-2); flex-wrap: wrap; }
+    .funnel-step { flex: 1; min-width: 120px; background: var(--val-color-bg-elevated); border: 1px solid var(--val-color-border); border-radius: var(--val-radius-md); padding: var(--val-space-3); text-align: center; position: relative; }
+    .funnel-step::after { content: '→'; position: absolute; right: -0.8rem; top: 50%; transform: translateY(-50%); color: var(--val-color-text-muted); font-size: 1.2rem; }
+    .funnel-step:last-child::after { display: none; }
+    .funnel-value { font-size: 1.5rem; font-weight: var(--val-weight-bold); }
+    .funnel-label { font-size: var(--val-text-xs); color: var(--val-color-text-muted); }
+    .funnel-pct { font-size: var(--val-text-xs); color: #4ade80; margin-top: var(--val-space-1); }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: var(--val-space-4); }
+    @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } .funnel { flex-direction: column; } .funnel-step::after { display: none; } }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: var(--val-text-sm); }
+    .data-table th { text-align: left; padding: var(--val-space-2); border-bottom: 1px solid var(--val-color-border); color: var(--val-color-text-muted); font-weight: var(--val-weight-medium); }
+    .data-table td { padding: var(--val-space-2); border-bottom: 1px solid var(--val-color-border); }
+    .data-table .count { text-align: right; font-variant-numeric: tabular-nums; }
+
+    .bar { display: inline-block; height: 8px; background: var(--val-color-primary); border-radius: 4px; margin-right: var(--val-space-2); vertical-align: middle; }
+
+    .chart { display: flex; align-items: flex-end; gap: 2px; height: 80px; }
+    .chart-bar { flex: 1; background: var(--val-color-primary); border-radius: 2px 2px 0 0; min-width: 4px; position: relative; }
+    .chart-bar:hover::after { content: attr(data-label); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--val-color-bg-elevated); border: 1px solid var(--val-color-border); padding: 2px 6px; border-radius: 4px; font-size: 10px; white-space: nowrap; }
+
+    .recent-list { list-style: none; padding: 0; }
+    .recent-list li { padding: var(--val-space-2) 0; border-bottom: 1px solid var(--val-color-border); display: flex; justify-content: space-between; font-size: var(--val-text-sm); }
+    .recent-list .badge { font-size: var(--val-text-xs); background: var(--val-color-bg-elevated); padding: 0.1rem 0.4rem; border-radius: 0.5rem; border: 1px solid var(--val-color-border); }
+
+    .loading { text-align: center; color: var(--val-color-text-muted); padding: var(--val-space-8); }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to content</a>
+  <header>
+    <nav class="top-nav" id="top-nav" aria-label="Main navigation">
+      <a href="/" class="nav-brand">Enshrouded Config</a>
+      <div class="nav-actions" id="nav-actions"></div>
+    </nav>
+  </header>
+
+  <main id="main-content" class="analytics">
+    <h1>Analytics</h1>
+    <div id="content" class="loading">Loading analytics...</div>
+  </main>
+
+  <footer class="site-footer">
+    Built with <a href="https://github.com/valencets/valence">Valence</a> · <a href="https://github.com/forrestblade/enshrouded-server-config">Source on GitHub</a>
+  </footer>
+
+  <script type="module" src="/js/nav.js"></script>
+  <script type="module" src="/js/analytics.js"></script>
+</body>
+</html>

@@ -25,12 +25,16 @@ if (navActions) {
         const accountLink = document.createElement('a')
         accountLink.className = 'btn btn-outline'
         accountLink.href = '/account'
+        accountLink.dataset.telemetryType = 'CLICK'
+        accountLink.dataset.telemetryTarget = 'nav.account'
         accountLink.textContent = 'Account'
         navActions.appendChild(accountLink)
 
         const logoutBtn = document.createElement('button')
         logoutBtn.className = 'btn btn-outline'
         logoutBtn.textContent = 'Log Out'
+        logoutBtn.dataset.telemetryType = 'CLICK'
+        logoutBtn.dataset.telemetryTarget = 'nav.logout'
         logoutBtn.setAttribute('aria-label', 'Log out')
         logoutBtn.dataset.telemetryType = 'CLICK'
         logoutBtn.dataset.telemetryTarget = 'nav.logout'
