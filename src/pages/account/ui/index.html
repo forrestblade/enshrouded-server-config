@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Account — Enshrouded Server Config</title>
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/account.css">
+</head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">Enshrouded Config</a>
+    <div class="nav-actions" id="nav-actions">
+      <a href="/login" class="btn btn-outline">Log In</a>
+      <a href="/signup" class="btn btn-primary">Sign Up</a>
+    </div>
+  </nav>
+  <div class="account-page">
+    <a class="back" href="/">&larr; Back</a>
+    <h1>Account Settings</h1>
+    <form id="account-form" class="account-form">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" required>
+      </div>
+      <div class="form-group">
+        <label for="avatarUrl">Avatar URL</label>
+        <input type="url" id="avatarUrl" placeholder="https://...">
+        <div class="avatar-preview" id="avatar-preview"></div>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" disabled>
+      </div>
+      <button type="submit" class="btn btn-primary" id="btn-save" data-telemetry-type="CLICK" data-telemetry-target="account.save">Save Changes</button>
+      <p class="form-message" id="message"></p>
+    </form>
+    <div class="danger-zone">
+      <h2>Danger Zone</h2>
+      <p>Permanently delete your account. Your configs will be preserved but unlinked from your profile.</p>
+      <button class="btn btn-danger" id="btn-delete" data-telemetry-type="CLICK" data-telemetry-target="account.delete">Delete Account</button>
+    </div>
+    <div class="modal-overlay" id="delete-modal" hidden>
+      <div class="modal">
+        <h3>Delete Account?</h3>
+        <p>This cannot be undone. Your configs will remain but lose ownership.</p>
+        <div class="modal-actions">
+          <button class="btn btn-outline" id="btn-cancel-delete">Cancel</button>
+          <button class="btn btn-danger" id="btn-confirm-delete">Delete My Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/js/nav.js"></script>
+  <script type="module" src="/js/account.js"></script>
+  <script type="module" src="/js/telemetry-init.js"></script>
+</body>
+</html>

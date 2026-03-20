@@ -1,0 +1,78 @@
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  text-align: center;
+  padding: var(--val-space-8);
+  background: linear-gradient(to bottom, oklch(0.13 0.027 261.7 / 0.6), oklch(0.13 0.027 261.7 / 0.95)),
+              url('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1203620/page_bg_raw.jpg') center/cover no-repeat;
+}
+.hero h1 {
+  font-size: var(--val-text-4xl);
+  font-weight: var(--val-weight-bold);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--val-space-4);
+}
+.hero p {
+  color: var(--val-color-text-muted);
+  font-size: var(--val-text-lg);
+  max-width: 48ch;
+  line-height: var(--val-leading-relaxed);
+  margin-bottom: var(--val-space-8);
+}
+.hero-links { display: flex; gap: var(--val-space-4); }
+.hero-links a {
+  padding: var(--val-space-2) var(--val-space-6);
+  border-radius: var(--val-radius-md);
+  font-size: var(--val-text-sm);
+  font-weight: var(--val-weight-medium);
+  text-decoration: none;
+  transition: background var(--val-duration-fast), color var(--val-duration-fast);
+}
+
+.configs {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 var(--val-space-4) var(--val-space-8);
+}
+.configs h2 {
+  font-size: var(--val-text-xl);
+  font-weight: var(--val-weight-semibold);
+  margin-bottom: var(--val-space-4);
+}
+.config-list { list-style: none; display: flex; flex-direction: column; gap: var(--val-space-3); }
+.config-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--val-space-4);
+  border: 1px solid var(--val-color-border);
+  border-radius: var(--val-radius-lg);
+  text-decoration: none;
+  color: var(--val-color-text);
+  transition: border-color var(--val-duration-fast);
+}
+.config-card:hover { border-color: var(--val-color-primary); }
+.config-card .info h3 {
+  font-size: var(--val-text-base);
+  font-weight: var(--val-weight-medium);
+  margin-bottom: var(--val-space-1);
+}
+.config-card .meta {
+  font-size: var(--val-text-xs);
+  color: var(--val-color-text-muted);
+}
+.config-card .preset {
+  font-size: var(--val-text-xs);
+  padding: var(--val-space-1) var(--val-space-2);
+  background: var(--val-color-bg-muted);
+  border-radius: var(--val-radius-sm);
+  color: var(--val-color-text-muted);
+}
+.empty {
+  color: var(--val-color-text-muted);
+  padding: var(--val-space-8) 0;
+  text-align: center;
+}

@@ -413,6 +413,13 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     })
     if (!res.ok) {
       const body = await res.text()
+      const tracker = document.createElement('span')
+      tracker.dataset.telemetryType = 'FORM_INPUT'
+      tracker.dataset.telemetryTarget = 'editor.save-failed'
+      tracker.style.display = 'none'
+      document.body.appendChild(tracker)
+      tracker.click()
+      tracker.remove()
       throw new Error('Save failed: ' + (body || res.status))
     }
     config = await res.json()

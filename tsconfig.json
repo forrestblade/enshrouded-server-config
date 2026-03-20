@@ -16,6 +16,7 @@
   },
   "include": [
     "*.ts",
-    "collections/**/*.ts"
+    "collections/**/*.ts",
+    "src/**/*.ts"
   ]
 }

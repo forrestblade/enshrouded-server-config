@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Browse Configs — Enshrouded Server Config</title>
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/browse.css">
+</head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">Enshrouded Config</a>
+    <div class="nav-actions" id="nav-actions">
+      <a href="/login" class="btn btn-outline">Log In</a>
+      <a href="/signup" class="btn btn-primary">Sign Up</a>
+    </div>
+  </nav>
+  <div class="browse-page">
+    <div class="browse-header">
+      <h1>Browse Configs</h1>
+      <p>Community-shared server configurations for Enshrouded.</p>
+    </div>
+    <div class="browse-controls">
+      <input type="search" id="search" placeholder="Search by name or preset..." class="search-input" data-telemetry-type="FORM_INPUT" data-telemetry-target="browse.search">
+      <select id="filter-preset" class="filter-select" data-telemetry-type="FORM_INPUT" data-telemetry-target="browse.filter-preset">
+        <option value="">All Presets</option>
+        <option value="Default">Default</option>
+        <option value="Relaxed">Relaxed</option>
+        <option value="Hard">Hard</option>
+        <option value="Survival">Survival</option>
+        <option value="Custom">Custom</option>
+      </select>
+    </div>
+    <section class="featured-section" id="featured-section" hidden>
+      <h2>Featured</h2>
+      <div class="config-grid" id="featured-list"></div>
+    </section>
+    <section class="all-section">
+      <h2>All Shared Configs</h2>
+      <div class="config-grid" id="config-grid"></div>
+      <p class="empty" id="empty" hidden>No shared configs found.</p>
+    </section>
+  </div>
+  <script type="module" src="/js/nav.js"></script>
+  <script type="module" src="/js/browse.js"></script>
+  <script type="module" src="/js/telemetry-init.js"></script>
+</body>
+</html>

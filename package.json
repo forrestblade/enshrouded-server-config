@@ -1,18 +1,20 @@
 {
-  "name": ".",
-  "version": "0.1.0",
+  "name": "enshrouded-server-config",
+  "version": "1.0.0",
   "type": "module",
+  "description": "Enshrouded game server configuration tool built with Valence",
   "scripts": {
-    "dev": "valence dev",
-    "build": "valence build",
+    "dev": "tsx --watch server.ts",
+    "build": "tsc",
     "migrate": "valence migrate",
     "user:create": "valence user:create",
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "@valencets/valence": "^0.7.1",
-    "@valencets/cms": "^0.2.1",
+    "@valencets/cms": "^0.4.0",
+    "@valencets/core": "^0.2.0",
     "@valencets/db": "^0.1.2",
+    "@valencets/valence": "^0.9.0",
     "tsx": "^4.21.0"
   },
   "devDependencies": {

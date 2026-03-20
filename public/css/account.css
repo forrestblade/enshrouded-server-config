@@ -1,0 +1,136 @@
+.account-page {
+  max-width: 480px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.account-page .back {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: var(--val-text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.account-page .back:hover {
+  color: var(--val-text-primary);
+}
+
+.account-page h1 {
+  margin: 0 0 1.5rem;
+  font-size: 1.5rem;
+  color: var(--val-text-primary);
+}
+
+.account-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.account-form label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--val-text-secondary);
+}
+
+.account-form input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--val-border);
+  border-radius: var(--val-radius, 6px);
+  background: var(--val-bg-input, var(--val-bg-secondary));
+  color: var(--val-text-primary);
+  font-size: 0.875rem;
+  box-sizing: border-box;
+}
+
+.account-form input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.avatar-preview {
+  margin-top: 0.5rem;
+  width: 48px;
+  height: 48px;
+}
+
+.avatar-preview img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--val-border);
+}
+
+.form-message {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  min-height: 1.25rem;
+}
+
+.form-message.success {
+  color: var(--val-success, #4ade80);
+}
+
+.form-message.error {
+  color: var(--val-danger, #f87171);
+}
+
+.danger-zone {
+  border-top: 1px solid var(--val-border);
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+}
+
+.danger-zone h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  color: var(--val-danger, #f87171);
+}
+
+.danger-zone p {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--val-text-secondary);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+.modal {
+  background: var(--val-bg-elevated, var(--val-bg-secondary));
+  padding: 1.5rem;
+  border-radius: var(--val-radius, 6px);
+  max-width: 400px;
+  width: 90%;
+  border: 1px solid var(--val-border);
+}
+
+.modal h3 {
+  margin: 0 0 0.5rem;
+  color: var(--val-text-primary);
+}
+
+.modal p {
+  margin: 0 0 1.25rem;
+  font-size: 0.875rem;
+  color: var(--val-text-secondary);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}

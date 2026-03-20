@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Config Detail — Enshrouded Server Config</title>
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/browse.css">
+</head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">Enshrouded Config</a>
+    <div class="nav-actions" id="nav-actions">
+      <a href="/login" class="btn btn-outline">Log In</a>
+      <a href="/signup" class="btn btn-primary">Sign Up</a>
+    </div>
+  </nav>
+  <div class="detail-page">
+    <a class="back" href="/browse">&larr; Browse</a>
+    <div id="detail" hidden>
+      <div class="detail-header">
+        <div>
+          <h1 id="config-name"></h1>
+          <p class="detail-meta" id="config-meta"></p>
+        </div>
+        <div class="detail-actions">
+          <button class="btn btn-outline" id="btn-export" data-telemetry-type="CLICK" data-telemetry-target="browse.export">Export JSON</button>
+          <button class="btn btn-primary" id="btn-clone" hidden data-telemetry-type="CLICK" data-telemetry-target="browse.clone">Clone to My Configs</button>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h2>Server Settings</h2>
+        <div class="detail-grid" id="server-settings"></div>
+      </div>
+      <div class="detail-section">
+        <h2>Game Settings</h2>
+        <div class="detail-grid" id="game-settings"></div>
+      </div>
+      <div class="detail-section">
+        <h2>User Groups</h2>
+        <div id="user-groups"></div>
+      </div>
+    </div>
+    <p class="not-found" id="not-found" hidden>Config not found or not shared.</p>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script type="module" src="/js/nav.js"></script>
+  <script type="module" src="/js/browse-detail.js"></script>
+  <script type="module" src="/js/telemetry-init.js"></script>
+</body>
+</html>

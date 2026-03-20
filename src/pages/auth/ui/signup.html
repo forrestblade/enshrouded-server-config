@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign Up — Enshrouded Server Config</title>
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">Enshrouded Config</a>
+    <div class="nav-actions">
+      <a href="/login" class="btn btn-outline">Log In</a>
+    </div>
+  </nav>
+
+  <div class="auth-page">
+    <h1>Sign Up</h1>
+    <form class="auth-form" id="signup-form" data-telemetry-type="LEAD_FORM" data-telemetry-target="auth.signup">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required autofocus>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required minlength="8">
+      </div>
+      <button type="submit" class="auth-submit" id="btn-submit">Create Account</button>
+      <p class="auth-error" id="error"></p>
+    </form>
+    <p class="auth-footer">Already have an account? <a href="/login">Log in</a></p>
+  </div>
+
+  <script type="module" src="/js/signup.js"></script>
+  <script type="module" src="/js/telemetry-init.js"></script>
+</body>
+</html>

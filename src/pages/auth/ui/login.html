@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log In — Enshrouded Server Config</title>
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">Enshrouded Config</a>
+    <div class="nav-actions">
+      <a href="/signup" class="btn btn-primary">Sign Up</a>
+    </div>
+  </nav>
+
+  <div class="auth-page">
+    <h1>Log In</h1>
+    <form class="auth-form" id="login-form" data-telemetry-type="LEAD_FORM" data-telemetry-target="auth.login">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required autofocus>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <button type="submit" class="auth-submit" id="btn-submit">Log In</button>
+      <p class="auth-error" id="error"></p>
+    </form>
+    <p class="auth-footer">Don't have an account? <a href="/signup">Sign up</a></p>
+  </div>
+
+  <script type="module" src="/js/login.js"></script>
+  <script type="module" src="/js/telemetry-init.js"></script>
+</body>
+</html>

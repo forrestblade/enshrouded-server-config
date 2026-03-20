@@ -64,6 +64,8 @@ function createTile (item, owner) {
   const div = document.createElement('a')
   div.className = 'config-tile'
   div.href = '/browse/' + item.id
+  div.dataset.telemetryType = 'CLICK'
+  div.dataset.telemetryTarget = 'browse.config-tile'
 
   const header = document.createElement('div')
   header.className = 'tile-header'

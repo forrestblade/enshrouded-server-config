@@ -5,6 +5,7 @@ import { ResultAsync } from 'neverthrow'
 import { buildCms } from '@valencets/cms'
 import { createPool } from '@valencets/db'
 import argon2 from 'argon2'
+import { createIngestionHandler } from '@valencets/telemetry'
 import configResult from './valence.config.js'
 
 // ── Resolve config ────────────────────────────────────────
@@ -166,7 +167,17 @@ async function getSessionUser (req: IncomingMessage): Promise<Record<string, unk
 }
 
 // ── Custom routes ─────────────────────────────────────────
+// ── Telemetry ─────────────────────────────────────────────
+const telemetryHandler = config.telemetry?.enabled
+  ? createIngestionHandler({ pool })
+  : null
+
 const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => Promise<void>> = {
+  'POST /api/telemetry': async (req, res) => {
+    if (telemetryHandler) { await telemetryHandler(req, res); return }
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ ok: true, ingested: 0 }))
+  },
   'POST /api/users/register': async (req, res) => {
     const bodyResult = await parseBody(req)
     if (bodyResult.isErr()) {

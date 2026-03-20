@@ -31,6 +31,8 @@ if (navActions) {
         const logoutBtn = document.createElement('button')
         logoutBtn.className = 'btn btn-outline'
         logoutBtn.textContent = 'Log Out'
+        logoutBtn.dataset.telemetryType = 'CLICK'
+        logoutBtn.dataset.telemetryTarget = 'nav.logout'
         logoutBtn.addEventListener('click', async () => {
           await fetch('/api/users/logout', { method: 'POST' })
           window.location.href = '/'

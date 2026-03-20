@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edit Config — Enshrouded Server Config</title>
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/editor.css">
+</head>
+<body>
+  <nav class="top-nav" id="top-nav">
+    <a href="/" class="nav-brand">Enshrouded Config</a>
+    <div class="nav-actions" id="nav-actions">
+      <a href="/login" class="btn btn-outline">Log In</a>
+      <a href="/signup" class="btn btn-primary">Sign Up</a>
+    </div>
+  </nav>
+
+  <div class="page">
+    <a class="back" href="/">&larr; All Configs</a>
+    <div id="editor" hidden>
+      <div class="page-header">
+        <h1 id="config-title"></h1>
+        <div class="header-actions">
+          <div class="toggle-field" style="margin-right: auto;">
+            <input type="checkbox" id="shared" data-path="shared" data-telemetry-type="CLICK" data-telemetry-target="editor.share-toggle">
+            <label for="shared">Share Publicly</label>
+          </div>
+          <button class="btn btn-outline" id="btn-reset" data-telemetry-type="CLICK" data-telemetry-target="editor.reset">Reset Defaults</button>
+          <button class="btn btn-outline" id="btn-export" data-telemetry-type="CLICK" data-telemetry-target="editor.export">Export JSON</button>
+          <button class="btn btn-primary" id="btn-save" data-telemetry-type="CLICK" data-telemetry-target="editor.save">Save</button>
+        </div>
+      </div>
+
+      <!-- Basic Server Settings -->
+      <details open>
+        <summary>Basic Server Settings</summary>
+        <div class="section-body">
+          <div class="grid">
+            <div class="field">
+              <label title="The name of the dedicated server as it appears in the server browser">Server Name</label>
+              <input type="text" id="serverName" data-path="server.serverName" placeholder="My Enshrouded Server">
+            </div>
+            <div class="field">
+              <label title="The directory where save games are stored">Save Directory</label>
+              <input type="text" id="saveDirectory" data-path="server.saveDirectory" placeholder="./savegame">
+            </div>
+            <div class="field">
+              <label title="The directory where log files are written">Log Directory</label>
+              <input type="text" id="logDirectory" data-path="server.logDirectory" placeholder="./logs">
+            </div>
+            <div class="field">
+              <label title="The IP address to bind the server to. 0.0.0.0 binds to all interfaces">IP Address</label>
+              <input type="text" id="ip" data-path="server.ip" placeholder="0.0.0.0">
+            </div>
+            <div class="field">
+              <label title="The port used for Steam server browser queries (1-65535)">Query Port</label>
+              <input type="number" id="queryPort" data-path="server.queryPort" min="1" max="65535" placeholder="15637">
+            </div>
+            <div class="field">
+              <label title="Maximum number of player slots (1-16)">Slot Count</label>
+              <input type="number" id="slotCount" data-path="server.slotCount" min="1" max="16" placeholder="16">
+            </div>
+            <div class="field">
+              <label title="Voice chat mode: Proximity, Always On, or Disabled">Voice Chat Mode</label>
+              <select id="voiceChatMode" data-path="server.voiceChatMode">
+                <option value="Proximity">Proximity</option>
+                <option value="AlwaysOn">Always On</option>
+                <option value="Disabled">Disabled</option>
+              </select>
+            </div>
+            <div class="toggle-field">
+              <input type="checkbox" id="enableVoiceChat" data-path="server.enableVoiceChat">
+              <label for="enableVoiceChat">Enable Voice Chat</label>
+            </div>
+            <div class="toggle-field">
+              <input type="checkbox" id="enableTextChat" data-path="server.enableTextChat">
+              <label for="enableTextChat">Enable Text Chat</label>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- Game Settings -->
+      <details id="game-settings-section">
+        <summary>Game Settings</summary>
+        <div class="section-body">
+          <div class="field" style="margin-bottom: var(--val-space-4);">
+            <label>Preset</label>
+            <select id="gameSettingsPreset" data-path="gameSettingsPreset">
+              <option value="Default">Default</option>
+              <option value="Relaxed">Relaxed</option>
+              <option value="Hard">Hard</option>
+              <option value="Survival">Survival</option>
+              <option value="Custom">Custom</option>
+            </select>
+          </div>
+
+          <div id="custom-settings" hidden>
+            <div class="grid" id="game-settings-grid"></div>
+          </div>
+        </div>
+      </details>
+
+      <!-- User Groups -->
+      <details open>
+        <summary>User Groups</summary>
+        <div class="section-body">
+          <div class="group-list" id="group-list"></div>
+          <button class="btn btn-outline" id="btn-add-group" data-telemetry-type="CLICK" data-telemetry-target="config.add-group">+ Add Group</button>
+        </div>
+      </details>
+    </div>
+
+    <p class="not-found" id="not-found" hidden>Config not found.</p>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="/js/nav.js"></script>
+  <script type="module" src="/js/editor.js"></script>
+  <script type="module" src="/js/telemetry-init.js"></script>
+</body>
+</html>
