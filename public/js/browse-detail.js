@@ -265,17 +265,20 @@ if (!res.ok) {
 
     // Export JSON
     document.getElementById('btn-export').addEventListener('click', () => {
+      const exportGroups = typeof config.userGroups === 'string' ? JSON.parse(config.userGroups) : (config.userGroups || [])
       const exportData = {
         name: config.server?.serverName || config.name,
         saveDirectory: config.server?.saveDirectory || './savegame',
         logDirectory: config.server?.logDirectory || './logs',
         ip: config.server?.ip || '0.0.0.0',
-        gamePort: config.server?.queryPort || 15637,
         queryPort: config.server?.queryPort || 15637,
         slotCount: config.server?.slotCount || 16,
+        voiceChatMode: config.server?.voiceChatMode || 'Proximity',
+        enableVoiceChat: config.server?.enableVoiceChat ?? true,
+        enableTextChat: config.server?.enableTextChat ?? true,
         gameSettingsPreset: config.gameSettingsPreset || 'Default',
-        gameSettings: config.gameSettings || {},
-        userGroups: config.userGroups || []
+        ...(config.gameSettingsPreset === 'Custom' && config.gameSettings ? config.gameSettings : {}),
+        userGroups: exportGroups
       }
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
       const a = document.createElement('a')
