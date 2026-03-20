@@ -1,11 +1,12 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
+import crypto from 'node:crypto'
 import { readFileSync, existsSync, statSync } from 'node:fs'
 import { join, extname } from 'node:path'
 import { ResultAsync } from 'neverthrow'
 import { buildCms } from '@valencets/cms'
 import { createPool } from '@valencets/db'
 import argon2 from 'argon2'
-import { createIngestionHandler } from '@valencets/telemetry'
+// Telemetry ingestion handler (inline to avoid @valencets/core DOMParser issue in Node)
 import configResult from './valence.config.js'
 
 // ── Resolve config ────────────────────────────────────────
@@ -167,16 +168,35 @@ async function getSessionUser (req: IncomingMessage): Promise<Record<string, unk
 }
 
 // ── Custom routes ─────────────────────────────────────────
-// ── Telemetry ─────────────────────────────────────────────
-const telemetryHandler = config.telemetry?.enabled
-  ? createIngestionHandler({ pool })
-  : null
-
 const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => Promise<void>> = {
   'POST /api/telemetry': async (req, res) => {
-    if (telemetryHandler) { await telemetryHandler(req, res); return }
-    res.writeHead(200, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ ok: true, ingested: 0 }))
+    const chunks: Buffer[] = []
+    for await (const chunk of req) chunks.push(chunk as Buffer)
+    const body = Buffer.concat(chunks).toString()
+    try {
+      const events = JSON.parse(body)
+      if (!Array.isArray(events) || events.length === 0) {
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: true, ingested: 0 }))
+        return
+      }
+      const sessionId = crypto.randomUUID()
+      await pool.sql.unsafe(
+        'INSERT INTO sessions (session_id, referrer, device_type) VALUES ($1, $2, $3)',
+        [sessionId, events[0]?.referrer ?? '', 'beacon']
+      )
+      for (const ev of events) {
+        await pool.sql.unsafe(
+          'INSERT INTO events (session_id, event_category, dom_target, payload) VALUES ($1, $2, $3, $4)',
+          [sessionId, ev.type ?? '', ev.targetDOMNode ?? '', JSON.stringify(ev)]
+        )
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ ok: true, ingested: events.length }))
+    } catch {
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ ok: true, ingested: 0 }))
+    }
   },
   'POST /api/users/register': async (req, res) => {
     const bodyResult = await parseBody(req)

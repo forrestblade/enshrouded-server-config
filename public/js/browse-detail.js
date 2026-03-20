@@ -55,8 +55,15 @@ if (!res.ok) {
 
     // Game settings
     const gameGrid = document.getElementById('game-settings')
-    if (config.gameSettings) {
-      for (const [key, val] of Object.entries(config.gameSettings)) {
+    const gameEntries = config.gameSettings ? Object.entries(config.gameSettings) : []
+    const preset = config.gameSettingsPreset || 'Default'
+    if (gameEntries.length === 0 && preset !== 'Custom') {
+      const msg = document.createElement('p')
+      msg.className = 'preset-defaults-msg'
+      msg.textContent = 'Using ' + preset + ' preset defaults'
+      gameGrid.appendChild(msg)
+    } else {
+      for (const [key, val] of gameEntries) {
         const field = document.createElement('div')
         field.className = 'detail-field'
         const label = document.createElement('div')

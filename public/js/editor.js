@@ -360,7 +360,7 @@ function collectFormData () {
     delete data.gameSettings
   }
 
-  data.userGroups = JSON.stringify(userGroups)
+  data.userGroups = userGroups.map(g => ({ ...g }))
   return data
 }
 
