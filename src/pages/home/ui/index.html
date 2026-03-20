@@ -14,50 +14,55 @@
   <link rel="stylesheet" href="/css/home.css">
 </head>
 <body>
-  <nav class="top-nav" id="top-nav">
-    <a href="/" class="nav-brand">Enshrouded Config</a>
-    <div class="nav-actions" id="nav-actions">
-      <a href="/browse" class="btn btn-outline">Browse</a>
-      <a href="/login" class="btn btn-outline">Log In</a>
-      <a href="/signup" class="btn btn-primary">Sign Up</a>
-    </div>
-  </nav>
-
-  <section class="hero">
-    <h1>Enshrouded Server Config</h1>
-    <p>Create and manage server configurations for Enshrouded dedicated servers. Save multiple configs and export them as JSON.</p>
-    <div class="hero-links">
-      <a href="/config/new" class="btn btn-primary" data-telemetry-type="CLICK" data-telemetry-target="home.new-config">New Config</a>
-      <a href="/browse" class="btn btn-outline" data-telemetry-type="CLICK" data-telemetry-target="home.browse">Browse Community Configs</a>
-    </div>
-  </section>
-
-  <section class="welcome" id="welcome" hidden>
-    <div class="welcome-grid">
-      <div class="welcome-card">
-        <h3>Configure</h3>
-        <p>Tune every setting for your Enshrouded dedicated server &mdash; game rules, difficulty, player slots, and more.</p>
+  <a href="#main-content" class="skip-link">Skip to content</a>
+  <header>
+    <nav class="top-nav" id="top-nav" aria-label="Main navigation">
+      <a href="/" class="nav-brand">Enshrouded Config</a>
+      <div class="nav-actions" id="nav-actions">
+        <a href="/browse" class="btn btn-outline">Browse</a>
+        <a href="/login" class="btn btn-outline">Log In</a>
+        <a href="/signup" class="btn btn-primary">Sign Up</a>
       </div>
-      <div class="welcome-card">
-        <h3>Share</h3>
-        <p>Publish your configs for others to discover on the <a href="/browse">community browse</a> page.</p>
-      </div>
-      <div class="welcome-card">
-        <h3>Export</h3>
-        <p>Download your finished config as a ready-to-use JSON file for your server.</p>
-      </div>
-    </div>
-    <p class="welcome-cta">
-      <a href="/signup" class="btn btn-primary">Create a Free Account</a>
-      to save and manage multiple configurations.
-    </p>
-  </section>
+    </nav>
+  </header>
 
-  <section class="configs" id="configs">
-    <h2>My Configurations</h2>
-    <ul class="config-list" id="config-list"></ul>
-    <p class="empty" id="empty" hidden>No configs yet. Create your first one above.</p>
-  </section>
+  <main id="main-content">
+    <section class="hero">
+      <h1>Enshrouded Server Config</h1>
+      <p>Create and manage server configurations for Enshrouded dedicated servers. Save multiple configs and export them as JSON.</p>
+      <div class="hero-links">
+        <a href="/config/new" class="btn btn-primary" data-telemetry-type="CLICK" data-telemetry-target="home.new-config">New Config</a>
+        <a href="/browse" class="btn btn-outline" data-telemetry-type="CLICK" data-telemetry-target="home.browse">Browse Community Configs</a>
+      </div>
+    </section>
+
+    <section class="welcome" id="welcome" hidden>
+      <div class="welcome-grid">
+        <div class="welcome-card">
+          <h2>Configure</h2>
+          <p>Tune every setting for your Enshrouded dedicated server &mdash; game rules, difficulty, player slots, and more.</p>
+        </div>
+        <div class="welcome-card">
+          <h2>Share</h2>
+          <p>Publish your configs for others to discover on the <a href="/browse">community browse</a> page.</p>
+        </div>
+        <div class="welcome-card">
+          <h2>Export</h2>
+          <p>Download your finished config as a ready-to-use JSON file for your server.</p>
+        </div>
+      </div>
+      <p class="welcome-cta">
+        <a href="/signup" class="btn btn-primary">Create a Free Account</a>
+        to save and manage multiple configurations.
+      </p>
+    </section>
+
+    <section class="configs" id="configs">
+      <h2>My Configurations</h2>
+      <ul class="config-list" id="config-list"></ul>
+      <p class="empty" id="empty" hidden>No configs yet. Create your first one above.</p>
+    </section>
+  </main>
 
   <script type="module" src="/js/nav.js"></script>
   <script type="module" src="/js/home.js"></script>

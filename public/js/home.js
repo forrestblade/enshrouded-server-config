@@ -32,6 +32,7 @@ if (!currentUser) {
       const a = document.createElement('a')
       a.className = 'config-card'
       a.href = '/config/' + item.id
+      a.setAttribute('aria-label', 'Edit config: ' + (item.name ?? 'Untitled Config'))
 
       const info = document.createElement('div')
       info.className = 'info'

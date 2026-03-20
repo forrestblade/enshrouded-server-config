@@ -14,14 +14,17 @@
   <link rel="stylesheet" href="/css/browse.css">
 </head>
 <body>
-  <nav class="top-nav">
-    <a href="/" class="nav-brand">Enshrouded Config</a>
-    <div class="nav-actions" id="nav-actions">
-      <a href="/login" class="btn btn-outline">Log In</a>
-      <a href="/signup" class="btn btn-primary">Sign Up</a>
-    </div>
-  </nav>
-  <div class="detail-page">
+  <a href="#main-content" class="skip-link">Skip to content</a>
+  <header>
+    <nav class="top-nav" aria-label="Main navigation">
+      <a href="/" class="nav-brand">Enshrouded Config</a>
+      <div class="nav-actions" id="nav-actions">
+        <a href="/login" class="btn btn-outline">Log In</a>
+        <a href="/signup" class="btn btn-primary">Sign Up</a>
+      </div>
+    </nav>
+  </header>
+  <main id="main-content" class="detail-page">
     <a class="back" href="/browse">&larr; Browse</a>
     <div id="detail" hidden>
       <div class="detail-header">
@@ -47,9 +50,9 @@
         <div id="user-groups"></div>
       </div>
     </div>
-    <p class="not-found" id="not-found" hidden>Config not found or not shared.</p>
-  </div>
-  <div class="toast" id="toast"></div>
+    <p class="not-found" id="not-found" hidden role="alert">Config not found or not shared.</p>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script type="module" src="/js/nav.js"></script>
   <script type="module" src="/js/browse-detail.js"></script>
   <script type="module" src="/js/telemetry-init.js"></script>

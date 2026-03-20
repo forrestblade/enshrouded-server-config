@@ -14,15 +14,18 @@
   <link rel="stylesheet" href="/css/config-new.css">
 </head>
 <body>
-  <nav class="top-nav" id="top-nav">
-    <a href="/" class="nav-brand">Enshrouded Config</a>
-    <div class="nav-actions" id="nav-actions">
-      <a href="/login" class="btn btn-outline">Log In</a>
-      <a href="/signup" class="btn btn-primary">Sign Up</a>
-    </div>
-  </nav>
+  <a href="#main-content" class="skip-link">Skip to content</a>
+  <header>
+    <nav class="top-nav" id="top-nav" aria-label="Main navigation">
+      <a href="/" class="nav-brand">Enshrouded Config</a>
+      <div class="nav-actions" id="nav-actions">
+        <a href="/login" class="btn btn-outline">Log In</a>
+        <a href="/signup" class="btn btn-primary">Sign Up</a>
+      </div>
+    </nav>
+  </header>
 
-  <div class="page">
+  <main id="main-content" class="page">
     <a class="back" href="/">&larr; Back</a>
     <h1>New Server Config</h1>
 
@@ -44,9 +47,9 @@
       </div>
 
       <button type="submit" class="btn-create" id="btn-submit">Create Config</button>
-      <p class="error" id="error"></p>
+      <p class="error" id="error" role="alert"></p>
     </form>
-  </div>
+  </main>
 
   <script type="module" src="/js/nav.js"></script>
   <script type="module" src="/js/config-new.js"></script>

@@ -15,14 +15,17 @@
   <link rel="stylesheet" href="/css/profile.css">
 </head>
 <body>
-  <nav class="top-nav">
-    <a href="/" class="nav-brand">Enshrouded Config</a>
-    <div class="nav-actions" id="nav-actions">
-      <a href="/login" class="btn btn-outline">Log In</a>
-      <a href="/signup" class="btn btn-primary">Sign Up</a>
-    </div>
-  </nav>
-  <div class="profile-page">
+  <a href="#main-content" class="skip-link">Skip to content</a>
+  <header>
+    <nav class="top-nav" aria-label="Main navigation">
+      <a href="/" class="nav-brand">Enshrouded Config</a>
+      <div class="nav-actions" id="nav-actions">
+        <a href="/login" class="btn btn-outline">Log In</a>
+        <a href="/signup" class="btn btn-primary">Sign Up</a>
+      </div>
+    </nav>
+  </header>
+  <main id="main-content" class="profile-page">
     <a class="back" href="/browse">&larr; Browse</a>
     <div id="profile" hidden>
       <div class="profile-header">
@@ -40,8 +43,8 @@
         <p class="empty" id="profile-empty" hidden>No published configs yet.</p>
       </section>
     </div>
-    <p class="not-found" id="not-found" hidden>User not found.</p>
-  </div>
+    <p class="not-found" id="not-found" hidden role="alert">User not found.</p>
+  </main>
   <script type="module" src="/js/nav.js"></script>
   <script type="module" src="/js/profile.js"></script>
   <script type="module" src="/js/telemetry-init.js"></script>

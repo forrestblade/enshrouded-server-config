@@ -36,19 +36,22 @@
   </style>
 </head>
 <body>
-  <nav class="top-nav" id="top-nav">
-    <a href="/" class="nav-brand">Enshrouded Config</a>
-    <div class="nav-actions" id="nav-actions">
-      <a href="/browse" class="btn btn-outline">Browse</a>
-      <a href="/login" class="btn btn-outline">Log In</a>
-      <a href="/signup" class="btn btn-primary">Sign Up</a>
-    </div>
-  </nav>
-  <div class="error-page">
-    <div class="error-code">404</div>
+  <a href="#main-content" class="skip-link">Skip to content</a>
+  <header>
+    <nav class="top-nav" id="top-nav" aria-label="Main navigation">
+      <a href="/" class="nav-brand">Enshrouded Config</a>
+      <div class="nav-actions" id="nav-actions">
+        <a href="/browse" class="btn btn-outline">Browse</a>
+        <a href="/login" class="btn btn-outline">Log In</a>
+        <a href="/signup" class="btn btn-primary">Sign Up</a>
+      </div>
+    </nav>
+  </header>
+  <main id="main-content" class="error-page" role="alert">
+    <h1 class="error-code">404</h1>
     <p class="error-message">The page you're looking for doesn't exist.</p>
     <a href="/" class="btn btn-primary">Go Home</a>
-  </div>
+  </main>
   <script type="module" src="/js/nav.js"></script>
 </body>
 </html>

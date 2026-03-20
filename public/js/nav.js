@@ -31,6 +31,7 @@ if (navActions) {
         const logoutBtn = document.createElement('button')
         logoutBtn.className = 'btn btn-outline'
         logoutBtn.textContent = 'Log Out'
+        logoutBtn.setAttribute('aria-label', 'Log out')
         logoutBtn.dataset.telemetryType = 'CLICK'
         logoutBtn.dataset.telemetryTarget = 'nav.logout'
         logoutBtn.addEventListener('click', async () => {

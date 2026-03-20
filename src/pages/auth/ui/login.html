@@ -14,14 +14,17 @@
   <link rel="stylesheet" href="/css/auth.css">
 </head>
 <body>
-  <nav class="top-nav">
-    <a href="/" class="nav-brand">Enshrouded Config</a>
-    <div class="nav-actions">
-      <a href="/signup" class="btn btn-primary">Sign Up</a>
-    </div>
-  </nav>
+  <a href="#main-content" class="skip-link">Skip to content</a>
+  <header>
+    <nav class="top-nav" aria-label="Main navigation">
+      <a href="/" class="nav-brand">Enshrouded Config</a>
+      <div class="nav-actions">
+        <a href="/signup" class="btn btn-primary">Sign Up</a>
+      </div>
+    </nav>
+  </header>
 
-  <div class="auth-page">
+  <main id="main-content" class="auth-page">
     <h1>Log In</h1>
     <form class="auth-form" id="login-form" data-telemetry-type="LEAD_FORM" data-telemetry-target="auth.login">
       <div class="form-group">
@@ -33,10 +36,10 @@
         <input type="password" id="password" name="password" required>
       </div>
       <button type="submit" class="auth-submit" id="btn-submit">Log In</button>
-      <p class="auth-error" id="error"></p>
+      <p class="auth-error" id="error" role="alert"></p>
     </form>
     <p class="auth-footer">Don't have an account? <a href="/signup">Sign up</a></p>
-  </div>
+  </main>
 
   <script type="module" src="/js/login.js"></script>
   <script type="module" src="/js/telemetry-init.js"></script>

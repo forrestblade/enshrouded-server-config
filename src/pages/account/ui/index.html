@@ -14,14 +14,17 @@
   <link rel="stylesheet" href="/css/account.css">
 </head>
 <body>
-  <nav class="top-nav">
-    <a href="/" class="nav-brand">Enshrouded Config</a>
-    <div class="nav-actions" id="nav-actions">
-      <a href="/login" class="btn btn-outline">Log In</a>
-      <a href="/signup" class="btn btn-primary">Sign Up</a>
-    </div>
-  </nav>
-  <div class="account-page">
+  <a href="#main-content" class="skip-link">Skip to content</a>
+  <header>
+    <nav class="top-nav" aria-label="Main navigation">
+      <a href="/" class="nav-brand">Enshrouded Config</a>
+      <div class="nav-actions" id="nav-actions">
+        <a href="/login" class="btn btn-outline">Log In</a>
+        <a href="/signup" class="btn btn-primary">Sign Up</a>
+      </div>
+    </nav>
+  </header>
+  <main id="main-content" class="account-page">
     <a class="back" href="/">&larr; Back</a>
     <h1>Account Settings</h1>
     <form id="account-form" class="account-form">
@@ -44,7 +47,7 @@
         <input type="email" id="email" disabled>
       </div>
       <button type="submit" class="btn btn-primary" id="btn-save" data-telemetry-type="CLICK" data-telemetry-target="account.save">Save Changes</button>
-      <p class="form-message" id="message"></p>
+      <p class="form-message" id="message" role="alert"></p>
     </form>
     <div class="danger-zone">
       <h2>Danger Zone</h2>
@@ -52,16 +55,16 @@
       <button class="btn btn-danger" id="btn-delete" data-telemetry-type="CLICK" data-telemetry-target="account.delete">Delete Account</button>
     </div>
     <div class="modal-overlay" id="delete-modal" hidden>
-      <div class="modal">
-        <h3>Delete Account?</h3>
-        <p>This cannot be undone. Your configs will remain but lose ownership.</p>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+        <h3 id="delete-modal-title">Delete Account?</h3>
+        <p id="delete-warning">This cannot be undone. Your configs will remain but lose ownership.</p>
         <div class="modal-actions">
           <button class="btn btn-outline" id="btn-cancel-delete">Cancel</button>
           <button class="btn btn-danger" id="btn-confirm-delete">Delete My Account</button>
         </div>
       </div>
     </div>
-  </div>
+  </main>
   <script type="module" src="/js/nav.js"></script>
   <script type="module">import '/js/vendor/val-ui/components/val-textarea.js'</script>
   <script type="module" src="/js/account.js"></script>

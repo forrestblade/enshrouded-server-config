@@ -64,9 +64,18 @@ form.addEventListener('submit', async (e) => {
 
 // Delete account
 const modal = document.getElementById('delete-modal')
-document.getElementById('btn-delete').addEventListener('click', () => { modal.hidden = false })
-document.getElementById('btn-cancel-delete').addEventListener('click', () => { modal.hidden = true })
-document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
+const btnDeleteTrigger = document.getElementById('btn-delete')
+btnDeleteTrigger.addEventListener('click', () => {
+  modal.hidden = false
+  document.getElementById('btn-cancel-delete').focus()
+})
+document.getElementById('btn-cancel-delete').addEventListener('click', () => {
+  modal.hidden = true
+  btnDeleteTrigger.focus()
+})
+const btnConfirmDelete = document.getElementById('btn-confirm-delete')
+btnConfirmDelete.setAttribute('aria-describedby', 'delete-warning')
+btnConfirmDelete.addEventListener('click', async () => {
   const btn = document.getElementById('btn-confirm-delete')
   btn.disabled = true
   btn.textContent = 'Deleting\u2026'
@@ -75,8 +84,8 @@ document.getElementById('btn-confirm-delete').addEventListener('click', async ()
   if (res.ok) {
     window.location.href = '/'
   } else {
-    btn.disabled = false
-    btn.textContent = 'Delete My Account'
+    btnConfirmDelete.disabled = false
+    btnConfirmDelete.textContent = 'Delete My Account'
     modal.hidden = true
     message.textContent = 'Failed to delete account.'
     message.className = 'form-message error'

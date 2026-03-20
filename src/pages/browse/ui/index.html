@@ -14,20 +14,25 @@
   <link rel="stylesheet" href="/css/browse.css">
 </head>
 <body>
-  <nav class="top-nav">
-    <a href="/" class="nav-brand">Enshrouded Config</a>
-    <div class="nav-actions" id="nav-actions">
-      <a href="/login" class="btn btn-outline">Log In</a>
-      <a href="/signup" class="btn btn-primary">Sign Up</a>
-    </div>
-  </nav>
-  <div class="browse-page">
+  <a href="#main-content" class="skip-link">Skip to content</a>
+  <header>
+    <nav class="top-nav" aria-label="Main navigation">
+      <a href="/" class="nav-brand">Enshrouded Config</a>
+      <div class="nav-actions" id="nav-actions">
+        <a href="/login" class="btn btn-outline">Log In</a>
+        <a href="/signup" class="btn btn-primary">Sign Up</a>
+      </div>
+    </nav>
+  </header>
+  <main id="main-content" class="browse-page">
     <div class="browse-header">
       <h1>Browse Configs</h1>
       <p>Community-shared server configurations for Enshrouded.</p>
     </div>
     <div class="browse-controls">
+      <label for="search" class="sr-only">Search configs</label>
       <input type="search" id="search" placeholder="Search by name or preset..." class="search-input" data-telemetry-type="FORM_INPUT" data-telemetry-target="browse.search">
+      <label for="filter-preset" class="sr-only">Filter by preset</label>
       <select id="filter-preset" class="filter-select" data-telemetry-type="FORM_INPUT" data-telemetry-target="browse.filter-preset">
         <option value="">All Presets</option>
         <option value="Default">Default</option>
@@ -36,6 +41,7 @@
         <option value="Survival">Survival</option>
         <option value="Custom">Custom</option>
       </select>
+      <label for="sort-by" class="sr-only">Sort by</label>
       <select id="sort-by" class="filter-select" data-telemetry-type="FORM_INPUT" data-telemetry-target="browse.sort">
         <option value="newest">Newest</option>
         <option value="most-liked">Most Liked</option>
@@ -52,7 +58,7 @@
       <div class="config-grid" id="config-grid"></div>
       <p class="empty" id="empty" hidden>No shared configs found.</p>
     </section>
-  </div>
+  </main>
   <script type="module" src="/js/nav.js"></script>
   <script type="module" src="/js/browse.js"></script>
   <script type="module" src="/js/telemetry-init.js"></script>

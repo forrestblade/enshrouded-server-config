@@ -59,6 +59,7 @@ if (!res.ok) {
           const forkLink = document.createElement('a')
           forkLink.href = '/browse/' + source.id
           forkLink.textContent = source.name || 'Untitled'
+          forkLink.setAttribute('aria-label', 'Forked from ' + (source.name || 'Untitled'))
           forkInfo.textContent = 'Forked from '
           forkInfo.appendChild(forkLink)
           document.getElementById('config-meta').after(forkInfo)
@@ -93,6 +94,8 @@ if (!res.ok) {
     const likeBtn = document.createElement('button')
     likeBtn.className = 'like-btn'
     likeBtn.innerHTML = '<span class="like-icon">♡</span> <span class="like-count">' + (config.likeCount || 0) + '</span>'
+    likeBtn.setAttribute('aria-label', 'Like')
+    likeBtn.setAttribute('aria-pressed', 'false')
     let isLiked = false
     let likeCount = config.likeCount || 0
 
@@ -105,6 +108,8 @@ if (!res.ok) {
           if (isLiked) {
             likeBtn.classList.add('liked')
             likeBtn.querySelector('.like-icon').textContent = '♥'
+            likeBtn.setAttribute('aria-label', 'Unlike')
+            likeBtn.setAttribute('aria-pressed', 'true')
           }
         }
       } catch { /* ignore */ }
@@ -122,6 +127,8 @@ if (!res.ok) {
           likeBtn.querySelector('.like-icon').textContent = isLiked ? '♥' : '♡'
           likeBtn.querySelector('.like-count').textContent = likeCount
           likeBtn.classList.toggle('liked', isLiked)
+          likeBtn.setAttribute('aria-label', isLiked ? 'Unlike' : 'Like')
+          likeBtn.setAttribute('aria-pressed', String(isLiked))
           if (isLiked) {
             likeBtn.style.transform = 'scale(1.2)'
             setTimeout(() => { likeBtn.style.transform = '' }, 200)
@@ -234,8 +241,10 @@ if (!res.ok) {
           permValue.className = 'detail-value'
           if (group[key]) {
             permValue.textContent = '\u2705'
+            permValue.setAttribute('aria-label', label + ': yes')
           } else {
             permValue.textContent = '\u274c'
+            permValue.setAttribute('aria-label', label + ': no')
           }
           permField.appendChild(permLabel)
           permField.appendChild(permValue)

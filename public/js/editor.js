@@ -27,6 +27,7 @@ function buildGameSettingsGrid () {
     const label = document.createElement('label')
     label.textContent = f.label
     label.title = f.tip
+    label.setAttribute('for', f.id)
     div.appendChild(label)
 
     if (f.type === 'pct') {
@@ -50,6 +51,9 @@ function buildGameSettingsGrid () {
       rangeInput.step = String(f.step ?? 0.01)
       rangeInput.value = String(GAME_DEFAULTS[f.id] ?? 1.0)
       rangeInput.setAttribute('aria-label', f.label + ' slider')
+      rangeInput.setAttribute('aria-valuemin', String(f.min))
+      rangeInput.setAttribute('aria-valuemax', String(f.max))
+      rangeInput.setAttribute('aria-valuenow', String(GAME_DEFAULTS[f.id] ?? 1.0))
 
       const pctLabel = document.createElement('span')
       pctLabel.className = 'pct-label'
@@ -71,6 +75,7 @@ function buildGameSettingsGrid () {
       const durLabel = document.createElement('div')
       durLabel.className = 'duration-label'
       durLabel.id = f.id + '-mins'
+      durLabel.setAttribute('aria-live', 'polite')
       div.appendChild(durLabel)
     } else if (f.type === 'select') {
       const select = document.createElement('select')
@@ -111,6 +116,7 @@ function initPctControls () {
       if (isNaN(v)) return
       numInput.value = v
       rangeInput.value = v
+      rangeInput.setAttribute('aria-valuenow', String(v))
       label.textContent = Math.round(v * 100) + '%'
     }
 
@@ -187,6 +193,7 @@ function renderGroups () {
       const delBtn = document.createElement('button')
       delBtn.className = 'btn btn-danger'
       delBtn.textContent = 'Delete'
+      delBtn.setAttribute('aria-label', 'Remove group: ' + (group.name || 'Unnamed'))
       delBtn.addEventListener('click', () => { userGroups.splice(index, 1); renderGroups() })
       header.appendChild(delBtn)
     }
@@ -235,7 +242,11 @@ function renderGroups () {
       cb.type = 'checkbox'
       cb.id = `group-${index}-${toggle.key}`
       cb.checked = group[toggle.key]
-      cb.addEventListener('change', () => { userGroups[index][toggle.key] = cb.checked })
+      cb.setAttribute('aria-checked', String(group[toggle.key]))
+      cb.addEventListener('change', () => {
+        userGroups[index][toggle.key] = cb.checked
+        cb.setAttribute('aria-checked', String(cb.checked))
+      })
       const lbl = document.createElement('label')
       lbl.htmlFor = cb.id
       lbl.textContent = toggle.label
@@ -626,7 +637,9 @@ document.getElementById('btn-reset').addEventListener('click', () => {
 })
 
 // ── Add Group ─────────────────────────────────────────────
-document.getElementById('btn-add-group').addEventListener('click', () => {
+const btnAddGroup = document.getElementById('btn-add-group')
+btnAddGroup.setAttribute('aria-label', 'Add user group')
+btnAddGroup.addEventListener('click', () => {
   userGroups.push({
     name: 'New Group', password: '',
     canKickBan: false, canAccessInventories: false,

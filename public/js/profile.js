@@ -12,7 +12,7 @@ if (!res.ok) {
   if (data.avatarUrl) {
     const img = document.createElement('img')
     img.src = data.avatarUrl
-    img.alt = data.username
+    img.alt = (data.username || 'User') + "'s avatar"
     img.width = 96
     img.height = 96
     avatarDiv.appendChild(img)
@@ -74,6 +74,8 @@ if (!res.ok) {
       const tile = document.createElement('a')
       tile.className = 'config-tile'
       tile.href = '/browse/' + item.id
+      tile.setAttribute('role', 'article')
+      tile.setAttribute('aria-label', item.name || 'Untitled')
 
       const header = document.createElement('div')
       header.className = 'tile-header'
@@ -100,6 +102,7 @@ if (!res.ok) {
         const forkSpan = document.createElement('span')
         forkSpan.className = 'tile-stat'
         forkSpan.textContent = '\u2442 ' + item.forkCount
+        forkSpan.setAttribute('aria-label', item.forkCount + (item.forkCount === 1 ? ' fork' : ' forks'))
         footer.appendChild(forkSpan)
       }
 
@@ -107,6 +110,7 @@ if (!res.ok) {
         const likeSpan = document.createElement('span')
         likeSpan.className = 'tile-stat'
         likeSpan.textContent = '\u2665 ' + item.likeCount
+        likeSpan.setAttribute('aria-label', item.likeCount + (item.likeCount === 1 ? ' like' : ' likes'))
         footer.appendChild(likeSpan)
       }
 

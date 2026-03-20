@@ -54,8 +54,10 @@ if (tagFilterDiv && allTags.length > 0) {
     btn.className = 'tag-filter-btn'
     btn.textContent = tag.name
     btn.dataset.slug = tag.slug
+    btn.setAttribute('aria-pressed', 'false')
     btn.addEventListener('click', () => {
       btn.classList.toggle('active')
+      btn.setAttribute('aria-pressed', String(btn.classList.contains('active')))
       render(allConfigs)
     })
     tagFilterDiv.appendChild(btn)
@@ -93,6 +95,9 @@ const search = document.getElementById('search')
 const filterPreset = document.getElementById('filter-preset')
 
 const sortSelect = document.getElementById('sort-by')
+if (sortSelect) sortSelect.setAttribute('aria-label', 'Sort configs by')
+
+if (search) search.setAttribute('aria-label', 'Search configs')
 
 function getActiveTagSlugs () {
   const btns = document.querySelectorAll('.tag-filter-btn.active')
@@ -140,6 +145,8 @@ function createTile (item, owner) {
   const div = document.createElement('a')
   div.className = 'config-tile'
   div.href = '/browse/' + item.id
+  div.setAttribute('role', 'article')
+  div.setAttribute('aria-label', item.name || 'Untitled')
   div.dataset.telemetryType = 'CLICK'
   div.dataset.telemetryTarget = 'browse.config-tile'
 
@@ -220,6 +227,7 @@ function createTile (item, owner) {
     forkSpan.className = 'tile-stat'
     forkSpan.textContent = '\u2442 ' + item.forkCount
     forkSpan.title = item.forkCount + (item.forkCount === 1 ? ' fork' : ' forks')
+    forkSpan.setAttribute('aria-label', item.forkCount + (item.forkCount === 1 ? ' fork' : ' forks'))
     footer.appendChild(forkSpan)
   }
 
@@ -227,6 +235,9 @@ function createTile (item, owner) {
   likeSpan.className = 'tile-stat'
   const isLiked = myLikedIds.has(item.id)
   likeSpan.textContent = (isLiked ? '\u2665' : '\u2661') + ' ' + (item.likeCount || 0)
+  likeSpan.setAttribute('role', 'button')
+  likeSpan.setAttribute('aria-label', isLiked ? 'Unlike' : 'Like')
+  likeSpan.setAttribute('aria-pressed', String(isLiked))
   if (isLiked) likeSpan.classList.add('liked')
   footer.appendChild(likeSpan)
 

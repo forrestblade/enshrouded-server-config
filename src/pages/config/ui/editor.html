@@ -14,15 +14,18 @@
   <link rel="stylesheet" href="/css/editor.css">
 </head>
 <body>
-  <nav class="top-nav" id="top-nav">
-    <a href="/" class="nav-brand">Enshrouded Config</a>
-    <div class="nav-actions" id="nav-actions">
-      <a href="/login" class="btn btn-outline">Log In</a>
-      <a href="/signup" class="btn btn-primary">Sign Up</a>
-    </div>
-  </nav>
+  <a href="#main-content" class="skip-link">Skip to content</a>
+  <header>
+    <nav class="top-nav" id="top-nav" aria-label="Main navigation">
+      <a href="/" class="nav-brand">Enshrouded Config</a>
+      <div class="nav-actions" id="nav-actions">
+        <a href="/login" class="btn btn-outline">Log In</a>
+        <a href="/signup" class="btn btn-primary">Sign Up</a>
+      </div>
+    </nav>
+  </header>
 
-  <div class="page">
+  <main id="main-content" class="page">
     <a class="back" href="/">&larr; All Configs</a>
     <div id="editor" hidden>
       <div class="page-header">
@@ -49,31 +52,31 @@
         <div class="section-body">
           <div class="grid">
             <div class="field">
-              <label title="The name of the dedicated server as it appears in the server browser">Server Name</label>
+              <label for="serverName" title="The name of the dedicated server as it appears in the server browser">Server Name</label>
               <input type="text" id="serverName" data-path="server.serverName" placeholder="My Enshrouded Server">
             </div>
             <div class="field">
-              <label title="The directory where save games are stored">Save Directory</label>
+              <label for="saveDirectory" title="The directory where save games are stored">Save Directory</label>
               <input type="text" id="saveDirectory" data-path="server.saveDirectory" placeholder="./savegame">
             </div>
             <div class="field">
-              <label title="The directory where log files are written">Log Directory</label>
+              <label for="logDirectory" title="The directory where log files are written">Log Directory</label>
               <input type="text" id="logDirectory" data-path="server.logDirectory" placeholder="./logs">
             </div>
             <div class="field">
-              <label title="The IP address to bind the server to. 0.0.0.0 binds to all interfaces">IP Address</label>
+              <label for="ip" title="The IP address to bind the server to. 0.0.0.0 binds to all interfaces">IP Address</label>
               <input type="text" id="ip" data-path="server.ip" placeholder="0.0.0.0">
             </div>
             <div class="field">
-              <label title="The port used for Steam server browser queries (1-65535)">Query Port</label>
+              <label for="queryPort" title="The port used for Steam server browser queries (1-65535)">Query Port</label>
               <input type="number" id="queryPort" data-path="server.queryPort" min="1" max="65535" placeholder="15637">
             </div>
             <div class="field">
-              <label title="Maximum number of player slots (1-16)">Slot Count</label>
+              <label for="slotCount" title="Maximum number of player slots (1-16)">Slot Count</label>
               <input type="number" id="slotCount" data-path="server.slotCount" min="1" max="16" placeholder="16">
             </div>
             <div class="field">
-              <label title="Voice chat mode: Proximity, Always On, or Disabled">Voice Chat Mode</label>
+              <label for="voiceChatMode" title="Voice chat mode: Proximity, Always On, or Disabled">Voice Chat Mode</label>
               <select id="voiceChatMode" data-path="server.voiceChatMode">
                 <option value="Proximity">Proximity</option>
                 <option value="AlwaysOn">Always On</option>
@@ -97,7 +100,7 @@
         <summary>Game Settings</summary>
         <div class="section-body">
           <div class="field" style="margin-bottom: var(--val-space-4);">
-            <label>Preset</label>
+            <label for="gameSettingsPreset">Preset</label>
             <select id="gameSettingsPreset" data-path="gameSettingsPreset">
               <option value="Default">Default</option>
               <option value="Relaxed">Relaxed</option>
@@ -123,10 +126,10 @@
       </details>
     </div>
 
-    <p class="not-found" id="not-found" hidden>Config not found.</p>
-  </div>
+    <p class="not-found" id="not-found" hidden role="alert">Config not found.</p>
+  </main>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script type="module" src="/js/nav.js"></script>
   <script type="module" src="/js/editor.js"></script>
