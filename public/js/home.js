@@ -9,12 +9,17 @@ try {
 
 const list = document.getElementById('config-list')
 const empty = document.getElementById('empty')
-const configs = document.querySelector('.configs')
+const configs = document.getElementById('configs')
+const welcome = document.getElementById('welcome')
 
-// Only show "My Configurations" section when logged in
+// Show welcome section for logged-out users, configs section for logged-in
 if (!currentUser) {
   configs.hidden = true
+  welcome.hidden = false
 } else {
+  welcome.hidden = true
+  configs.hidden = false
+
   const res = await fetch('/api/server-configs?owner=' + currentUser.id)
   if (res.ok) {
     const items = await res.json()

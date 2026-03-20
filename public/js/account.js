@@ -18,11 +18,15 @@ avatarInput.value = user.avatarUrl || ''
 updatePreview()
 
 function updatePreview () {
-  const url = document.getElementById('avatarUrl').value.trim()
+  const url = avatarInput.value.trim()
+  preview.textContent = ''
   if (url) {
-    preview.innerHTML = '<img src="' + url + '" alt="Avatar" width="48" height="48">'
-  } else {
-    preview.innerHTML = ''
+    const img = document.createElement('img')
+    img.src = url
+    img.alt = 'Avatar'
+    img.width = 48
+    img.height = 48
+    preview.appendChild(img)
   }
 }
 
@@ -38,7 +42,7 @@ form.addEventListener('submit', async (e) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       username: document.getElementById('username').value.trim(),
-      avatarUrl: document.getElementById('avatarUrl').value.trim()
+      avatarUrl: avatarInput.value.trim()
     })
   })
 
@@ -57,10 +61,16 @@ const modal = document.getElementById('delete-modal')
 document.getElementById('btn-delete').addEventListener('click', () => { modal.hidden = false })
 document.getElementById('btn-cancel-delete').addEventListener('click', () => { modal.hidden = true })
 document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-confirm-delete')
+  btn.disabled = true
+  btn.textContent = 'Deleting\u2026'
+
   const res = await fetch('/api/account', { method: 'DELETE' })
   if (res.ok) {
     window.location.href = '/'
   } else {
+    btn.disabled = false
+    btn.textContent = 'Delete My Account'
     modal.hidden = true
     message.textContent = 'Failed to delete account.'
     message.className = 'form-message error'

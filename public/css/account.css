@@ -1,47 +1,53 @@
 .account-page {
   max-width: 480px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  margin: var(--val-space-8) auto;
+  padding: 0 var(--val-space-4);
 }
 
 .account-page .back {
   display: inline-block;
-  margin-bottom: 1rem;
-  color: var(--val-text-secondary);
+  margin-bottom: var(--val-space-4);
+  color: var(--val-color-text-muted);
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: var(--val-text-sm);
 }
 
 .account-page .back:hover {
-  color: var(--val-text-primary);
+  color: var(--val-color-primary);
 }
 
 .account-page h1 {
-  margin: 0 0 1.5rem;
-  font-size: 1.5rem;
-  color: var(--val-text-primary);
+  margin: 0 0 var(--val-space-6);
+  font-size: var(--val-text-2xl);
+  color: var(--val-color-text);
 }
 
 .account-form .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: var(--val-space-4);
 }
 
 .account-form label {
   display: block;
-  margin-bottom: 0.25rem;
-  font-size: 0.875rem;
-  color: var(--val-text-secondary);
+  margin-bottom: var(--val-space-1);
+  font-size: var(--val-text-sm);
+  font-weight: var(--val-weight-medium);
+  color: var(--val-color-text-muted);
 }
 
 .account-form input {
   width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--val-border);
-  border-radius: var(--val-radius, 6px);
-  background: var(--val-bg-input, var(--val-bg-secondary));
-  color: var(--val-text-primary);
-  font-size: 0.875rem;
+  padding: var(--val-space-2) var(--val-space-3);
+  border: 1px solid var(--val-color-border);
+  border-radius: var(--val-radius-md);
+  background: var(--val-color-bg-elevated);
+  color: var(--val-color-text);
+  font-size: var(--val-text-sm);
   box-sizing: border-box;
+}
+
+.account-form input:focus {
+  outline: 2px solid var(--val-color-primary);
+  outline-offset: 1px;
 }
 
 .account-form input:disabled {
@@ -50,7 +56,7 @@
 }
 
 .avatar-preview {
-  margin-top: 0.5rem;
+  margin-top: var(--val-space-2);
   width: 48px;
   height: 48px;
 }
@@ -60,45 +66,45 @@
   height: 48px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid var(--val-border);
+  border: 2px solid var(--val-color-border);
 }
 
 .form-message {
-  margin-top: 0.75rem;
-  font-size: 0.8125rem;
+  margin-top: var(--val-space-3);
+  font-size: var(--val-text-sm);
   min-height: 1.25rem;
 }
 
 .form-message.success {
-  color: var(--val-success, #4ade80);
+  color: var(--val-color-success);
 }
 
 .form-message.error {
-  color: var(--val-danger, #f87171);
+  color: var(--val-color-error);
 }
 
 .danger-zone {
-  border-top: 1px solid var(--val-border);
-  margin-top: 2rem;
-  padding-top: 1.5rem;
+  border-top: 1px solid var(--val-color-border);
+  margin-top: var(--val-space-8);
+  padding-top: var(--val-space-6);
 }
 
 .danger-zone h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1.125rem;
-  color: var(--val-danger, #f87171);
+  margin: 0 0 var(--val-space-2);
+  font-size: var(--val-text-lg);
+  color: var(--val-color-error);
 }
 
 .danger-zone p {
-  margin: 0 0 1rem;
-  font-size: 0.875rem;
-  color: var(--val-text-secondary);
+  margin: 0 0 var(--val-space-4);
+  font-size: var(--val-text-sm);
+  color: var(--val-color-text-muted);
 }
 
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: oklch(0 0 0 / 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,27 +116,28 @@
 }
 
 .modal {
-  background: var(--val-bg-elevated, var(--val-bg-secondary));
-  padding: 1.5rem;
-  border-radius: var(--val-radius, 6px);
+  background: var(--val-color-bg-elevated);
+  padding: var(--val-space-6);
+  border-radius: var(--val-radius-lg);
   max-width: 400px;
   width: 90%;
-  border: 1px solid var(--val-border);
+  border: 1px solid var(--val-color-border);
+  box-shadow: var(--val-shadow-md);
 }
 
 .modal h3 {
-  margin: 0 0 0.5rem;
-  color: var(--val-text-primary);
+  margin: 0 0 var(--val-space-2);
+  color: var(--val-color-text);
 }
 
 .modal p {
-  margin: 0 0 1.25rem;
-  font-size: 0.875rem;
-  color: var(--val-text-secondary);
+  margin: 0 0 var(--val-space-6);
+  font-size: var(--val-text-sm);
+  color: var(--val-color-text-muted);
 }
 
 .modal-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--val-space-3);
   justify-content: flex-end;
 }

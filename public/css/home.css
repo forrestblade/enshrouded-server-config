@@ -35,7 +35,10 @@
 .configs {
   max-width: 720px;
   margin: 0 auto;
-  padding: 0 var(--val-space-4) var(--val-space-8);
+  padding: var(--val-space-8) var(--val-space-4);
+}
+.configs[hidden] {
+  display: none;
 }
 .configs h2 {
   font-size: var(--val-text-xl);
@@ -75,4 +78,57 @@
   color: var(--val-color-text-muted);
   padding: var(--val-space-8) 0;
   text-align: center;
+}
+
+/* Welcome section for logged-out users */
+.welcome {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--val-space-8) var(--val-space-4);
+}
+
+.welcome[hidden] {
+  display: none;
+}
+
+.welcome-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--val-space-4);
+  margin-bottom: var(--val-space-8);
+}
+
+@media (max-width: 600px) {
+  .welcome-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.welcome-card {
+  padding: var(--val-space-6);
+  border: 1px solid var(--val-color-border);
+  border-radius: var(--val-radius-lg);
+  background: var(--val-color-bg-elevated);
+}
+
+.welcome-card h3 {
+  font-size: var(--val-text-base);
+  font-weight: var(--val-weight-semibold);
+  margin-bottom: var(--val-space-2);
+}
+
+.welcome-card p {
+  font-size: var(--val-text-sm);
+  color: var(--val-color-text-muted);
+  line-height: var(--val-leading-relaxed);
+}
+
+.welcome-cta {
+  text-align: center;
+  font-size: var(--val-text-sm);
+  color: var(--val-color-text-muted);
+}
+
+.welcome-cta .btn {
+  margin-right: var(--val-space-1);
 }
