@@ -4,8 +4,9 @@ CREATE TABLE IF NOT EXISTS tags (
   slug TEXT NOT NULL UNIQUE,
   "isCurated" BOOLEAN NOT NULL DEFAULT false,
   "usageCount" INTEGER NOT NULL DEFAULT 0,
-  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
-  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ
 );
 
 -- Seed curated tags
