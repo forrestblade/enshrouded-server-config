@@ -207,7 +207,9 @@ function renderGroups () {
     // Password
     const pwField = document.createElement('div')
     pwField.className = 'field'
-    pwField.innerHTML = '<label>Password</label>'
+    const pwLabel = document.createElement('label')
+    pwLabel.textContent = 'Password'
+    pwField.appendChild(pwLabel)
     const pwInput = document.createElement('input')
     pwInput.type = 'text'
     pwInput.value = group.password
@@ -219,7 +221,9 @@ function renderGroups () {
     // Reserved Slots
     const slotsField = document.createElement('div')
     slotsField.className = 'field'
-    slotsField.innerHTML = '<label>Reserved Slots</label>'
+    const slotsLabel = document.createElement('label')
+    slotsLabel.textContent = 'Reserved Slots'
+    slotsField.appendChild(slotsLabel)
     const slotsInput = document.createElement('input')
     slotsInput.type = 'number'
     slotsInput.min = '0'

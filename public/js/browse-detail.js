@@ -93,7 +93,15 @@ if (!res.ok) {
     // Like button
     const likeBtn = document.createElement('button')
     likeBtn.className = 'like-btn'
-    likeBtn.innerHTML = '<span class="like-icon">♡</span> <span class="like-count">' + (config.likeCount || 0) + '</span>'
+    const likeIcon = document.createElement('span')
+    likeIcon.className = 'like-icon'
+    likeIcon.textContent = '♡'
+    const likeCountSpan = document.createElement('span')
+    likeCountSpan.className = 'like-count'
+    likeCountSpan.textContent = config.likeCount || 0
+    likeBtn.appendChild(likeIcon)
+    likeBtn.appendChild(document.createTextNode(' '))
+    likeBtn.appendChild(likeCountSpan)
     likeBtn.setAttribute('aria-label', 'Like')
     likeBtn.setAttribute('aria-pressed', 'false')
     let isLiked = false
