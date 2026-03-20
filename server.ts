@@ -199,6 +199,35 @@ async function getSessionUser (req: IncomingMessage): Promise<Record<string, unk
 //   - POST /api/server-configs/:id/clone — limit to prevent clone abuse
 //   - POST /api/telemetry       — limit to prevent telemetry flood
 const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => Promise<void>> = {
+  'GET /sitemap.xml': async (_req, res) => {
+    const configs = await pool.sql.unsafe(
+      \`SELECT slug, "updatedAt" FROM "server-configs" WHERE shared = true AND deleted_at IS NULL ORDER BY "updatedAt" DESC\`
+    )
+    const users = await pool.sql.unsafe(
+      \`SELECT username, "createdAt" FROM users WHERE deleted_at IS NULL\`
+    )
+    const base = 'https://enshroudedserverconfig.com'
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    // Static pages
+    xml += \`  <url><loc>\${base}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n\`
+    xml += \`  <url><loc>\${base}/browse</loc><changefreq>daily</changefreq><priority>0.9</priority></url>\n\`
+    xml += \`  <url><loc>\${base}/signup</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>\n\`
+    xml += \`  <url><loc>\${base}/login</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>\n\`
+    // Shared configs
+    for (const c of configs) {
+      const date = c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : ''
+      xml += \`  <url><loc>\${base}/browse/\${c.id}</loc>\${date ? \`<lastmod>\${date}</lastmod>\` : ''}<changefreq>weekly</changefreq><priority>0.7</priority></url>\n\`
+    }
+    // User profiles
+    for (const u of users) {
+      xml += \`  <url><loc>\${base}/users/\${encodeURIComponent(u.username)}</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>\n\`
+    }
+    xml += '</urlset>'
+    res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8', ...SECURITY_HEADERS })
+    res.end(xml)
+  },
+
   'GET /api/users/me': async (req, res) => {
     const user = await getSessionUser(req)
     if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
