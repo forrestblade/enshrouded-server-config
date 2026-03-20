@@ -230,13 +230,33 @@ function createTile (item, owner) {
   }
 
   const likeSpan = document.createElement('span')
-  likeSpan.className = 'tile-stat'
-  const isLiked = myLikedIds.has(item.id)
-  likeSpan.textContent = (isLiked ? '\u2665' : '\u2661') + ' ' + (item.likeCount || 0)
+  likeSpan.className = 'tile-stat like-btn'
+  likeSpan.style.cursor = 'pointer'
+  let isLiked = myLikedIds.has(item.id)
+  let likeCount = item.likeCount || 0
+  likeSpan.textContent = (isLiked ? '\u2665' : '\u2661') + ' ' + likeCount
   likeSpan.setAttribute('role', 'button')
   likeSpan.setAttribute('aria-label', isLiked ? 'Unlike' : 'Like')
   likeSpan.setAttribute('aria-pressed', String(isLiked))
   if (isLiked) likeSpan.classList.add('liked')
+  likeSpan.addEventListener('click', async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!currentUser) return
+    try {
+      const res = await fetch('/api/server-configs/' + item.id + '/like', { method: 'POST' })
+      if (res.ok) {
+        const data = await res.json()
+        isLiked = data.liked
+        likeCount += isLiked ? 1 : -1
+        likeSpan.textContent = (isLiked ? '\u2665' : '\u2661') + ' ' + likeCount
+        likeSpan.classList.toggle('liked', isLiked)
+        likeSpan.setAttribute('aria-label', isLiked ? 'Unlike' : 'Like')
+        likeSpan.setAttribute('aria-pressed', String(isLiked))
+        if (isLiked) myLikedIds.add(item.id); else myLikedIds.delete(item.id)
+      }
+    } catch { /* ignore */ }
+  })
   footer.appendChild(likeSpan)
 
   div.appendChild(footer)
