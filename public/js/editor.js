@@ -1,3 +1,4 @@
+import { t } from './i18n.js'
 import { presets, defaultUserGroups, gameSettingsFields } from './presets.js'
 
 // ── State ──────────────────────────────────────────────────
@@ -192,7 +193,7 @@ function renderGroups () {
     if (userGroups.length > 1) {
       const delBtn = document.createElement('button')
       delBtn.className = 'btn btn-danger'
-      delBtn.textContent = 'Delete'
+      delBtn.textContent = t('common.delete')
       delBtn.setAttribute('aria-label', 'Remove group: ' + (group.name || 'Unnamed'))
       delBtn.addEventListener('click', () => { userGroups.splice(index, 1); renderGroups() })
       header.appendChild(delBtn)
@@ -463,7 +464,7 @@ async function loadConfig () {
       userGroups = draft._userGroups.map(g => ({ ...g }))
       renderGroups()
     }
-    showToast('Draft restored')
+    showToast(t('editor.draftRestored'))
   }
 }
 
@@ -533,7 +534,7 @@ function scheduleDraftSave () {
   clearTimeout(draftTimer)
   draftTimer = setTimeout(() => {
     saveDraft()
-    showToast('Draft saved', 'success')
+    showToast(t('editor.draftSaved'), 'success')
   }, 2000)
 }
 
@@ -561,11 +562,11 @@ document.getElementById('btn-save').addEventListener('click', async () => {
       document.body.appendChild(tracker)
       tracker.click()
       tracker.remove()
-      throw new Error('Save failed: ' + (body || res.status))
+      throw new Error(t('editor.saveFailed') + ' ' + (body || res.status))
     }
     config = await res.json()
     clearDraft()
-    showToast('Config saved')
+    showToast(t('editor.saved'))
   } catch (err) {
     showToast(err.message, 'error')
   } finally {
@@ -608,12 +609,12 @@ document.getElementById('btn-export').addEventListener('click', () => {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = 'enshrouded_server.json'
+  a.download = t('editor.exportFilename')
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
-  showToast('JSON exported')
+  showToast(t('editor.jsonExported'))
 })
 
 // ── Reset Defaults ────────────────────────────────────────
@@ -633,7 +634,7 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   applyGameSettings(presets.Default)
   userGroups = defaultUserGroups.map(g => ({ ...g }))
   renderGroups()
-  showToast('Reset to defaults')
+  showToast(t('editor.resetToDefaults'))
 })
 
 // ── Add Group ─────────────────────────────────────────────

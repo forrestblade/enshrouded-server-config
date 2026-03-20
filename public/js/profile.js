@@ -1,3 +1,4 @@
+import { t } from './i18n.js'
 const username = window.location.pathname.split('/').pop()
 
 const res = await fetch('/api/users/profile/' + encodeURIComponent(username))
@@ -36,7 +37,7 @@ if (!res.ok) {
 
   // Join date
   const joinDate = data.createdAt ? new Date(data.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) : ''
-  document.getElementById('profile-meta').textContent = joinDate ? 'Joined ' + joinDate : ''
+  document.getElementById('profile-meta').textContent = joinDate ? t('profile.joined', { date: joinDate }) : ''
 
   // Stats
   const configs = data.configs || []
@@ -102,7 +103,7 @@ if (!res.ok) {
         const forkSpan = document.createElement('span')
         forkSpan.className = 'tile-stat'
         forkSpan.textContent = '\u2442 ' + item.forkCount
-        forkSpan.setAttribute('aria-label', item.forkCount + (item.forkCount === 1 ? ' fork' : ' forks'))
+        forkSpan.setAttribute('aria-label', item.forkCount === 1 ? t('browse.fork', { count: item.forkCount }) : t('browse.forks', { count: item.forkCount }))
         footer.appendChild(forkSpan)
       }
 

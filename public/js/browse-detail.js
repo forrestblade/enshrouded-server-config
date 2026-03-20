@@ -1,3 +1,4 @@
+import { t } from './i18n.js'
 import { presets, diffFromDefault } from './presets.js'
 
 const configId = window.location.pathname.split('/').pop()
@@ -11,11 +12,10 @@ function showToast (msg, type) {
 
 // Check if user is logged in
 let currentUser = null
-const hasCookie = document.cookie.includes('cms_session')
-if (hasCookie) {
+try {
   const meRes = await fetch('/api/users/me')
   if (meRes.ok) currentUser = await meRes.json()
-}
+} catch { /* not logged in */ }
 
 // Fetch config
 const res = await fetch('/api/server-configs/' + configId)
@@ -71,7 +71,7 @@ if (!res.ok) {
     if (config.forkCount > 0) {
       const forkCount = document.createElement('span')
       forkCount.className = 'fork-count-badge'
-      forkCount.textContent = config.forkCount + (config.forkCount === 1 ? ' fork' : ' forks')
+      forkCount.textContent = config.forkCount === 1 ? t('browse.fork', { count: config.forkCount }) : t('browse.forks', { count: config.forkCount })
       document.getElementById('config-meta').appendChild(document.createTextNode(' · '))
       document.getElementById('config-meta').appendChild(forkCount)
     }
@@ -116,7 +116,7 @@ if (!res.ok) {
     }
 
     likeBtn.addEventListener('click', async () => {
-      if (!currentUser) { showToast('Log in to like configs', 'error'); return }
+      if (!currentUser) { showToast(t('browse.loginToLike'), 'error'); return }
       likeBtn.disabled = true
       try {
         const likeRes = await fetch('/api/server-configs/' + configId + '/like', { method: 'POST' })
@@ -134,7 +134,7 @@ if (!res.ok) {
             setTimeout(() => { likeBtn.style.transform = '' }, 200)
           }
         }
-      } catch { showToast('Failed to like', 'error') }
+      } catch { showToast(t('browse.failedToLike'), 'error') }
       likeBtn.disabled = false
     })
 
@@ -266,7 +266,7 @@ if (!res.ok) {
           const cloned = await cloneRes.json()
           window.location.href = '/config/' + cloned.id
         } else {
-          showToast('Failed to clone config', 'error')
+          showToast(t('browse.failedToClone'), 'error')
           cloneBtn.disabled = false
         }
       })
@@ -306,7 +306,7 @@ if (!res.ok) {
       a.download = (config.name || 'config').replace(/[^a-z0-9]/gi, '_') + '.json'
       a.click()
       URL.revokeObjectURL(a.href)
-      showToast('JSON exported', 'success')
+      showToast(t('editor.jsonExported'), 'success')
     })
   }
 }

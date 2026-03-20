@@ -1,3 +1,4 @@
+import { t } from './i18n.js'
 // Redirect if not logged in
 const meRes = await fetch('/api/users/me')
 if (!meRes.ok) {
@@ -53,11 +54,11 @@ form.addEventListener('submit', async (e) => {
   })
 
   if (res.ok) {
-    message.textContent = 'Changes saved.'
+    message.textContent = t('account.saved')
     message.className = 'form-message success'
   } else {
     const body = await res.json().catch(() => ({}))
-    message.textContent = body.error || 'Failed to save.'
+    message.textContent = body.error || t('account.saveFailed')
     message.className = 'form-message error'
   }
 })
@@ -78,7 +79,7 @@ btnConfirmDelete.setAttribute('aria-describedby', 'delete-warning')
 btnConfirmDelete.addEventListener('click', async () => {
   const btn = document.getElementById('btn-confirm-delete')
   btn.disabled = true
-  btn.textContent = 'Deleting\u2026'
+  btn.textContent = t('common.deleting')
 
   const res = await fetch('/api/account', { method: 'DELETE' })
   if (res.ok) {
@@ -87,7 +88,7 @@ btnConfirmDelete.addEventListener('click', async () => {
     btnConfirmDelete.disabled = false
     btnConfirmDelete.textContent = 'Delete My Account'
     modal.hidden = true
-    message.textContent = 'Failed to delete account.'
+    message.textContent = t('account.deleteFailed')
     message.className = 'form-message error'
   }
 })

@@ -1,3 +1,4 @@
+import { t } from './i18n.js'
 const form = document.getElementById('signup-form')
 const errorEl = document.getElementById('error')
 const btn = document.getElementById('btn-submit')
@@ -27,7 +28,7 @@ form.addEventListener('submit', async (e) => {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
-      throw new Error(body.message ?? `Sign up failed (${res.status})`)
+      throw new Error(body.message ?? t('auth.signupFailed'))
     }
 
     // Auto-login after signup

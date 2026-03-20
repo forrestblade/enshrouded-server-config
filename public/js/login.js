@@ -1,3 +1,4 @@
+import { t } from './i18n.js'
 const form = document.getElementById('login-form')
 const errorEl = document.getElementById('error')
 const btn = document.getElementById('btn-submit')
@@ -19,7 +20,7 @@ form.addEventListener('submit', async (e) => {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
-      throw new Error(body.message ?? 'Invalid email or password')
+      throw new Error(body.message ?? t('auth.loginFailed'))
     }
 
     window.location.href = '/'

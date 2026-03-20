@@ -1,3 +1,4 @@
+import { t } from './i18n.js'
 import { presets, diffFromDefault } from './presets.js'
 
 // Resolve owner UUIDs to user info
@@ -18,13 +19,10 @@ async function resolveUser (ownerId) {
 
 // Fetch current user
 let currentUser = null
-const hasCookie = document.cookie.includes('cms_session')
-if (hasCookie) {
-  try {
-    const meRes = await fetch('/api/users/me')
-    if (meRes.ok) currentUser = await meRes.json()
-  } catch { /* ignore */ }
-}
+try {
+  const meRes = await fetch('/api/users/me')
+  if (meRes.ok) currentUser = await meRes.json()
+} catch { /* not logged in */ }
 
 // Fetch user's liked config IDs
 let myLikedIds = new Set()
@@ -226,8 +224,8 @@ function createTile (item, owner) {
     const forkSpan = document.createElement('span')
     forkSpan.className = 'tile-stat'
     forkSpan.textContent = '\u2442 ' + item.forkCount
-    forkSpan.title = item.forkCount + (item.forkCount === 1 ? ' fork' : ' forks')
-    forkSpan.setAttribute('aria-label', item.forkCount + (item.forkCount === 1 ? ' fork' : ' forks'))
+    forkSpan.title = item.forkCount === 1 ? t('browse.fork', { count: item.forkCount }) : t('browse.forks', { count: item.forkCount })
+    forkSpan.setAttribute('aria-label', item.forkCount === 1 ? t('browse.fork', { count: item.forkCount }) : t('browse.forks', { count: item.forkCount }))
     footer.appendChild(forkSpan)
   }
 
