@@ -141,11 +141,22 @@ function matchPagePattern (pathname: string): string | null {
 }
 
 // ── Helpers ───────────────────────────────────────────────
+const MAX_BODY_SIZE = 1024 * 1024 // 1 MB
+
 function parseBody (req: IncomingMessage): ResultAsync<Record<string, unknown>, Error> {
   return ResultAsync.fromPromise(
     new Promise<Record<string, unknown>>((resolve, reject) => {
       const chunks: Buffer[] = []
-      req.on('data', (chunk: Buffer) => chunks.push(chunk))
+      let totalSize = 0
+      req.on('data', (chunk: Buffer) => {
+        totalSize += chunk.length
+        if (totalSize > MAX_BODY_SIZE) {
+          req.destroy()
+          reject(new Error('Request body too large'))
+          return
+        }
+        chunks.push(chunk)
+      })
       req.on('end', () => {
         const parsed = JSON.parse(Buffer.concat(chunks).toString())
         resolve(parsed)
@@ -181,6 +192,12 @@ async function getSessionUser (req: IncomingMessage): Promise<Record<string, unk
 }
 
 // ── Custom routes ─────────────────────────────────────────
+// RATE LIMITING (handled by nginx in production):
+//   - POST /api/users/register  — limit to prevent spam account creation
+//   - POST /api/tags            — limit to prevent tag flood
+//   - POST /api/server-configs/:id/like — limit to prevent like spam
+//   - POST /api/server-configs/:id/clone — limit to prevent clone abuse
+//   - POST /api/telemetry       — limit to prevent telemetry flood
 const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => Promise<void>> = {
   'GET /api/users/me': async (req, res) => {
     const user = await getSessionUser(req)
@@ -190,7 +207,15 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
   },
   'POST /api/telemetry': async (req, res) => {
     const chunks: Buffer[] = []
-    for await (const chunk of req) chunks.push(chunk as Buffer)
+    let totalSize = 0
+    for await (const chunk of req) {
+      totalSize += (chunk as Buffer).length
+      if (totalSize > MAX_BODY_SIZE) {
+        sendJson(res, 413, { error: 'Request body too large' })
+        return
+      }
+      chunks.push(chunk as Buffer)
+    }
     const body = Buffer.concat(chunks).toString()
     try {
       const events = JSON.parse(body)
@@ -227,6 +252,22 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
 
     if (!username || !email || !password) {
       sendJson(res, 400, { error: 'Username, email, and password are required' })
+      return
+    }
+    if (typeof username !== 'string' || username.length < 1 || username.length > 64) {
+      sendJson(res, 400, { error: 'Username must be between 1 and 64 characters' })
+      return
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+      sendJson(res, 400, { error: 'Username may only contain letters, numbers, hyphens, and underscores' })
+      return
+    }
+    if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      sendJson(res, 400, { error: 'Invalid email format' })
+      return
+    }
+    if (email.length > 254) {
+      sendJson(res, 400, { error: 'Email address is too long' })
       return
     }
     if (password.length < 8) {
@@ -266,9 +307,30 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
 
     const { username, avatarUrl, bio } = bodyResult.value as { username?: string, avatarUrl?: string, bio?: string }
     const updates: Record<string, unknown> = {}
-    if (username !== undefined) updates.username = username
-    if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl
-    if (bio !== undefined) updates.bio = bio
+    if (username !== undefined) {
+      if (typeof username !== 'string' || username.length < 1 || username.length > 64) {
+        sendJson(res, 400, { error: 'Username must be between 1 and 64 characters' }); return
+      }
+      if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+        sendJson(res, 400, { error: 'Username may only contain letters, numbers, hyphens, and underscores' }); return
+      }
+      updates.username = username
+    }
+    if (avatarUrl !== undefined) {
+      if (typeof avatarUrl !== 'string' || avatarUrl.length > 2048) {
+        sendJson(res, 400, { error: 'Invalid avatar URL' }); return
+      }
+      if (avatarUrl !== '' && !/^https?:\/\/.+/.test(avatarUrl)) {
+        sendJson(res, 400, { error: 'Avatar URL must be a valid HTTP(S) URL' }); return
+      }
+      updates.avatarUrl = avatarUrl
+    }
+    if (bio !== undefined) {
+      if (typeof bio !== 'string' || bio.length > 500) {
+        sendJson(res, 400, { error: 'Bio must be 500 characters or fewer' }); return
+      }
+      updates.bio = bio
+    }
 
     if (Object.keys(updates).length === 0) {
       sendJson(res, 400, { error: 'No fields to update' })
@@ -286,7 +348,8 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
       return
     }
 
-    sendJson(res, 200, updateResult.value)
+    const { password_hash: _, ...safeUser } = updateResult.value as Record<string, unknown>
+    sendJson(res, 200, safeUser)
   },
 
   'GET /api/tags': async (_req, res) => {
@@ -305,6 +368,9 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
 
     const { name } = bodyResult.value as { name?: string }
     if (!name || !name.trim()) { sendJson(res, 400, { error: 'Tag name is required' }); return }
+    if (typeof name !== 'string' || name.trim().length > 64) {
+      sendJson(res, 400, { error: 'Tag name must be 64 characters or fewer' }); return
+    }
 
     const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
@@ -321,8 +387,8 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
         [name.trim(), slug]
       )
       sendJson(res, 201, rows[0])
-    } catch (err: any) {
-      sendJson(res, 400, { error: err.message ?? 'Failed to create tag' })
+    } catch {
+      sendJson(res, 400, { error: 'Failed to create tag' })
     }
   },
 
@@ -575,7 +641,8 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     if (handler) { await handler(req, res, adminMatch.params); return }
   }
 
-  // 4. REST API routes
+  // 4. REST API routes (CMS framework handles auth + ownership enforcement
+  //    for PATCH/DELETE on collections via its built-in middleware)
   const restMatch = matchRoute(url.pathname, cms.restRoutes as any)
   if (restMatch) {
     const handler = restMatch.entry[method]
