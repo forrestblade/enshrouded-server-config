@@ -1,3 +1,5 @@
+import { presets, diffFromDefault } from './presets.js'
+
 // Resolve owner UUIDs to user info
 const userCache = {}
 async function resolveUser (ownerId) {
@@ -78,6 +80,16 @@ function createTile (item, owner) {
   header.appendChild(badge)
   div.appendChild(header)
 
+  // Diff-from-default summary
+  const settings = item.gameSettings || (presets[item.gameSettingsPreset] ? { ...presets[item.gameSettingsPreset] } : null)
+  const diff = diffFromDefault(settings, item.gameSettingsPreset)
+  if (diff) {
+    const diffEl = document.createElement('p')
+    diffEl.className = 'diff-summary'
+    diffEl.textContent = diff
+    div.appendChild(diffEl)
+  }
+
   // Creator info
   if (owner) {
     const creator = document.createElement('div')
@@ -101,7 +113,7 @@ function createTile (item, owner) {
   meta.className = 'tile-meta'
   const slots = item.server?.slotCount ?? 16
   const date = item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : ''
-  meta.textContent = [slots + ' slots', date].filter(Boolean).join(' \u00b7 ')
+  meta.textContent = [slots + ' slots', date].filter(Boolean).join(' · ')
   div.appendChild(meta)
 
   return div
