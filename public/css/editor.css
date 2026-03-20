@@ -169,3 +169,23 @@ details[open] > summary::after { transform: rotate(90deg); }
 .tag-option:hover { background: var(--val-color-bg-muted); }
 .tag-option.curated { font-weight: var(--val-weight-medium); }
 .tag-option.tag-create { color: var(--val-color-primary); font-style: italic; }
+
+/* Publishing bar — share toggle + tags, sits between header and config sections */
+.publishing-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--val-space-4);
+  padding: var(--val-space-3) var(--val-space-4);
+  margin-bottom: var(--val-space-4);
+  background: var(--val-color-bg-elevated);
+  border: 1px solid var(--val-color-border);
+  border-radius: var(--val-radius-lg);
+}
+.publishing-bar .toggle-field {
+  flex-shrink: 0;
+  padding-top: var(--val-space-1);
+}
+.publishing-bar .tag-picker {
+  flex: 1;
+  min-width: 0;
+}

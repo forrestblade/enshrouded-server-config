@@ -35,8 +35,9 @@
         <div class="avatar-preview" id="avatar-preview"></div>
       </div>
       <div class="form-group">
-        <label for="bio">Bio</label>
-        <textarea id="bio" maxlength="500" rows="3" placeholder="Tell others about yourself..."></textarea>
+        <val-textarea id="bio" maxlength="500" rows="3" placeholder="Tell others about yourself..." autoresize>
+          <span slot="label">Bio</span>
+        </val-textarea>
       </div>
       <div class="form-group">
         <label for="email">Email</label>
@@ -62,6 +63,7 @@
     </div>
   </div>
   <script type="module" src="/js/nav.js"></script>
+  <script type="module">import '/js/vendor/val-ui/components/val-textarea.js'</script>
   <script type="module" src="/js/account.js"></script>
   <script type="module" src="/js/telemetry-init.js"></script>
 </body>

@@ -28,14 +28,19 @@
       <div class="page-header">
         <h1 id="config-title"></h1>
         <div class="header-actions">
-          <div class="toggle-field" style="margin-right: auto;">
-            <input type="checkbox" id="shared" data-path="shared" data-telemetry-type="CLICK" data-telemetry-target="editor.share-toggle">
-            <label for="shared">Share Publicly</label>
-          </div>
           <button class="btn btn-outline" id="btn-reset" data-telemetry-type="CLICK" data-telemetry-target="editor.reset">Reset Defaults</button>
           <button class="btn btn-outline" id="btn-export" data-telemetry-type="CLICK" data-telemetry-target="editor.export">Export JSON</button>
           <button class="btn btn-primary" id="btn-save" data-telemetry-type="CLICK" data-telemetry-target="editor.save">Save</button>
         </div>
+      </div>
+
+      <!-- Publishing -->
+      <div class="publishing-bar">
+        <div class="toggle-field">
+          <input type="checkbox" id="shared" data-path="shared" data-telemetry-type="CLICK" data-telemetry-target="editor.share-toggle">
+          <label for="shared">Share Publicly</label>
+        </div>
+        <div id="tag-picker" class="tag-picker"></div>
       </div>
 
       <!-- Basic Server Settings -->
@@ -105,14 +110,6 @@
           <div id="custom-settings" hidden>
             <div class="grid" id="game-settings-grid"></div>
           </div>
-        </div>
-      </details>
-
-      <!-- Tags -->
-      <details>
-        <summary>Tags</summary>
-        <div class="section-body">
-          <div id="tag-picker" class="tag-picker"></div>
         </div>
       </details>
 

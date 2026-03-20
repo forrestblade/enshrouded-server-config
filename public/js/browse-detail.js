@@ -265,19 +265,30 @@ if (!res.ok) {
 
     // Export JSON
     document.getElementById('btn-export').addEventListener('click', () => {
-      const exportGroups = typeof config.userGroups === 'string' ? JSON.parse(config.userGroups) : (config.userGroups || [])
+      const presetName = config.gameSettingsPreset || 'Default'
+      // Merge full preset defaults with any stored custom overrides so the
+      // exported file always contains every game-setting key.
+      const presetBase = presets[presetName] ? { ...presets[presetName] } : {}
+      const mergedSettings = { ...presetBase, ...(config.gameSettings || {}) }
+
+      // userGroups may arrive as a JSON string from the API — always parse
+      const exportGroups = typeof config.userGroups === 'string'
+        ? JSON.parse(config.userGroups)
+        : (config.userGroups || [])
+
       const exportData = {
         name: config.server?.serverName || config.name,
         saveDirectory: config.server?.saveDirectory || './savegame',
         logDirectory: config.server?.logDirectory || './logs',
         ip: config.server?.ip || '0.0.0.0',
+        gamePort: config.server?.gamePort || 15636,
         queryPort: config.server?.queryPort || 15637,
         slotCount: config.server?.slotCount || 16,
         voiceChatMode: config.server?.voiceChatMode || 'Proximity',
         enableVoiceChat: config.server?.enableVoiceChat ?? true,
         enableTextChat: config.server?.enableTextChat ?? true,
-        gameSettingsPreset: config.gameSettingsPreset || 'Default',
-        ...(config.gameSettingsPreset === 'Custom' && config.gameSettings ? config.gameSettings : {}),
+        gameSettingsPreset: presetName,
+        gameSettings: mergedSettings,
         userGroups: exportGroups
       }
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })

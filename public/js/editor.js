@@ -565,21 +565,31 @@ document.getElementById('btn-save').addEventListener('click', async () => {
 // ── Export JSON ───────────────────────────────────────────
 document.getElementById('btn-export').addEventListener('click', () => {
   const data = collectFormData()
+  const preset = data.gameSettingsPreset || 'Default'
+
+  // For named presets collectFormData() strips gameSettings, so resolve the
+  // full settings from the preset definition merged with any custom overrides.
+  const presetBase = presets[preset] ? { ...presets[preset] } : {}
+  const mergedSettings = { ...presetBase, ...(data.gameSettings || {}) }
+
+  // data.userGroups is a JSON string (required by the CMS API); parse it back
+  // to an array for the exported game config file which expects a plain array.
+  const groups = typeof data.userGroups === 'string' ? JSON.parse(data.userGroups) : data.userGroups
+
   const exported = {
     name: data.server.serverName,
     saveDirectory: data.server.saveDirectory,
     logDirectory: data.server.logDirectory,
     ip: data.server.ip,
+    gamePort: data.server.gamePort || 15636,
     queryPort: data.server.queryPort,
     slotCount: data.server.slotCount,
     voiceChatMode: data.server.voiceChatMode,
     enableVoiceChat: data.server.enableVoiceChat,
     enableTextChat: data.server.enableTextChat,
-    gameSettingsPreset: data.gameSettingsPreset,
-    ...(data.gameSettingsPreset === 'Custom' ? data.gameSettings : {}),
-    // data.userGroups is a JSON string (required by the CMS API); parse it back to an array
-    // for the exported game config file which expects a plain array.
-    userGroups: typeof data.userGroups === 'string' ? JSON.parse(data.userGroups) : data.userGroups
+    gameSettingsPreset: preset,
+    gameSettings: mergedSettings,
+    userGroups: groups
   }
 
   const json = JSON.stringify(exported, null, 2)
