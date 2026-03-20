@@ -360,7 +360,9 @@ function collectFormData () {
     delete data.gameSettings
   }
 
-  data.userGroups = userGroups.map(g => ({ ...g }))
+  // The CMS REST API validates field.json as a JSON-encoded string (z.string().refine(...)),
+  // so userGroups must be serialized to a string here before being sent in the PATCH body.
+  data.userGroups = JSON.stringify(userGroups.map(g => ({ ...g })))
   return data
 }
 
@@ -447,7 +449,9 @@ document.getElementById('btn-export').addEventListener('click', () => {
     enableTextChat: data.server.enableTextChat,
     gameSettingsPreset: data.gameSettingsPreset,
     ...(data.gameSettingsPreset === 'Custom' ? data.gameSettings : {}),
-    userGroups: data.userGroups
+    // data.userGroups is a JSON string (required by the CMS API); parse it back to an array
+    // for the exported game config file which expects a plain array.
+    userGroups: typeof data.userGroups === 'string' ? JSON.parse(data.userGroups) : data.userGroups
   }
 
   const json = JSON.stringify(exported, null, 2)

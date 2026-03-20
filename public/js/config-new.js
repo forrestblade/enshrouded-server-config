@@ -28,7 +28,13 @@ form.addEventListener('submit', async (e) => {
 
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
-  const body = { name, slug, gameSettingsPreset: preset }
+  // Include default user groups so new configs are never created with NULL userGroups.
+  // The CMS REST API validates field.json as a JSON-encoded string, so we serialize here.
+  const defaultUserGroups = [
+    { name: 'Admin', password: '', canKickBan: true, canAccessInventories: true, canEditBase: true, canExtendBase: true, reservedSlots: 0 },
+    { name: 'Default', password: '', canKickBan: false, canAccessInventories: false, canEditBase: false, canExtendBase: false, reservedSlots: 0 }
+  ]
+  const body = { name, slug, gameSettingsPreset: preset, userGroups: JSON.stringify(defaultUserGroups) }
   if (currentUser) {
     body.owner = currentUser.id
   }
