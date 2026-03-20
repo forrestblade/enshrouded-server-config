@@ -5,7 +5,7 @@
  * Usage: npx tsx scripts/aggregate-telemetry.ts
  */
 import { createPool } from '@valencets/db'
-import 'dotenv/config'
+// env vars loaded via shell: source .env
 
 const pool = createPool({
   host: process.env.DB_HOST ?? '127.0.0.1',
