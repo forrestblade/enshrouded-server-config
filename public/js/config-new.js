@@ -48,7 +48,7 @@ form.addEventListener('submit', async (e) => {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
-      throw new Error(data.message ?? `Failed to create config (${res.status})`)
+      throw new Error(data.error ?? data.message ?? `Failed to create config (${res.status})`)
     }
 
     const config = await res.json()

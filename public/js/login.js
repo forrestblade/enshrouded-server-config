@@ -20,7 +20,7 @@ form.addEventListener('submit', async (e) => {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
-      throw new Error(body.message ?? t('auth.loginFailed'))
+      throw new Error(body.error ?? body.message ?? t('auth.loginFailed'))
     }
 
     window.location.href = '/'

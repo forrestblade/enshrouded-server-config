@@ -28,7 +28,7 @@ form.addEventListener('submit', async (e) => {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
-      throw new Error(body.message ?? t('auth.signupFailed'))
+      throw new Error(body.error ?? body.message ?? t('auth.signupFailed'))
     }
 
     // Auto-login after signup
