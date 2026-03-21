@@ -8,21 +8,36 @@
 
 import { readFileSync } from 'node:fs'
 
-// ── Expected game-settings keys (from presets.js base) ────
-const GAME_SETTINGS_KEYS = [
+// ── Expected game-settings keys (from actual Enshrouded server config) ────
+const NUMERIC_KEYS = [
   'playerHealthFactor', 'playerManaFactor', 'playerStaminaFactor',
-  'playerBodyHeatFactor', 'enableDurability', 'enableStarvingDebuff',
+  'playerBodyHeatFactor', 'playerDivingTimeFactor',
   'foodBuffDurationFactor', 'fromHungerToStarving', 'shroudTimeFactor',
-  'tombstoneMode', 'miningDamageFactor', 'plantGrowthSpeedFactor',
+  'miningDamageFactor', 'plantGrowthSpeedFactor',
   'resourceDropStackAmountFactor', 'factoryProductionSpeedFactor',
-  'perkUpgradeRecyclingFactor', 'perkCostFactor', 'experienceCombatFactor',
-  'experienceMiningFactor', 'experienceExplorationQuestsFactor',
-  'aggroPoolAmount', 'enemyDamageFactor', 'enemyHealthFactor',
-  'enemyStaminaFactor', 'enemyPerceptionRangeFactor', 'bossDamageFactor',
-  'bossHealthFactor', 'threatBonusFactor', 'pacifiedEnemies',
-  'dayTimeDuration', 'nightTimeDuration',
-  'waterOfTheWakeMode', 'waterOfTheWakeDistance'
+  'perkUpgradeRecyclingFactor', 'perkCostFactor',
+  'experienceCombatFactor', 'experienceMiningFactor',
+  'experienceExplorationQuestsFactor',
+  'enemyDamageFactor', 'enemyHealthFactor', 'enemyStaminaFactor',
+  'enemyPerceptionRangeFactor', 'bossDamageFactor', 'bossHealthFactor',
+  'threatBonus', 'dayTimeDuration', 'nightTimeDuration'
 ]
+
+const SELECT_KEYS = {
+  enableDurability: ['true', 'false'],
+  enableStarvingDebuff: ['true', 'false'],
+  enableGliderTurbulences: ['true', 'false'],
+  tombstoneMode: ['AddBackpackMaterials', 'Everything', 'NoTombstone'],
+  weatherFrequency: ['Disabled', 'Rare', 'Normal', 'Often'],
+  fishingDifficulty: ['VeryEasy', 'Easy', 'Normal', 'Hard', 'VeryHard'],
+  curseModifier: ['Easy', 'Normal', 'Hard'],
+  randomSpawnerAmount: ['Few', 'Normal', 'Many', 'Extreme'],
+  aggroPoolAmount: ['Few', 'Normal', 'Many', 'Extreme'],
+  pacifyAllEnemies: ['true', 'false'],
+  tamingStartleRepercussion: ['KeepProgress', 'LoseSomeProgress', 'LoseAllProgress']
+}
+
+const ALL_GAME_KEYS = [...NUMERIC_KEYS, ...Object.keys(SELECT_KEYS)]
 
 // Nanosecond duration fields that must remain as raw numbers
 const DURATION_KEYS = ['fromHungerToStarving', 'dayTimeDuration', 'nightTimeDuration']
@@ -49,16 +64,24 @@ function validate (data) {
     fail('gameSettingsPreset: invalid value "' + data.gameSettingsPreset + '"')
   }
 
-  // ── gameSettings must be an object (not spread at top level) ──
+  // ── gameSettings must be an object ──
   if (typeof data.gameSettings !== 'object' || data.gameSettings === null || Array.isArray(data.gameSettings)) {
     fail('gameSettings: expected an object, got ' + (Array.isArray(data.gameSettings) ? 'array' : typeof data.gameSettings))
   } else {
-    // Every expected key should be present
-    for (const key of GAME_SETTINGS_KEYS) {
+    // Check numeric keys
+    for (const key of NUMERIC_KEYS) {
       if (!(key in data.gameSettings)) {
         fail('gameSettings.' + key + ': missing')
       } else if (typeof data.gameSettings[key] !== 'number') {
         fail('gameSettings.' + key + ': expected number, got ' + typeof data.gameSettings[key])
+      }
+    }
+    // Check select keys
+    for (const [key, validValues] of Object.entries(SELECT_KEYS)) {
+      if (!(key in data.gameSettings)) {
+        fail('gameSettings.' + key + ': missing')
+      } else if (!validValues.includes(String(data.gameSettings[key]))) {
+        fail('gameSettings.' + key + ': invalid value "' + data.gameSettings[key] + '", expected one of: ' + validValues.join(', '))
       }
     }
     // Duration values must be nanoseconds (large numbers, not human-readable)
@@ -70,7 +93,7 @@ function validate (data) {
     }
   }
 
-  // ── userGroups must be a proper array (not a double-encoded string) ──
+  // ── userGroups must be a proper array ──
   if (typeof data.userGroups === 'string') {
     fail('userGroups: got a JSON string instead of an array (double-encoding bug)')
   } else if (!Array.isArray(data.userGroups)) {
@@ -95,7 +118,7 @@ function validate (data) {
   return errors
 }
 
-// ── Self-test fixtures ────────────────────────────────────
+// ── Self-test ─────────────────────────────────────────────
 function selfTest () {
   console.log('Running self-tests...\n')
   let passed = 0
@@ -114,25 +137,30 @@ function selfTest () {
     }
   }
 
-  // Valid export
+  const validGameSettings = {
+    playerHealthFactor: 1, playerManaFactor: 1, playerStaminaFactor: 1,
+    playerBodyHeatFactor: 1, playerDivingTimeFactor: 1,
+    enableDurability: 'true', enableStarvingDebuff: 'false', enableGliderTurbulences: 'true',
+    foodBuffDurationFactor: 1, fromHungerToStarving: 600000000000,
+    shroudTimeFactor: 1, tombstoneMode: 'AddBackpackMaterials',
+    miningDamageFactor: 1, plantGrowthSpeedFactor: 1,
+    resourceDropStackAmountFactor: 1, factoryProductionSpeedFactor: 1,
+    perkUpgradeRecyclingFactor: 0.5, perkCostFactor: 1,
+    experienceCombatFactor: 1, experienceMiningFactor: 1,
+    experienceExplorationQuestsFactor: 1,
+    weatherFrequency: 'Normal', fishingDifficulty: 'Normal', curseModifier: 'Normal',
+    randomSpawnerAmount: 'Normal', aggroPoolAmount: 'Normal',
+    enemyDamageFactor: 1, enemyHealthFactor: 1, enemyStaminaFactor: 1,
+    enemyPerceptionRangeFactor: 1, pacifyAllEnemies: 'false',
+    tamingStartleRepercussion: 'LoseSomeProgress',
+    bossDamageFactor: 1, bossHealthFactor: 1, threatBonus: 1,
+    dayTimeDuration: 1800000000000, nightTimeDuration: 720000000000
+  }
+
   const validExport = {
-    name: 'Test Server',
-    saveDirectory: './savegame',
-    logDirectory: './logs',
-    ip: '0.0.0.0',
-    gamePort: 15636,
-    queryPort: 15637,
-    slotCount: 16,
-    gameSettingsPreset: 'Default',
-    gameSettings: Object.fromEntries(GAME_SETTINGS_KEYS.map(k => {
-      if (k === 'fromHungerToStarving') return [k, 600000000000]
-      if (k === 'dayTimeDuration') return [k, 1800000000000]
-      if (k === 'nightTimeDuration') return [k, 720000000000]
-      if (k === 'perkUpgradeRecyclingFactor') return [k, 0.5]
-      if (k === 'waterOfTheWakeDistance') return [k, 100]
-      if (k === 'tombstoneMode' || k === 'pacifiedEnemies' || k === 'waterOfTheWakeMode') return [k, 0]
-      return [k, 1]
-    })),
+    name: 'Test Server', saveDirectory: './savegame', logDirectory: './logs',
+    ip: '0.0.0.0', gamePort: 15636, queryPort: 15637, slotCount: 16,
+    gameSettingsPreset: 'Default', gameSettings: validGameSettings,
     userGroups: [
       { name: 'Admin', password: '', canKickBan: true, canAccessInventories: true, canEditBase: true, canExtendBase: true, reservedSlots: 0 },
       { name: 'Default', password: '', canKickBan: false, canAccessInventories: false, canEditBase: false, canExtendBase: false, reservedSlots: 0 }
@@ -140,23 +168,19 @@ function selfTest () {
   }
   assert('valid export passes', validate(validExport), true)
 
-  // Double-encoded userGroups (known bug)
   const doubleEncoded = { ...validExport, userGroups: JSON.stringify(validExport.userGroups) }
   assert('double-encoded userGroups detected', validate(doubleEncoded), false)
 
-  // Missing gameSettings object
   const noGameSettings = { ...validExport }
   delete noGameSettings.gameSettings
   assert('missing gameSettings detected', validate(noGameSettings), false)
 
-  // gameSettings with human-readable duration (minutes instead of nanoseconds)
   const humanDuration = {
     ...validExport,
     gameSettings: { ...validExport.gameSettings, dayTimeDuration: 30 }
   }
   assert('human-readable duration detected', validate(humanDuration), false)
 
-  // Missing gamePort
   const noGamePort = { ...validExport }
   delete noGamePort.gamePort
   assert('missing gamePort detected', validate(noGamePort), false)

@@ -25,12 +25,14 @@ export interface GameSettings {
   readonly playerManaFactor: number
   readonly playerStaminaFactor: number
   readonly playerBodyHeatFactor: number
-  readonly enableDurability: number
-  readonly enableStarvingDebuff: number
+  readonly playerDivingTimeFactor: number
+  readonly enableDurability: string
+  readonly enableStarvingDebuff: string
+  readonly enableGliderTurbulences: string
   readonly foodBuffDurationFactor: number
   readonly fromHungerToStarving: number
   readonly shroudTimeFactor: number
-  readonly tombstoneMode: number
+  readonly tombstoneMode: string
   readonly miningDamageFactor: number
   readonly plantGrowthSpeedFactor: number
   readonly resourceDropStackAmountFactor: number
@@ -40,19 +42,22 @@ export interface GameSettings {
   readonly experienceCombatFactor: number
   readonly experienceMiningFactor: number
   readonly experienceExplorationQuestsFactor: number
-  readonly aggroPoolAmount: number
+  readonly weatherFrequency: string
+  readonly fishingDifficulty: string
+  readonly curseModifier: string
+  readonly randomSpawnerAmount: string
+  readonly aggroPoolAmount: string
   readonly enemyDamageFactor: number
   readonly enemyHealthFactor: number
   readonly enemyStaminaFactor: number
   readonly enemyPerceptionRangeFactor: number
+  readonly pacifyAllEnemies: string
+  readonly tamingStartleRepercussion: string
   readonly bossDamageFactor: number
   readonly bossHealthFactor: number
-  readonly threatBonusFactor: number
-  readonly pacifiedEnemies: number
+  readonly threatBonus: number
   readonly dayTimeDuration: number
   readonly nightTimeDuration: number
-  readonly waterOfTheWakeMode: number
-  readonly waterOfTheWakeDistance: number
 }
 
 export type GameSettingsPreset = 'Default' | 'Relaxed' | 'Hard' | 'Survival' | 'Custom'

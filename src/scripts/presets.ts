@@ -5,12 +5,14 @@ const base: GameSettings = {
   playerManaFactor: 1.0,
   playerStaminaFactor: 1.0,
   playerBodyHeatFactor: 1.0,
-  enableDurability: 1.0,
-  enableStarvingDebuff: 1.0,
+  playerDivingTimeFactor: 1.0,
+  enableDurability: 'true',
+  enableStarvingDebuff: 'false',
+  enableGliderTurbulences: 'true',
   foodBuffDurationFactor: 1.0,
   fromHungerToStarving: 600000000000,
   shroudTimeFactor: 1.0,
-  tombstoneMode: 0,
+  tombstoneMode: 'AddBackpackMaterials',
   miningDamageFactor: 1.0,
   plantGrowthSpeedFactor: 1.0,
   resourceDropStackAmountFactor: 1.0,
@@ -20,19 +22,22 @@ const base: GameSettings = {
   experienceCombatFactor: 1.0,
   experienceMiningFactor: 1.0,
   experienceExplorationQuestsFactor: 1.0,
-  aggroPoolAmount: 1.0,
+  weatherFrequency: 'Normal',
+  fishingDifficulty: 'Normal',
+  curseModifier: 'Normal',
+  randomSpawnerAmount: 'Normal',
+  aggroPoolAmount: 'Normal',
   enemyDamageFactor: 1.0,
   enemyHealthFactor: 1.0,
   enemyStaminaFactor: 1.0,
   enemyPerceptionRangeFactor: 1.0,
+  pacifyAllEnemies: 'false',
+  tamingStartleRepercussion: 'LoseSomeProgress',
   bossDamageFactor: 1.0,
   bossHealthFactor: 1.0,
-  threatBonusFactor: 1.0,
-  pacifiedEnemies: 0,
+  threatBonus: 1.0,
   dayTimeDuration: 1800000000000,
-  nightTimeDuration: 720000000000,
-  waterOfTheWakeMode: 0,
-  waterOfTheWakeDistance: 100
+  nightTimeDuration: 720000000000
 }
 
 export const presets: Record<string, GameSettings> = {
@@ -42,8 +47,8 @@ export const presets: Record<string, GameSettings> = {
     playerHealthFactor: 2.0,
     playerManaFactor: 2.0,
     playerStaminaFactor: 2.0,
-    enableDurability: 0,
-    enableStarvingDebuff: 0,
+    enableDurability: 'false',
+    enableStarvingDebuff: 'false',
     foodBuffDurationFactor: 2.0,
     shroudTimeFactor: 2.0,
     miningDamageFactor: 2.0,
@@ -57,16 +62,13 @@ export const presets: Record<string, GameSettings> = {
     enemyHealthFactor: 0.5,
     enemyStaminaFactor: 0.5,
     bossDamageFactor: 0.5,
-    bossHealthFactor: 0.5,
-    tombstoneMode: 0
+    bossHealthFactor: 0.5
   },
   Hard: {
     ...base,
     playerHealthFactor: 0.5,
     playerManaFactor: 0.5,
     playerStaminaFactor: 0.5,
-    enableDurability: 1.0,
-    enableStarvingDebuff: 1.0,
     foodBuffDurationFactor: 0.5,
     shroudTimeFactor: 0.5,
     miningDamageFactor: 0.5,
@@ -80,16 +82,14 @@ export const presets: Record<string, GameSettings> = {
     enemyPerceptionRangeFactor: 2.0,
     bossDamageFactor: 2.0,
     bossHealthFactor: 2.0,
-    threatBonusFactor: 2.0,
-    tombstoneMode: 1
+    threatBonus: 2.0,
+    tombstoneMode: 'Everything'
   },
   Survival: {
     ...base,
     playerHealthFactor: 0.25,
     playerManaFactor: 0.25,
     playerStaminaFactor: 0.25,
-    enableDurability: 1.0,
-    enableStarvingDebuff: 1.0,
     foodBuffDurationFactor: 0.25,
     shroudTimeFactor: 0.25,
     fromHungerToStarving: 300000000000,
@@ -105,8 +105,7 @@ export const presets: Record<string, GameSettings> = {
     enemyPerceptionRangeFactor: 4.0,
     bossDamageFactor: 4.0,
     bossHealthFactor: 4.0,
-    threatBonusFactor: 4.0,
-    tombstoneMode: 2,
-    pacifiedEnemies: 0
+    threatBonus: 4.0,
+    tombstoneMode: 'NoTombstone'
   }
 }
