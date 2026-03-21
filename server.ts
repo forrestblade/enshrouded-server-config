@@ -35,6 +35,36 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Referrer-Policy': 'strict-origin-when-cross-origin'
 }
 
+
+// ── Rate limiting ─────────────────────────────────────────
+const rateLimitBuckets = new Map<string, { count: number, resetAt: number }>()
+
+function rateLimit (key: string, maxRequests: number, windowMs: number): boolean {
+  const now = Date.now()
+  const bucket = rateLimitBuckets.get(key)
+  if (!bucket || now > bucket.resetAt) {
+    rateLimitBuckets.set(key, { count: 1, resetAt: now + windowMs })
+    return true
+  }
+  if (bucket.count >= maxRequests) return false
+  bucket.count++
+  return true
+}
+
+function getClientIp (req: IncomingMessage): string {
+  const forwarded = req.headers['x-forwarded-for']
+  if (typeof forwarded === 'string') return forwarded.split(',')[0]?.trim() ?? 'unknown'
+  return req.socket.remoteAddress ?? 'unknown'
+}
+
+// Clean up expired buckets every 5 minutes
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, bucket] of rateLimitBuckets) {
+    if (now > bucket.resetAt) rateLimitBuckets.delete(key)
+  }
+}, 300_000)
+
 // ── Database ──────────────────────────────────────────────
 const pool = createPool({
   host: config.db.host,
@@ -322,6 +352,12 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
     sendJson(res, 200, safe)
   },
   'POST /api/telemetry': async (req, res) => {
+    const ip = getClientIp(req)
+    if (!rateLimit('telemetry:' + ip, 60, 60_000)) {
+      res.writeHead(429, { 'Content-Type': 'application/json', ...SECURITY_HEADERS })
+      res.end(JSON.stringify({ error: 'Rate limited' }))
+      return
+    }
     const chunks: Buffer[] = []
     let totalSize = 0
     for await (const chunk of req) {
@@ -359,6 +395,11 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
     }
   },
   'POST /api/users/register': async (req, res) => {
+    const ip = getClientIp(req)
+    if (!rateLimit('register:' + ip, 5, 3600_000)) {
+      sendJson(res, 429, { error: 'Too many registration attempts. Try again later.' })
+      return
+    }
     const bodyResult = await parseBody(req)
     if (bodyResult.isErr()) {
       sendJson(res, 400, { error: 'Invalid JSON body' })
@@ -476,6 +517,11 @@ const CUSTOM_API: Record<string, (req: IncomingMessage, res: ServerResponse) => 
   },
 
   'POST /api/tags': async (req, res) => {
+    const ip = getClientIp(req)
+    if (!rateLimit('tags:' + ip, 10, 60_000)) {
+      sendJson(res, 429, { error: 'Too many tag creation attempts.' })
+      return
+    }
     const user = await getSessionUser(req)
     if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
 
@@ -560,6 +606,9 @@ const CUSTOM_API_PATTERNS: PatternHandler[] = [
     handler: async (req, res, params) => {
       const user = await getSessionUser(req)
       if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
+      if (!rateLimit('clone:' + String(user.id), 10, 3600_000)) {
+        sendJson(res, 429, { error: 'Too many clone attempts.' }); return
+      }
 
       const sourceResult = await cms.api.findByID({
         collection: 'server-configs',
@@ -612,6 +661,9 @@ CUSTOM_API_PATTERNS.push({
   handler: async (req, res, params) => {
     const user = await getSessionUser(req)
     if (!user) { sendJson(res, 401, { error: 'Not authenticated' }); return }
+    if (!rateLimit('like:' + String(user.id), 30, 60_000)) {
+      sendJson(res, 429, { error: 'Too many like attempts.' }); return
+    }
 
     const existing = await pool.sql.unsafe(
       `SELECT id FROM likes WHERE "userId" = $1 AND "configId" = $2`,
