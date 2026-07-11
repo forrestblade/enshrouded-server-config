@@ -14,6 +14,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply enshrouded_config --local",
     "db:migrate:remote": "wrangler d1 migrations apply enshrouded_config --remote"
@@ -46,6 +48,7 @@
     "neostandard": "^0.13.0",
     "sharp": "^0.35.3",
     "typescript": "^5.9.3",
+    "vitest": "^4.1.10",
     "wrangler": "^4.110.0"
   }
 }
