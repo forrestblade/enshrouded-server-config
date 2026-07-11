@@ -1,9 +1,27 @@
 ---
 import Layout from '@/app/layouts/Layout.astro'
 import { PRESET_TEMPLATES } from '@/entities/server-config'
+
+// Static, trusted content only — safe for set:html.
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Enshrouded Server Config Editor',
+  url: 'https://enshroudedserverconfig.com/',
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: 'Web',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  description:
+    'Edit every setting in enshrouded_server.json, keep it valid, export a file the game will load, and share configs with other players.',
+})
 ---
 
 <Layout>
+  <Fragment slot="head">
+    {/* Tropikal is only used by this page's hero — preload here, not site-wide. */}
+    <link rel="preload" href="/fonts/tropikal-bold.woff" as="font" type="font/woff" crossorigin />
+    <script type="application/ld+json" set:html={jsonLd} />
+  </Fragment>
   <section class="hero">
     <div class="hero-media" aria-hidden="true"></div>
     <div class="hero-inner container">

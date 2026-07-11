@@ -22,6 +22,7 @@ const {
 } = Astro.props
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://enshroudedserverconfig.com')
+const ogImage = new URL('/og-default.jpg', Astro.site ?? 'https://enshroudedserverconfig.com')
 const year = new Date().getFullYear()
 const path = Astro.url.pathname
 const active = (href: string): boolean => (href === '/' ? path === '/' : path.startsWith(href))
@@ -53,9 +54,18 @@ try {
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     <meta name="theme-color" content="#0d0c0b" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Enshrouded Server Config" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical.href} />
+    <meta property="og:image" content={ogImage.href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage.href} />
+    <slot name="head" />
     <ClientRouter />
   </head>
   <body>
