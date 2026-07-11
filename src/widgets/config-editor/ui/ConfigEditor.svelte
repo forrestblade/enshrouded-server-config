@@ -15,6 +15,7 @@
   } from '@/entities/server-config'
   import type { ServerConfig, GameSettings, NumericFieldKey } from '@/entities/server-config'
   import { DRAFT_KEY } from '@/shared/config/keys'
+  import { highlightJson } from '@/shared/lib/json-highlight'
   import PublishDialog from '@/features/publish-config/ui/PublishDialog.svelte'
   import FactorField from './FactorField.svelte'
   import UserGroupsEditor from './UserGroupsEditor.svelte'
@@ -33,7 +34,7 @@
   const isCustom = $derived(config.gameSettingsPreset === 'Custom')
   const gsDisabled = $derived(!isCustom)
   const json = $derived(stringifyEnshroudedJson(snap, { public: publicPreview }))
-  const highlighted = $derived(highlight(json))
+  const highlighted = $derived(highlightJson(json))
 
   function setGS (key: keyof GameSettings, value: unknown): void {
     ;(config.gameSettings as Record<string, unknown>)[key] = value
@@ -60,20 +61,6 @@
 
   function download (): void {
     downloadEnshroudedJson(snap, { public: publicPreview })
-  }
-
-  function highlight (source: string): string {
-    const esc = source.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    return esc.replace(
-      /("(?:\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
-      (match) => {
-        let cls = 'num'
-        if (match.startsWith('"')) cls = /:$/.test(match) ? 'key' : 'str'
-        else if (match === 'true' || match === 'false') cls = 'bool'
-        else if (match === 'null') cls = 'null'
-        return `<span class="t-${cls}">${match}</span>`
-      },
-    )
   }
 
   onMount(() => {

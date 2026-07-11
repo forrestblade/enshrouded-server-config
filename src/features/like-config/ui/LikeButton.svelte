@@ -9,7 +9,12 @@
     authed = false,
   }: { slug: string, count?: number, liked?: boolean, authed?: boolean } = $props()
 
+  // Capturing the initial prop values is intentional: the server-rendered
+  // props are the baseline and the island remounts on navigation — after that
+  // the server response (not the prop) is the source of truth.
+  // svelte-ignore state_referenced_locally
   let n = $state(count)
+  // svelte-ignore state_referenced_locally
   let on = $state(liked)
   let busy = $state(false)
 

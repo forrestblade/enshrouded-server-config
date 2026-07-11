@@ -82,7 +82,9 @@
       }
       error = res.status === 422
         ? 'Check the title (3–120 characters) and tags (up to 8).'
-        : 'Could not publish. Please try again.'
+        : res.status === 429
+          ? 'Publishing limit reached — please wait a bit and try again.'
+          : 'Could not publish. Please try again.'
     } catch {
       submitting = false
       error = 'Network error. Please try again.'
@@ -100,45 +102,52 @@
   Publish
 </button>
 
+<svelte:window onkeydown={(e) => { if (open && e.key === 'Escape' && !submitting) open = false }} />
+
 {#if open}
-  <div class="overlay" role="presentation" onclick={() => { if (!submitting) open = false }}>
-    <form class="modal" role="dialog" aria-label="Publish config" onsubmit={submit} onclick={(e) => e.stopPropagation()}>
-      <h2>Publish config</h2>
-      <p class="modal-sub">Shared publicly in the browse gallery. Passwords and host fields are removed automatically.</p>
+  <!-- Keyboard path is the window Escape handler above; the overlay click is a
+       pointer-only convenience, so no key handler belongs on the div itself. -->
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class="overlay" role="presentation" onclick={(e) => { if (!submitting && e.target === e.currentTarget) open = false }}>
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Publish config">
+      <form onsubmit={submit}>
+        <h2>Publish config</h2>
+        <p class="modal-sub">Shared publicly in the browse gallery. Passwords and host fields are removed automatically.</p>
 
-      {#if error}<p class="modal-error" role="alert">{error}</p>{/if}
+        {#if error}<p class="modal-error" role="alert">{error}</p>{/if}
 
-      <label class="field">
-        <span>Title</span>
-        <input type="text" bind:value={title} maxlength="120" placeholder="e.g. Hardcore survival, no tombstone" required />
-      </label>
+        <label class="field">
+          <span>Title</span>
+          <input type="text" bind:value={title} maxlength="120" placeholder="e.g. Hardcore survival, no tombstone" required />
+        </label>
 
-      <label class="field">
-        <span>Summary <em>(optional)</em></span>
-        <textarea bind:value={summary} maxlength="300" rows="2" placeholder="One line on who this is for."></textarea>
-      </label>
+        <label class="field">
+          <span>Summary <em>(optional)</em></span>
+          <textarea bind:value={summary} maxlength="300" rows="2" placeholder="One line on who this is for."></textarea>
+        </label>
 
-      <label class="field">
-        <span>Tags <em>(optional, comma-separated)</em></span>
-        <input type="text" bind:value={tagsRaw} placeholder="hardcore, pvp, coop" />
-      </label>
+        <label class="field">
+          <span>Tags <em>(optional, comma-separated)</em></span>
+          <input type="text" bind:value={tagsRaw} placeholder="hardcore, pvp, coop" />
+        </label>
 
-      <label class="field">
-        <span>Visibility</span>
-        <select bind:value={visibility}>
-          <option value="public">Public — listed in browse</option>
-          <option value="unlisted">Unlisted — only people with the link</option>
-          <option value="private">Private — only you</option>
-        </select>
-      </label>
+        <label class="field">
+          <span>Visibility</span>
+          <select bind:value={visibility}>
+            <option value="public">Public — listed in browse</option>
+            <option value="unlisted">Unlisted — only people with the link</option>
+            <option value="private">Private — only you</option>
+          </select>
+        </label>
 
-      <div class="modal-actions">
-        <button class="btn" type="button" onclick={() => { open = false }} disabled={submitting}>Cancel</button>
-        <button class="btn btn-primary" type="submit" disabled={submitting || !titleOk}>
-          {submitting ? 'Publishing…' : 'Publish'}
-        </button>
-      </div>
-    </form>
+        <div class="modal-actions">
+          <button class="btn" type="button" onclick={() => { open = false }} disabled={submitting}>Cancel</button>
+          <button class="btn btn-primary" type="submit" disabled={submitting || !titleOk}>
+            {submitting ? 'Publishing…' : 'Publish'}
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 {/if}
 
@@ -161,10 +170,12 @@
     border: 1px solid var(--border-2);
     border-radius: var(--radius-lg);
     padding: var(--space-5);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+  }
+  .modal form {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
   }
   .modal h2 {
     font-size: var(--fs-xl);

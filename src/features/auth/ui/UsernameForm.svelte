@@ -5,6 +5,9 @@
 
   let { current = '' }: { current?: string } = $props()
 
+  // Intentional initial-value capture: the field is seeded from the server-
+  // rendered username and owned by the user's typing afterwards.
+  // svelte-ignore state_referenced_locally
   let value = $state(current)
   let status = $state<'idle' | 'checking' | 'saving' | 'saved' | 'error'>('idle')
   let message = $state<string | null>(null)

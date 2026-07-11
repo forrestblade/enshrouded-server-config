@@ -8,18 +8,33 @@ import { CONFIG_SORTS, type ConfigSort } from '@/entities/shared-config'
 
 export const prerender = false
 
+const PAGE_SIZE = 24
+
 const url = Astro.url
 const q = (url.searchParams.get('q') ?? '').trim()
 const activeTag = (url.searchParams.get('tag') ?? '').trim()
 const sortParam = url.searchParams.get('sort') ?? ''
 const sort: ConfigSort = (CONFIG_SORTS as readonly string[]).includes(sortParam) ? sortParam as ConfigSort : 'recent'
+const pageParam = Number.parseInt(url.searchParams.get('page') ?? '1', 10)
+const page = Number.isFinite(pageParam) && pageParam >= 1 ? Math.min(pageParam, 400) : 1
 
+// Fetch one extra row to know whether a next page exists without a count query.
 const db = getDb(env.DB)
-const [items, tags] = await Promise.all([
-  listConfigs(db, { q: q || undefined, tag: activeTag || undefined, sort }),
+const [fetched, tags] = await Promise.all([
+  listConfigs(db, {
+    q: q || undefined,
+    tag: activeTag || undefined,
+    sort,
+    limit: PAGE_SIZE + 1,
+    offset: (page - 1) * PAGE_SIZE,
+  }),
   listTags(db, 16),
 ])
+const hasMore = fetched.length > PAGE_SIZE
+const items = fetched.slice(0, PAGE_SIZE)
 
+// Page is intentionally NOT carried over — changing search/tag/sort resets to
+// page 1; only the pager links pass `page` explicitly.
 function hrefWith (overrides: Record<string, string | undefined>): string {
   const merged: Record<string, string | undefined> = {
     q: q || undefined,
@@ -55,7 +70,7 @@ function hrefWith (overrides: Record<string, string | undefined>): string {
         <a class={sort === 'recent' ? 'sort active' : 'sort'} href={hrefWith({ sort: undefined })}>Recent</a>
         <a class={sort === 'popular' ? 'sort active' : 'sort'} href={hrefWith({ sort: 'popular' })}>Popular</a>
       </div>
-      <p class="count">{items.length} config{items.length === 1 ? '' : 's'}{q ? ` for “${q}”` : ''}</p>
+      <p class="count">{items.length} config{items.length === 1 ? '' : 's'}{q ? ` for “${q}”` : ''}{page > 1 ? ` · page ${page}` : ''}</p>
     </div>
 
     {tags.length > 0 && (
@@ -79,6 +94,18 @@ function hrefWith (overrides: Record<string, string | undefined>): string {
           <a class="btn btn-primary" href="/editor">Build one to share</a>
         </div>
       )}
+
+    {(page > 1 || hasMore) && (
+      <nav class="pager" aria-label="Pagination">
+        {page > 1
+          ? <a class="btn btn-ghost" rel="prev" href={hrefWith({ page: page > 2 ? String(page - 1) : undefined })}>← Previous</a>
+          : <span aria-hidden="true"></span>}
+        <span class="pager-page">Page {page}</span>
+        {hasMore
+          ? <a class="btn btn-ghost" rel="next" href={hrefWith({ page: String(page + 1) })}>Next →</a>
+          : <span aria-hidden="true"></span>}
+      </nav>
+    )}
   </section>
 </Layout>
 
@@ -222,5 +249,16 @@ function hrefWith (overrides: Record<string, string | undefined>): string {
     gap: var(--space-4);
     padding: var(--space-10) 0;
     color: var(--text-muted);
+  }
+  .pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+  }
+  .pager-page {
+    font-size: var(--fs-sm);
+    color: var(--text-dim);
   }
 </style>
