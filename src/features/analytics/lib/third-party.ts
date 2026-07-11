@@ -8,8 +8,11 @@
  *   2. update analytics_storage to granted,
  *   3. load the GTM container and/or GA4 gtag.
  *
- * Everything here runs ONLY after the viewer granted consent — the first-party
- * beacon is the default path; these third-party tags are the flex on top.
+ * Everything here runs ONLY after the viewer granted consent — before that, no
+ * Google script is on the page at all. Both loaders may be active at once
+ * (Setup B in docs/TRACKING_SPEC.md §5: direct GA4 owns page_view, GTM routes
+ * the custom events); the page_view double-count rule is enforced by container
+ * configuration, not here.
  */
 import { pushConsentDefaultDenied, updateAnalyticsConsent } from './consent-mode'
 import { loadGtm } from './gtm'

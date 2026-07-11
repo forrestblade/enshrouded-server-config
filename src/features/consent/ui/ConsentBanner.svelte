@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { readConsent, writeConsent, type ConsentState } from '../lib/consent'
+  import { readConsent, writeConsent, initConsentTabSync, CONSENT_EVENT, type ConsentState } from '../lib/consent'
 
   let state = $state<ConsentState>('unset')
   let open = $state(false)
@@ -8,6 +8,15 @@
   onMount(() => {
     state = readConsent()
     if (state === 'unset') open = true
+    // Keep this tab's banner (and, via CONSENT_EVENT, the analytics loader)
+    // in sync when the decision changes in another tab.
+    initConsentTabSync()
+    const onChange = (event: Event) => {
+      const decision = (event as CustomEvent<string>).detail
+      if (decision === 'granted' || decision === 'denied') state = decision
+    }
+    window.addEventListener(CONSENT_EVENT, onChange)
+    return () => window.removeEventListener(CONSENT_EVENT, onChange)
   })
 
   function decide (decision: 'granted' | 'denied'): void {
@@ -22,8 +31,10 @@
     <div class="panel" role="dialog" aria-label="Privacy choices">
       <p class="panel-title">Privacy</p>
       <p class="panel-text">
-        Nothing is collected until you allow it. If you accept, this site records privacy-friendly,
-        first-party usage stats at the edge. No third-party trackers and no ads.
+        No analytics load until you decide. If you accept, Google Analytics (loaded through
+        Google Tag Manager) counts visits and which features get used. There is no advertising,
+        and if your browser sends Do Not Track or Global Privacy Control, that is respected
+        either way.
       </p>
       <div class="panel-actions">
         <button class="btn btn-primary" type="button" onclick={() => decide('granted')}>Accept all</button>

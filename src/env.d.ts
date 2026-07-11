@@ -14,8 +14,6 @@ interface CloudflareEnv {
   GOOGLE_CLIENT_SECRET: string
   DISCORD_CLIENT_ID: string
   DISCORD_CLIENT_SECRET: string
-  TURNSTILE_SITE_KEY: string
-  TURNSTILE_SECRET_KEY: string
   // Consent-gated Google analytics (loaded ONLY after consent). Both are PUBLIC
   // (they ship to the browser). Configure GA4 in exactly ONE place — directly
   // OR as a tag inside the GTM container — not both, or every hit double-counts.

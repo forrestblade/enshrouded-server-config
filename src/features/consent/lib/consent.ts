@@ -8,8 +8,9 @@
 export type ConsentDecision = 'granted' | 'denied'
 export type ConsentState = ConsentDecision | 'unset'
 
-const KEY = 'esc:consent:v1'
+export const CONSENT_KEY = 'esc:consent:v1'
 export const CONSENT_EVENT = 'esc:consentchange'
+const KEY = CONSENT_KEY
 
 export function readConsent (): ConsentState {
   if (typeof localStorage === 'undefined') return 'unset'
@@ -26,4 +27,22 @@ export function writeConsent (decision: ConsentDecision): void {
 
 export function hasAnalyticsConsent (): boolean {
   return readConsent() === 'granted'
+}
+
+let tabSyncStarted = false
+
+/**
+ * Cross-tab sync: `storage` events fire in OTHER tabs when the decision
+ * changes, so re-dispatch CONSENT_EVENT locally — the banner updates its state
+ * and the analytics loader enables/disables tags without a reload. Idempotent.
+ */
+export function initConsentTabSync (): void {
+  if (typeof window === 'undefined' || tabSyncStarted) return
+  tabSyncStarted = true
+  window.addEventListener('storage', (event: StorageEvent) => {
+    if (event.key !== CONSENT_KEY) return
+    if (event.newValue === 'granted' || event.newValue === 'denied') {
+      window.dispatchEvent(new CustomEvent(CONSENT_EVENT, { detail: event.newValue }))
+    }
+  })
 }

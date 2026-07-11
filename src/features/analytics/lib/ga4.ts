@@ -26,7 +26,9 @@ export function loadGa4 (id: string): void {
   document.head.appendChild(s)
 
   gtag('js', new Date())
-  gtag('config', id, { anonymize_ip: true })
+  // (No `anonymize_ip` here — that's a Universal Analytics flag; GA4 never
+  // logs full IP addresses and ignores it.)
+  gtag('config', id)
 
   injected = true
   currentId = id
