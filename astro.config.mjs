@@ -8,6 +8,14 @@ export default defineConfig({
   site: 'https://enshroudedserverconfig.com',
   output: 'server',
   server: { port: 4321 },
+  // Astro's checkOrigin requires an `Origin` header on state-changing requests,
+  // which some browsers omit on same-origin POST (e.g. Safari) and which the
+  // Better Auth client omits on the bodyless sign-out POST -> it was silently
+  // 403ing sign-out / like / delete. We disable it because CSRF is already
+  // covered: Better Auth runs its own origin/referer check for /api/auth/*, and
+  // our endpoints require the session cookie, which is SameSite=Lax (cross-site
+  // POSTs can't carry it).
+  security: { checkOrigin: false },
   adapter: cloudflare({
     // adapter v14: local bindings are provided automatically by @cloudflare/vite-plugin
     // (the old `platformProxy` option was removed). Sessions auto-use a `SESSION` KV binding.
