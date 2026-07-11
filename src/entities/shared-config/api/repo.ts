@@ -7,7 +7,7 @@
  * Drizzle builder. Lists are hydrated with authors + tags in batched IN-queries
  * (no N+1). Raw-SQL rows return unix-second integers for dates, so we convert.
  */
-import { and, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, inArray, sql } from 'drizzle-orm'
 import type { Db } from '@/shared/db'
 import { serverConfig, tag, configTag, like, user } from '@/shared/db'
 import { serverConfigSchema, defaultServerConfig } from '@/entities/server-config'
@@ -137,7 +137,12 @@ export async function publishConfig (db: Db, userId: string, input: PublishInput
     forkedFromId = src[0]?.id ?? null
   }
 
-  await db.insert(serverConfig).values({
+  // Tags are upserted first (read-dependency), then the config row + tag links
+  // land in ONE batch — D1 runs a batch as a transaction, so a failure can't
+  // leave a config without its tags (or vice versa).
+  const tagIds = await upsertTags(db, input.tags)
+
+  const insertConfig = db.insert(serverConfig).values({
     id,
     userId,
     slug,
@@ -150,12 +155,30 @@ export async function publishConfig (db: Db, userId: string, input: PublishInput
     forkedFromId,
   })
 
-  const tagIds = await upsertTags(db, input.tags)
   if (tagIds.length > 0) {
-    await db.insert(configTag).values(tagIds.map((tagId) => ({ configId: id, tagId })))
+    await db.batch([
+      insertConfig,
+      db.insert(configTag).values(tagIds.map((tagId) => ({ configId: id, tagId }))),
+    ])
+  } else {
+    await insertConfig
   }
 
   return { slug }
+}
+
+/**
+ * Publishes by `userId` in the trailing window — the input to the publish rate
+ * limit (see POST /api/configs). Counting rows beats a separate limiter store:
+ * no extra binding, and deleting spam doesn't reset the clock unfairly.
+ */
+export async function countRecentPublishes (db: Db, userId: string, windowMs = 60 * 60 * 1000): Promise<number> {
+  const since = new Date(Date.now() - windowMs)
+  const rows = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(serverConfig)
+    .where(and(eq(serverConfig.userId, userId), gt(serverConfig.createdAt, since)))
+  return Number(rows[0]?.n ?? 0)
 }
 
 export async function listConfigs (
@@ -299,8 +322,9 @@ export async function getConfigDetail (db: Db, slug: string, viewerId: string | 
 /**
  * Delete a config the caller owns. Explicitly clears child rows (config_tag,
  * like) and nulls any fork children's lineage rather than relying on FK cascade
- * (D1 does not enforce foreign keys by default). The FTS row is removed by the
- * AFTER DELETE trigger on server_config.
+ * (D1 does not enforce foreign keys by default). All four statements run in one
+ * D1 batch (a transaction), so a mid-sequence failure can't strand orphaned
+ * likes/tags. The FTS row is removed by the AFTER DELETE trigger on server_config.
  */
 export async function deleteConfig (db: Db, userId: string, slug: string): Promise<'deleted' | 'not_found' | 'forbidden'> {
   const rows = await db
@@ -312,13 +336,21 @@ export async function deleteConfig (db: Db, userId: string, slug: string): Promi
   if (!cfg) return 'not_found'
   if (cfg.userId !== userId) return 'forbidden'
 
-  await db.delete(configTag).where(eq(configTag.configId, cfg.id))
-  await db.delete(like).where(eq(like.configId, cfg.id))
-  await db.update(serverConfig).set({ forkedFromId: null }).where(eq(serverConfig.forkedFromId, cfg.id))
-  await db.delete(serverConfig).where(eq(serverConfig.id, cfg.id))
+  await db.batch([
+    db.delete(configTag).where(eq(configTag.configId, cfg.id)),
+    db.delete(like).where(eq(like.configId, cfg.id)),
+    db.update(serverConfig).set({ forkedFromId: null }).where(eq(serverConfig.forkedFromId, cfg.id)),
+    db.delete(serverConfig).where(eq(serverConfig.id, cfg.id)),
+  ])
   return 'deleted'
 }
 
+/**
+ * Best-effort view counter. Call sites only count PUBLIC configs viewed by
+ * non-owners (see /c/[slug]) — unlisted links and owner refreshes don't inflate
+ * the "Popular"-adjacent number. No per-viewer dedup by design: keeping it
+ * cookieless beats perfect counts for this product.
+ */
 export async function incrementView (db: Db, id: string): Promise<void> {
   await db
     .update(serverConfig)
@@ -341,21 +373,26 @@ export async function toggleLike (
     .where(and(eq(like.userId, userId), eq(like.configId, cfg.id)))
     .limit(1)
 
-  let liked: boolean
-  if (existing.length > 0) {
-    await db.delete(like).where(and(eq(like.userId, userId), eq(like.configId, cfg.id)))
-    await db
-      .update(serverConfig)
-      .set({ likeCount: sql`max(${serverConfig.likeCount} - 1, 0)` })
-      .where(eq(serverConfig.id, cfg.id))
-    liked = false
+  // The cached rollup is recomputed from the like rows (not ±1 blind math), so
+  // a double-fire or crash between statements self-heals on the next toggle.
+  // `onConflictDoNothing` makes the insert race-proof against the (user, config)
+  // primary key; mutation + rollup run in one batch (a D1 transaction).
+  const recount = db
+    .update(serverConfig)
+    .set({ likeCount: sql`(select count(*) from ${like} where ${like.configId} = ${cfg.id})` })
+    .where(eq(serverConfig.id, cfg.id))
+
+  const liked = existing.length === 0
+  if (liked) {
+    await db.batch([
+      db.insert(like).values({ userId, configId: cfg.id }).onConflictDoNothing(),
+      recount,
+    ])
   } else {
-    await db.insert(like).values({ userId, configId: cfg.id })
-    await db
-      .update(serverConfig)
-      .set({ likeCount: sql`${serverConfig.likeCount} + 1` })
-      .where(eq(serverConfig.id, cfg.id))
-    liked = true
+    await db.batch([
+      db.delete(like).where(and(eq(like.userId, userId), eq(like.configId, cfg.id))),
+      recount,
+    ])
   }
 
   const updated = await db

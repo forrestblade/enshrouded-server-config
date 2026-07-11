@@ -2,7 +2,9 @@
  * /api/configs/[slug] — DELETE a config you own.
  *
  * Auth required; ownership enforced in the repo (403 if not yours, 404 if gone).
- * Removes tags/likes/fts + nulls fork lineage. Same-origin only (Astro CSRF).
+ * Removes tags/likes/fts + nulls fork lineage. CSRF: SameSite=Lax session cookie
+ * (cross-site requests can't carry it) + the middleware Origin check; HTML forms
+ * can't send DELETE at all.
  */
 import type { APIRoute } from 'astro'
 import { env } from 'cloudflare:workers'

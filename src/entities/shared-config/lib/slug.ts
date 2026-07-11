@@ -20,9 +20,21 @@ export function slugify (input: string): string {
   return s || BASE
 }
 
+const SUFFIX_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
+// Largest multiple of 36 that fits in a byte — bytes >= this are rejected so
+// every character is uniform (a bare `b % 36` skews toward 0–f).
+const SUFFIX_REJECT_ABOVE = 252
+
 export function randomSuffix (len = 6): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(len))
-  return Array.from(bytes, (b) => (b % 36).toString(36)).join('')
+  const out: string[] = []
+  const buf = new Uint8Array(len * 2)
+  while (out.length < len) {
+    crypto.getRandomValues(buf)
+    for (const b of buf) {
+      if (b < SUFFIX_REJECT_ABOVE && out.length < len) out.push(SUFFIX_ALPHABET[b % 36])
+    }
+  }
+  return out.join('')
 }
 
 /** Config slug: `my-hardcore-server-a1b2c3`. */

@@ -19,7 +19,9 @@ const detail = await getConfigDetail(db, slug, viewer?.id ?? null)
 const visible = detail != null && (detail.visibility !== 'private' || detail.isOwner)
 if (!visible) Astro.response.status = 404
 
-if (detail && visible && !detail.isOwner) {
+// Count views for PUBLIC configs viewed by non-owners only — unlisted links and
+// owner refreshes shouldn't inflate the number that "Popular" sits next to.
+if (detail && visible && !detail.isOwner && detail.visibility === 'public') {
   await incrementView(db, detail.id)
 }
 

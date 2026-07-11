@@ -14,7 +14,8 @@ export default defineConfig({
   // 403ing sign-out / like / delete. We disable it because CSRF is already
   // covered: Better Auth runs its own origin/referer check for /api/auth/*, and
   // our endpoints require the session cookie, which is SameSite=Lax (cross-site
-  // POSTs can't carry it).
+  // POSTs can't carry it). Defense-in-depth: src/middleware.ts additionally
+  // rejects unsafe /api/* requests whose Origin header is present + mismatched.
   security: { checkOrigin: false },
   adapter: cloudflare({
     // adapter v14: local bindings are provided automatically by @cloudflare/vite-plugin
