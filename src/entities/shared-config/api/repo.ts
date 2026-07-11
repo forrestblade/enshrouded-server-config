@@ -296,6 +296,29 @@ export async function getConfigDetail (db: Db, slug: string, viewerId: string | 
   }
 }
 
+/**
+ * Delete a config the caller owns. Explicitly clears child rows (config_tag,
+ * like) and nulls any fork children's lineage rather than relying on FK cascade
+ * (D1 does not enforce foreign keys by default). The FTS row is removed by the
+ * AFTER DELETE trigger on server_config.
+ */
+export async function deleteConfig (db: Db, userId: string, slug: string): Promise<'deleted' | 'not_found' | 'forbidden'> {
+  const rows = await db
+    .select({ id: serverConfig.id, userId: serverConfig.userId })
+    .from(serverConfig)
+    .where(eq(serverConfig.slug, slug))
+    .limit(1)
+  const cfg = rows[0]
+  if (!cfg) return 'not_found'
+  if (cfg.userId !== userId) return 'forbidden'
+
+  await db.delete(configTag).where(eq(configTag.configId, cfg.id))
+  await db.delete(like).where(eq(like.configId, cfg.id))
+  await db.update(serverConfig).set({ forkedFromId: null }).where(eq(serverConfig.forkedFromId, cfg.id))
+  await db.delete(serverConfig).where(eq(serverConfig.id, cfg.id))
+  return 'deleted'
+}
+
 export async function incrementView (db: Db, id: string): Promise<void> {
   await db
     .update(serverConfig)
