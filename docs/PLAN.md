@@ -6,14 +6,21 @@
 - **Framework:** Astro 5 (SSR) + `@astrojs/cloudflare` adapter
 - **Islands:** Svelte 5 (runes) — used for the config editor + interactive social bits
 - **DB:** Cloudflare **D1 (SQLite)** via **Drizzle ORM**; search via **FTS5**
-- **Auth:** Better Auth — OAuth-only, passwordless, + magic link (email via Resend HTTP API)
-  - Providers: Google, Discord, Twitch, Facebook, X/Twitter
-  - **Account linking** enabled → one user, many linked providers
+- **Auth:** Better Auth — OAuth-only, passwordless (no magic link / no transactional email)
+  - Providers at launch: Discord + Google (Twitch/Facebook/X deferred)
+  - **Account linking** enabled → one user, many linked providers (matched on providers'
+    verified emails, server-side — no email sending required)
 - **Bot gating:** Cloudflare Turnstile on write endpoints
-- **Analytics:** first-class primitive, **zero tracking before consent** (strict). GA4 + first-party
-  events both gated behind an explicit consent grant. Consent Mode v2 signals wired for GA4.
+- **Analytics:** HEADLINE feature (studio niche = martech/analytics), co-equal with the stack.
+  "Invisible analytics": first-party + cookieless by default via Cloudflare Analytics Engine (no
+  third-party tracker on the page), **zero collection before consent**, GPC/DNT respected,
+  Consent Mode v2 wired for GA4 only once granted, plus an admin dashboard reading events back.
 - **Hosting:** Cloudflare Pages, domain `enshroudedserverconfig.com`
 - **Attribution:** sleek footer credit backlinking `forrestblade.com`
+- **Architecture:** Feature-Sliced Design, Astro-adapted — `src/{app,pages,widgets,features,entities,shared}`;
+  Astro `src/pages` = FSD pages layer; cross-slice imports via each slice's `index.ts` barrel.
+- **Lint:** neostandard (JS Standard Style, flat config, TS) + astro/svelte plugins (ESLint 9).
+- **Error handling:** neverthrow `Result<T,E>`; pure Zod `model`, Result adapters in `shared`/entity `lib`.
 - Valence fully removed.
 
 ## Source of truth
@@ -30,11 +37,11 @@ impossible (range + enum enforcement, strict JSON, "Custom preset" gotcha surfac
 0. Foundation: scaffold Astro+Cloudflare+Svelte, Drizzle+D1 schema, design tokens, CI to Pages.
 1. Config core: typed Enshrouded schema module (source of truth), editor island, JSON export,
    local (unauth) drafts, presets (Default/Relaxed/Hard/Survival/Custom + Casual/Balanced/Hardcore).
-2. Auth + accounts: Better Auth, 5 providers, account linking, magic link, /account + profiles.
+2. Auth + accounts: Better Auth, 5 providers, account linking, /account + profiles.
 3. Social: publish/share, browse + FTS5 search, likes, fork/clone, tags, public profiles.
 4. Analytics + consent: dormant-by-default pipeline, CMP banner, GA4 gated, admin dashboard, Turnstile.
 5. Polish: SEO/sitemap/OG, View Transitions, a11y, perf, launch.
 
 ## Env / secrets required from owner before production
 Cloudflare account + D1 binding, Pages project; OAuth client id/secret for Google, Discord, Twitch,
-Facebook, X; Resend API key + from-address; GA4 measurement id; Turnstile site+secret keys.
+Facebook, X; GA4 measurement id; Turnstile site+secret keys.

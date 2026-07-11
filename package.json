@@ -12,6 +12,8 @@
     "astro": "astro",
     "check": "astro check",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply enshrouded_config --local",
     "db:migrate:remote": "wrangler d1 migrations apply enshrouded_config --remote"
@@ -19,16 +21,30 @@
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.2",
     "@astrojs/svelte": "^9.0.1",
+    "@fontsource/oswald": "^5.2.8",
     "astro": "^7.0.7",
     "better-auth": "^1.6.23",
     "drizzle-orm": "^0.45.2",
+    "neverthrow": "^8.2.0",
     "svelte": "^5.56.4",
     "zod": "^4.4.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "workerd"
+    ]
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@cloudflare/workers-types": "^5.20260711.1",
     "drizzle-kit": "^0.31.10",
+    "eslint": "^9.39.5",
+    "eslint-plugin-astro": "^1.7.0",
+    "eslint-plugin-svelte": "^3.20.0",
+    "neostandard": "^0.13.0",
+    "sharp": "^0.35.3",
     "typescript": "^5.9.3",
     "wrangler": "^4.110.0"
   }

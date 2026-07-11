@@ -1,0 +1,39 @@
+---
+import { TECH_STACK } from './tech-stack'
+---
+<ul class="tech" aria-label="Built with">
+  {TECH_STACK.map((t) => (
+    <li class="tech-item" style={`--brand:#${t.hex}`}>
+      <svg viewBox="0 0 24 24" width="15" height="15" role="img" aria-label={t.label}>
+        <path d={t.path} fill="currentColor" />
+      </svg>
+      <span>{t.label}</span>
+    </li>
+  ))}
+</ul>
+
+<style>
+  .tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .tech-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: var(--fs-xs);
+    color: var(--text-dim);
+    transition: color 0.15s ease;
+  }
+  .tech-item svg {
+    color: inherit;
+    flex: none;
+  }
+  .tech-item:hover {
+    color: var(--brand);
+  }
+</style>

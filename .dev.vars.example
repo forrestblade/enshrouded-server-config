@@ -1,4 +1,4 @@
-# Copy to `.dev.vars` for local dev (loaded by Wrangler / Astro platformProxy).
+# Copy to `.dev.vars` for local dev (loaded by Wrangler / the Cloudflare Vite plugin).
 # In production these are set as Cloudflare Pages secrets — never commit real values.
 
 # Better Auth
@@ -17,9 +17,7 @@ FACEBOOK_CLIENT_SECRET=""
 TWITTER_CLIENT_ID=""
 TWITTER_CLIENT_SECRET=""
 
-# Magic link email (Resend)
-RESEND_API_KEY=""
-EMAIL_FROM="noreply@enshroudedserverconfig.com"
+# Auth is OAuth-only (no magic link / transactional email) — no email provider needed.
 
 # Cloudflare Turnstile (bot gating on write endpoints)
 TURNSTILE_SITE_KEY=""

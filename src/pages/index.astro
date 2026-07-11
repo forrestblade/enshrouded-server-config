@@ -1,0 +1,129 @@
+---
+import Layout from '@/app/layouts/Layout.astro'
+import { PRESET_TEMPLATES } from '@/entities/server-config'
+---
+
+<Layout>
+  <section class="hero">
+    <div class="hero-media" aria-hidden="true"></div>
+    <div class="hero-inner container">
+      <h1 class="hero-title">Enshrouded<br />server config editor</h1>
+      <p class="hero-sub">
+        Edit every setting in enshrouded_server.json, keep it valid, and download a file the game
+        will load. Save configs to your account and use ones other players share.
+      </p>
+      <div class="hero-cta">
+        <a href="/editor" class="btn btn-primary">Open editor</a>
+        <a href="/browse" class="btn btn-ghost">Browse configs</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="container presets-section">
+    <h2>Presets</h2>
+    <div class="presets">
+      {PRESET_TEMPLATES.map((p) => (
+        <div class="preset">
+          <h3>{p.label}</h3>
+          <p>{p.description}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: min(82vh, 680px);
+    margin-right: calc(var(--rail-w) * -1);
+    padding-right: var(--rail-w);
+    overflow: hidden;
+  }
+  .hero-media {
+    position: absolute;
+    inset: 0;
+    background-image: url('/backgrounds/exploration.webp');
+    background-image: image-set(
+      url('/backgrounds/exploration.avif') type('image/avif'),
+      url('/backgrounds/exploration.webp') type('image/webp')
+    );
+    background-size: cover;
+    background-position: center 35%;
+  }
+  .hero-media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(13, 12, 11, 0.35) 0%,
+      rgba(13, 12, 11, 0.55) 55%,
+      var(--bg) 100%
+    );
+  }
+  .hero-inner {
+    position: relative;
+    padding-block: var(--space-8);
+  }
+  .hero-title {
+    font-family: 'Tropikal', var(--font-display);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: var(--fs-hero);
+    line-height: 1;
+    letter-spacing: 0.01em;
+    text-shadow: 0 2px 30px rgba(0, 0, 0, 0.5);
+  }
+  .hero-sub {
+    margin: var(--space-4) auto 0;
+    max-width: 52ch;
+    font-size: var(--fs-lg);
+    color: var(--text);
+    opacity: 0.92;
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+  }
+  .hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+  }
+
+  .presets-section {
+    padding-block: var(--space-10);
+  }
+  .presets-section h2 {
+    font-size: var(--fs-2xl);
+    margin-bottom: var(--space-4);
+  }
+  .presets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: var(--space-3);
+  }
+  .preset {
+    padding: var(--space-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .preset:hover {
+    border-color: var(--border-2);
+    transform: translateY(-2px);
+  }
+  .preset h3 {
+    font-size: var(--fs-lg);
+  }
+  .preset p {
+    margin-top: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+  }
+</style>

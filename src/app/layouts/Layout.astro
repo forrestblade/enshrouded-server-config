@@ -1,0 +1,259 @@
+---
+import { ClientRouter } from 'astro:transitions'
+import TechStack from '@/shared/ui/TechStack.astro'
+import ConsentBanner from '@/features/consent/ui/ConsentBanner.svelte'
+import '@fontsource/oswald/500.css'
+import '@fontsource/oswald/700.css'
+import '../styles/tokens.css'
+import '../styles/global.css'
+
+interface Props {
+  title?: string
+  description?: string
+  noindex?: boolean
+}
+
+const {
+  title = 'Enshrouded server config editor',
+  description = 'Edit enshrouded_server.json, keep values valid, export the file, and share configs with other players.',
+  noindex = false,
+} = Astro.props
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://enshroudedserverconfig.com')
+const year = new Date().getFullYear()
+const path = Astro.url.pathname
+const active = (href: string): boolean => (href === '/' ? path === '/' : path.startsWith(href))
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href={canonical.href} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="theme-color" content="#0d0c0b" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical.href} />
+    <ClientRouter />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <nav class="rail" aria-label="Primary">
+      <ul class="rail-items">
+        <li>
+          <a href="/" class={active('/') ? 'rail-link active' : 'rail-link'} aria-current={active('/') ? 'page' : undefined}>
+            <span class="rail-logo" aria-hidden="true"></span>
+            <span>Home</span>
+          </a>
+        </li>
+        <li>
+          <a href="/editor" class={active('/editor') ? 'rail-link active' : 'rail-link'} aria-current={active('/editor') ? 'page' : undefined}>
+            <svg width="24" height="24" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="11.7" y="6.6" transform="matrix(0.7071 0.7071 -0.7071 0.7071 17.0399 -4.1169)" width="3.6" height="23.9" />
+              <polyline points="18.9,16.1 20.9,18.1 23,16.1 25.9,16.1 25.9,13.1 28,11.1 25.9,9 25.9,6.1 23,6.1 20.9,4 18.9,6.1 15.9,6.1 15.9,9 13.9,11.1 15.9,13.1 " />
+              <line x1="23" y1="26" x2="29" y2="26" />
+              <line x1="26" y1="23" x2="26" y2="29" />
+              <line x1="18" y1="23" x2="22" y2="23" />
+              <line x1="20" y1="21" x2="20" y2="25" />
+            </svg>
+            <span>Editor</span>
+          </a>
+        </li>
+        <li>
+          <a href="/browse" class={active('/browse') ? 'rail-link active' : 'rail-link'} aria-current={active('/browse') ? 'page' : undefined}>
+            <svg width="24" height="24" viewBox="0 -9.25 369.5 369.5" fill="currentColor" aria-hidden="true">
+              <path d="M226.3 175.2A41.2 41.2 0 11185 134a41.2 41.2 0 0141.3 41.2zM366.3 38.5a96.2 96.2 0 012.7 22.8 98.6 98.6 0 01-4.3 28.8l.2-.7a47.2 47.2 0 01-19 26.8l-.1.1q-42.3 27.9-84.6 55.5a37.6 37.6 0 01-4.1 2h-.3c0-17-.5-33.2.2-49.4.4-8.8 5.1-16.2 11.8-22a163.2 163.2 0 0116.5-12.6l.5-.4C311 73.1 336.3 57.1 361.5 41l4.8-2.4zM256.8 175.5c4 2.5 6.6 4 9 5.7 25.5 16.3 50.8 33 76.5 48.9 18.4 11.3 26 28 27 48.5.5 10.4 0 20.9 0 32.7-3.4-1.7-5.2-2.5-6.9-3.5l-74.3-46.5c-3.2-2-6.1-4.3-9.3-6.3a45 45 0 01-22.1-43c.6-11.5 0-23 0-36.5zM48.3 3.2A96.2 96.2 0 0171 .6 98.6 98.6 0 01100 4.8l-.7-.1a47.2 47.2 0 0126.8 19v.1q28 42.2 55.6 84.6a37.6 37.6 0 012 4v.3c-17 0-33.2.5-49.4-.1a30.8 30.8 0 01-22-11.9 163.1 163.1 0 01-12.6-16.4l-.4-.6C82.9 58.6 66.8 33.3 50.7 8c-.9-1.3-1.5-2.9-2.4-4.8zM185 112.8c2.5-4 4-6.6 5.7-9.1 16.3-25.5 33-50.7 48.9-76.5C250.9 9 267.6 1.3 288 .2c10.4-.5 20.9 0 32.7 0-1.7 3.4-2.4 5.3-3.5 7l-46.5 74.2c-2 3.2-4.2 6.2-6.3 9.3a45 45 0 01-43 22.2c-11.4-.6-23-.1-36.5-.1zM321 347.7a96.2 96.2 0 01-22.7 2.7 98.6 98.6 0 01-28.8-4.3l.7.2a47.2 47.2 0 01-26.9-19v-.2q-27.9-42.2-55.5-84.5a37.6 37.6 0 01-2-4.1l-.1-.3c17 0 33.3-.5 49.5.2 8.7.4 16.2 5.1 22 11.8a163.2 163.2 0 0112.6 16.4l.3.6c16.4 25.2 32.4 50.5 48.5 75.7 1 1.4 1.5 3 2.5 4.8zM184.5 238.3l-5.6 9c-16.4 25.5-33 50.7-49 76.5-11.3 18.3-28 26-48.5 27-10.4.5-20.8 0-32.7 0 1.7-3.4 2.5-5.3 3.5-6.9l46.5-74.3c2-3.2 4.3-6.2 6.3-9.3a45 45 0 0143-22.2c11.5.6 23 .2 36.5.2zM3.3 311.6A96.2 96.2 0 01.6 289 98.6 98.6 0 015 260l-.2.7a47.2 47.2 0 0119-26.9h.1q42.3-27.9 84.6-55.5a37.6 37.6 0 014.1-2l.3-.1c0 17 .5 33.2-.2 49.5a30.8 30.8 0 01-11.8 22 163.1 163.1 0 01-16.5 12.6l-.5.3C58.6 277 33.3 293.1 8 309.2c-1.4 1-3 1.5-4.8 2.4zM112.8 174.9c-4-2.5-6.6-4-9.1-5.7-25.5-16.3-50.7-33-76.5-49C9 109 1.3 92.3.2 71.9-.2 61.4.3 50.9.3 39c3.4 1.7 5.3 2.4 7 3.4L81.3 89c3.2 2 6.2 4.3 9.3 6.3a45 45 0 0122.2 43c-.6 11.5-.1 23-.1 36.6z" />
+            </svg>
+            <span>Browse</span>
+          </a>
+        </li>
+        <li>
+          <a href="/about" class={active('/about') ? 'rail-link active' : 'rail-link'} aria-current={active('/about') ? 'page' : undefined}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
+            </svg>
+            <span>About</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="shell">
+      <main id="main">
+        <slot />
+      </main>
+
+      <footer class="site-footer">
+        <div class="container footer-inner">
+          <p class="footer-tag">
+            A free tool for building and sharing Enshrouded server configs. Not affiliated with
+            Keen Games or Enshrouded.
+          </p>
+          <div class="footer-stack">
+            <span class="footer-stack-label">Built with</span>
+            <TechStack />
+          </div>
+          <p class="footer-credit">
+            Made by <a href="https://forrestblade.com" target="_blank" rel="noopener">forrestblade.com</a>
+            <span aria-hidden="true">·</span> © {year}
+          </p>
+        </div>
+      </footer>
+    </div>
+
+    <ConsentBanner client:idle />
+
+    <style>
+      .skip-link {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        padding: var(--space-2) var(--space-4);
+        background: var(--surface-3);
+        z-index: 100;
+      }
+      .skip-link:focus {
+        left: var(--space-4);
+        top: var(--space-4);
+      }
+
+      /* Right-side floating HUD nav. No panel, no divider — fades into the page. */
+      .rail {
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 150px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-end;
+        padding: var(--space-4) var(--space-4) var(--space-4) 0;
+        z-index: 50;
+        pointer-events: none;
+        background: linear-gradient(
+          to left,
+          var(--bg) 42%,
+          color-mix(in srgb, var(--bg) 70%, transparent) 72%,
+          transparent 100%
+        );
+      }
+      .rail-items {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        pointer-events: auto;
+      }
+      .rail-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        padding: var(--space-3);
+        color: var(--text-muted);
+        font-size: 0.58rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-decoration: none;
+        opacity: 0.85;
+        transition: color 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+      }
+      .rail-link:hover {
+        color: var(--text);
+        opacity: 1;
+        transform: translateY(-1px);
+        text-decoration: none;
+      }
+      .rail-link.active {
+        color: var(--accent);
+        opacity: 1;
+      }
+      .rail-logo {
+        display: block;
+        width: 24px;
+        height: 24px;
+        background-color: currentColor;
+        -webkit-mask: url('/icons/enshrouded-monogram.png') center / contain no-repeat;
+        mask: url('/icons/enshrouded-monogram.png') center / contain no-repeat;
+      }
+
+      .shell {
+        margin-right: var(--rail-w);
+        display: flex;
+        flex-direction: column;
+        min-height: 100dvh;
+      }
+      main {
+        flex: 1;
+      }
+
+      .site-footer {
+        margin-top: var(--space-10);
+        padding: var(--space-6) 0;
+        border-top: 1px solid var(--border);
+      }
+      .footer-inner {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+      }
+      .footer-tag {
+        color: var(--text-muted);
+        font-size: var(--fs-sm);
+        max-width: 60ch;
+      }
+      .footer-stack {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+      }
+      .footer-stack-label {
+        font-size: var(--fs-xs);
+        color: var(--text-dim);
+      }
+      .footer-credit {
+        color: var(--text-dim);
+        font-size: var(--fs-sm);
+      }
+
+      @media (max-width: 640px) {
+        .rail {
+          top: auto;
+          right: 0;
+          left: 0;
+          bottom: 0;
+          width: auto;
+          height: 62px;
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+          padding: 0;
+          background: linear-gradient(to top, var(--bg) 30%, transparent);
+        }
+        .rail-items {
+          flex-direction: row;
+          width: 100%;
+          justify-content: space-around;
+          align-items: center;
+        }
+        .rail-link {
+          opacity: 0.85;
+        }
+        .shell {
+          margin-right: 0;
+          padding-bottom: 62px;
+        }
+      }
+    </style>
+  </body>
+</html>

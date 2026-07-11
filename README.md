@@ -11,7 +11,7 @@ configurations — no hand-editing JSON, no silent config wipes.
 - **Astro 5** (SSR) on **Cloudflare Pages**
 - **Svelte 5** islands for the interactive editor
 - **Cloudflare D1** (SQLite) + **Drizzle ORM**
-- **Better Auth** — OAuth-only (Google, Discord, Twitch, Facebook, X) with account linking + magic link
+- **Better Auth** — OAuth-only (Discord + Google at launch) with account linking
 - **Consent-gated analytics** — zero tracking before explicit consent
 - **Cloudflare Turnstile** bot gating
 

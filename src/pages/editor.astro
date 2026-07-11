@@ -1,0 +1,11 @@
+---
+import Layout from '@/app/layouts/Layout.astro'
+import ConfigEditor from '@/widgets/config-editor/ui/ConfigEditor.svelte'
+---
+
+<Layout
+  title="Config editor"
+  description="Build and validate an Enshrouded server config with a live JSON preview, then download enshrouded_server.json."
+>
+  <ConfigEditor client:load />
+</Layout>
