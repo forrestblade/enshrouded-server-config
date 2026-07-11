@@ -241,6 +241,17 @@ export async function listByUser (
   return hydrateList(db, rows)
 }
 
+/** All of a user's configs (any visibility), by user id — for the owner's account page. */
+export async function listOwnConfigs (db: Db, userId: string): Promise<ConfigListItem[]> {
+  const rows = await db
+    .select(listCols)
+    .from(serverConfig)
+    .where(eq(serverConfig.userId, userId))
+    .orderBy(desc(serverConfig.createdAt), sql`server_config.rowid desc`)
+    .limit(50)
+  return hydrateList(db, rows)
+}
+
 export async function getConfigDetail (db: Db, slug: string, viewerId: string | null): Promise<ConfigDetail | null> {
   const rows = await db
     .select({ ...listCols, visibility: serverConfig.visibility, forkedFromId: serverConfig.forkedFromId, config: serverConfig.config })

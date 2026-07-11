@@ -2,45 +2,54 @@
 import Layout from '@/app/layouts/Layout.astro'
 import SignOutButton from '@/features/auth/ui/SignOutButton.svelte'
 import UsernameForm from '@/features/auth/ui/UsernameForm.svelte'
+import ConfigCard from '@/entities/shared-config/ui/ConfigCard.astro'
 import { env } from 'cloudflare:workers'
 import { getDb, account as accountTable } from '@/shared/db'
+import { listOwnConfigs } from '@/entities/shared-config/api/repo'
 import { eq } from 'drizzle-orm'
+
+export const prerender = false
 
 const user = Astro.locals.user
 if (!user) {
   return Astro.redirect('/login?redirect=/account')
 }
 
-// Which OAuth providers are linked to this account.
 const db = getDb(env.DB)
-const links = await db
-  .select({ providerId: accountTable.providerId })
-  .from(accountTable)
-  .where(eq(accountTable.userId, user.id))
+const [links, configs] = await Promise.all([
+  db.select({ providerId: accountTable.providerId }).from(accountTable).where(eq(accountTable.userId, user.id)),
+  listOwnConfigs(db, user.id),
+])
 const providers = links.map((l) => l.providerId)
+const providerLabels: Record<string, string> = { discord: 'Discord', google: 'Google' }
 
 const displayName = user.displayUsername || user.username || user.name
 const profileHref = user.username ? `/u/${user.username}` : null
-const providerLabels: Record<string, string> = { discord: 'Discord', google: 'Google' }
 ---
 
 <Layout title="Your account — Enshrouded server config" noindex>
   <section class="container account">
-    <header class="account-head">
+    <header class="ac-head">
       {user.image
-        ? <img class="avatar" src={user.image} alt="" width="72" height="72" referrerpolicy="no-referrer" />
+        ? <img class="avatar" src={user.image} alt="" width="84" height="84" referrerpolicy="no-referrer" />
         : <span class="avatar avatar-fallback" aria-hidden="true">{displayName.charAt(0).toUpperCase()}</span>}
-      <div>
+      <div class="ac-id">
+        <p class="eyebrow">Your account</p>
         <h1>{displayName}</h1>
         {profileHref
-          ? <a class="profile-link" href={profileHref}>View public profile</a>
-          : <span class="profile-none">Set a username to get a public profile.</span>}
+          ? <a class="profile-link" href={profileHref}>View public profile →</a>
+          : <span class="profile-none">Choose a username below to get a public profile.</span>}
+      </div>
+      <div class="ac-head-actions">
+        <a class="btn btn-primary" href="/editor">Open editor</a>
+        <SignOutButton client:load />
       </div>
     </header>
 
     <div class="cards">
       <section class="card">
         <h2>Username</h2>
+        <p class="muted">Your public handle at <code>/u/&lt;username&gt;</code>.</p>
         <UsernameForm client:load current={user.username ?? ''} />
       </section>
 
@@ -54,37 +63,50 @@ const providerLabels: Record<string, string> = { discord: 'Discord', google: 'Go
           )
           : <p class="muted">No linked providers found.</p>}
         <p class="muted small">
-          Signing in with another provider using the same verified email links it here
-          automatically.
+          Signing in with another provider that shares this verified email links it here
+          automatically. {user.email && <>Signed in as <code>{user.email}</code>.</>}
         </p>
       </section>
-
-      <section class="card">
-        <h2>Account</h2>
-        <p class="muted">Signed in{user.email ? ` as ${user.email}` : ''}.</p>
-        <div class="actions">
-          <a class="btn btn-primary" href="/editor">Open editor</a>
-          <SignOutButton client:load />
-        </div>
-      </section>
     </div>
+
+    <section class="ac-configs">
+      <div class="ac-configs-head">
+        <h2>Your configs {configs.length > 0 && <span class="n">{configs.length}</span>}</h2>
+        <a class="btn" href="/editor">New config</a>
+      </div>
+      {configs.length > 0
+        ? (
+          <div class="grid">
+            {configs.map((c) => <ConfigCard config={c} />)}
+          </div>
+        )
+        : (
+          <div class="empty">
+            <p>You have not published any configs yet. Build one in the editor and hit Publish.</p>
+            <a class="btn btn-primary" href="/editor">Open editor</a>
+          </div>
+        )}
+    </section>
   </section>
 </Layout>
 
 <style>
   .account {
-    max-width: 760px;
-    padding-block: var(--space-9);
+    max-width: 1000px;
+    padding-block: var(--space-9) var(--space-10);
   }
-  .account-head {
+  .ac-head {
     display: flex;
     align-items: center;
     gap: var(--space-4);
-    margin-bottom: var(--space-7);
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
   }
   .avatar {
-    width: 72px;
-    height: 72px;
+    width: 84px;
+    height: 84px;
     border-radius: 50%;
     object-fit: cover;
     border: 1px solid var(--border-2);
@@ -95,11 +117,22 @@ const providerLabels: Record<string, string> = { discord: 'Discord', google: 'Go
     background: var(--surface-3);
     color: var(--accent);
     font-family: var(--font-display);
-    font-size: 2rem;
+    font-size: 2.4rem;
   }
-  .account-head h1 {
+  .ac-id {
+    flex: 1;
+    min-width: 12rem;
+  }
+  .eyebrow {
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+  .ac-id h1 {
     font-size: var(--fs-2xl);
     line-height: 1.1;
+    margin: 2px 0;
   }
   .profile-link {
     font-size: var(--fs-sm);
@@ -109,19 +142,29 @@ const providerLabels: Record<string, string> = { discord: 'Discord', google: 'Go
     font-size: var(--fs-sm);
     color: var(--text-dim);
   }
-  .cards {
+  .ac-head-actions {
     display: flex;
-    flex-direction: column;
+    gap: var(--space-2);
+    align-items: center;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: var(--space-4);
+    margin-bottom: var(--space-8);
   }
   .card {
     padding: var(--space-5);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
   }
   .card h2 {
     font-size: var(--fs-lg);
+    margin-bottom: var(--space-2);
+  }
+  .card > .muted {
     margin-bottom: var(--space-3);
   }
   .providers {
@@ -133,24 +176,65 @@ const providerLabels: Record<string, string> = { discord: 'Discord', google: 'Go
     gap: var(--space-2);
   }
   .providers li {
-    padding: 0.25rem 0.7rem;
+    padding: 0.25rem 0.75rem;
     border: 1px solid var(--border-2);
     border-radius: 999px;
     font-size: var(--fs-sm);
+  }
+  code {
+    color: var(--text);
+    background: var(--surface-2);
+    padding: 0 4px;
+    border-radius: var(--radius-sm);
+    font-size: 0.9em;
   }
   .muted {
     color: var(--text-muted);
     font-size: var(--fs-sm);
   }
   .muted.small {
-    margin-top: var(--space-2);
     font-size: var(--fs-xs);
     color: var(--text-dim);
   }
-  .actions {
+
+  .ac-configs-head {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
     gap: var(--space-3);
-    margin-top: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+  .ac-configs-head h2 {
+    font-size: var(--fs-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .ac-configs-head .n {
+    font-size: var(--fs-sm);
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+    gap: var(--space-4);
+  }
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    background: var(--surface);
+    border: 1px dashed var(--border-2);
+    border-radius: var(--radius-lg);
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 640px) {
+    .ac-head-actions {
+      width: 100%;
+    }
   }
 </style>

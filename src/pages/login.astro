@@ -15,52 +15,158 @@ const hadError = Astro.url.searchParams.has('error')
 ---
 
 <Layout title="Sign in — Enshrouded server config" noindex>
-  <section class="container auth-page">
-    <h1>Sign in</h1>
-    <p class="lede">
-      Sign in to save configs to your account, publish them for other players, and manage your
-      profile. Sign-in is through Discord or Google. There is no password to set or remember.
-    </p>
+  <section class="auth">
+    <div class="auth-media" aria-hidden="true"></div>
+    <div class="auth-scrim" aria-hidden="true"></div>
 
-    {hadError && (
-      <p class="err" role="alert">Sign-in did not complete. Please try again.</p>
-    )}
+    <div class="auth-inner">
+      <div class="auth-card">
+        <p class="eyebrow">Enshrouded server config</p>
+        <h1 class="auth-title">Sign in</h1>
+        <p class="auth-lede">
+          Save configs to your account, publish them for other players, and manage your profile.
+          Sign-in is through Discord or Google. No password to set or remember.
+        </p>
 
-    <SignInButtons client:load redirect={redirect} />
+        {hadError && (
+          <p class="auth-error" role="alert">Sign-in did not complete. Please try again.</p>
+        )}
 
-    <p class="fine">
-      We use your Discord or Google account for sign-in only. No email is sent and no password is
-      stored. If you sign in with both, they link to one account automatically.
-    </p>
+        <div class="auth-providers">
+          <SignInButtons client:load redirect={redirect} />
+        </div>
+
+        <div class="auth-perks">
+          <span>Publish &amp; share configs</span>
+          <span>Fork any build</span>
+          <span>One account, linked providers</span>
+        </div>
+
+        <p class="auth-fine">
+          We use your Discord or Google account for sign-in only. No email is sent and no password is
+          stored. Sign in with both and they link to one account automatically.
+        </p>
+      </div>
+    </div>
   </section>
 </Layout>
 
 <style>
-  .auth-page {
-    max-width: 640px;
-    padding-block: var(--space-10);
+  .auth {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: calc(100dvh - 3.5rem);
+    margin-left: calc(var(--rail-w) * -1);
+    padding-left: var(--rail-w);
+    overflow: hidden;
   }
-  .auth-page h1 {
-    font-size: var(--fs-2xl);
+  .auth-media {
+    position: absolute;
+    inset: 0;
+    background-image: url('/backgrounds/survival.webp');
+    background-image: image-set(
+      url('/backgrounds/survival.avif') type('image/avif'),
+      url('/backgrounds/survival.webp') type('image/webp')
+    );
+    background-size: cover;
+    background-position: center 25%;
+    transform: scale(1.02);
   }
-  .lede {
-    margin: var(--space-3) 0 var(--space-6);
+  .auth-scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to right, rgba(13, 12, 11, 0.94) 0%, rgba(13, 12, 11, 0.72) 42%, rgba(13, 12, 11, 0.35) 100%),
+      linear-gradient(to top, var(--bg), transparent 40%);
+  }
+  .auth-inner {
+    position: relative;
+    width: 100%;
+    max-width: var(--max-width);
+    margin-inline: auto;
+    padding-inline: var(--space-5);
+    padding-block: var(--space-8);
+  }
+  .auth-card {
+    width: min(440px, 100%);
+    background: color-mix(in srgb, var(--surface) 78%, transparent);
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  }
+  .eyebrow {
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+  }
+  .auth-title {
+    font-family: 'Tropikal', var(--font-display);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: clamp(2.5rem, 6vw, 3.75rem);
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+    margin: var(--space-3) 0 var(--space-4);
+  }
+  .auth-lede {
     color: var(--text-muted);
-    max-width: 52ch;
+    font-size: var(--fs-base);
+    max-width: 42ch;
+    margin-bottom: var(--space-5);
   }
-  .err {
+  .auth-error {
     margin-bottom: var(--space-4);
     padding: var(--space-3);
     border: 1px solid #6b2b2b;
     border-radius: var(--radius);
-    background: color-mix(in srgb, #d66 12%, transparent);
+    background: color-mix(in srgb, #d66 14%, transparent);
     color: #ff9b9b;
     font-size: var(--fs-sm);
   }
-  .fine {
-    margin-top: var(--space-6);
+  .auth-providers {
+    margin-bottom: var(--space-5);
+  }
+  .auth-perks {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4) 0;
+    border-top: 1px solid var(--border);
+    margin-bottom: var(--space-4);
+  }
+  .auth-perks span {
+    position: relative;
+    padding-left: 1.4rem;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+  }
+  .auth-perks span::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.45em;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .auth-fine {
     color: var(--text-dim);
     font-size: var(--fs-xs);
-    max-width: 52ch;
+    max-width: 46ch;
+  }
+
+  @media (max-width: 640px) {
+    .auth {
+      min-height: calc(100dvh - 62px);
+    }
+    .auth-scrim {
+      background:
+        linear-gradient(to top, var(--bg) 8%, rgba(13, 12, 11, 0.82) 55%, rgba(13, 12, 11, 0.55));
+    }
   }
 </style>

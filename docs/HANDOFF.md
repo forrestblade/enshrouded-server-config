@@ -150,15 +150,14 @@ drizzle.config.ts               # dialect sqlite, schema ./src/shared/db/schema,
    local dev + migrations already work with the placeholder).
 2. **Better Auth** (Discord + Google, account linking); `/account`, `/u/[username]`. Populate
    `src/entities/session/model/types` from Better Auth's inferred types.
-3. **Social**: publish (strip secrets via existing export public mode), browse + FTS5 search, likes,
-   fork/clone, tags, public profiles. `/browse` and `/about` routes are referenced by the nav but
-   DO NOT EXIST yet (they 404).
+3. ~~Social~~ **DONE** (publish, browse + FTS5, likes, fork, tags, profiles). `/browse` + `/c/[slug]`
+   exist. NOTE: `/about` is still linked in the nav and 404s — build it in polish.
 4. **Invisible analytics (HEADLINE)**: wire `hasAnalyticsConsent()` to a first-party beacon →
    Cloudflare Analytics Engine (binding `ANALYTICS` already in wrangler.toml), Consent Mode v2 for
    GA4 when granted, admin dashboard. The consent UI + gate are already built.
 5. **Polish**: SEO/sitemap/OG, a11y, perf, README, Cloudflare Pages CI, launch. Also: carry the
-   atmospheric theme into the editor page, add /browse + /about pages, give About a solid-style icon
-   to match dungeon/shadowkeep (wand + info are outline — visual inconsistency the owner may flag).
+   atmospheric theme into the editor page, **build the /about page (still 404s, linked in nav)**,
+   give About a solid-style icon to match dungeon/shadowkeep (wand + info are outline).
 
 ## Task tracker snapshot (recreate these — the tracker does NOT carry across sessions)
 Done: (1) foundation + drift, (2) Zod keystone schema, (3) presets + export, (4) tokens/layout/homepage
@@ -173,9 +172,12 @@ Remaining todos (recreate in order; blockers in parens):
 - [x] **#7 Better Auth — Discord + Google + account linking** — DONE & verified. createAuth factory,
       session middleware, /login /account /u/[username], username plugin. Session types now derived
       from `Auth['$Infer']['Session']`. Remaining owner step: register OAuth redirect URIs (above).
-- [ ] ~~#7 Better Auth — Discord + Google + account linking**; /account, /u/[username]. (needs #6)
-- [ ] **#8 Social** — publish (strip secrets), browse + FTS5 search, likes, fork/clone, tags,
-      public profiles. /browse and /about are linked in the nav but 404 today. (needs #6, #7)
+- [x] **#8 Social** — DONE & verified. shared-config entity (client-safe types/slug/shareable +
+      server-only D1 repo in `api/repo.ts`), FTS5 search, likes, fork lineage, tags/facets. API:
+      POST /api/configs, POST /api/configs/[slug]/like. UI: PublishDialog (in editor), ConfigCard,
+      LikeButton, ForkButton, /browse, /c/[slug]. /u + /account list configs. **Also done this**
+      **session: layout fix (nav→left, consent→right, scrollbar-gutter:stable) + full redesign of**
+      **/login, /u/[username], /account (atmospheric covers, glass cards).** Remaining: `/about` 404s.
 - [ ] **#9 Invisible analytics (HEADLINE)** — first-party beacon → Cloudflare Analytics Engine
       (ANALYTICS binding), Consent Mode v2 for GA4 once granted, admin dashboard. The consent UI +
       `hasAnalyticsConsent()` gate are already built; only the pipeline/dashboard remain.
@@ -202,6 +204,15 @@ neostandard 0.13.0 · eslint-plugin-astro 1.7.0 (pinned v1) · eslint-plugin-sve
 - **Auth is PER-REQUEST**: `createAuth(env)` is a factory, never a module singleton (D1 binding is
   request-scoped). Server code imports `@/shared/auth`; browser code imports `@/shared/auth/client`
   — keep them separate so Better Auth+drizzle+D1 never bundle into the client.
+- **Astro CSRF (`security.checkOrigin`, on by default)** returns **403** for state-changing POST/PUT/
+  DELETE whose `Origin` header doesn't match — EXCEPT `application/json` bodies (browsers preflight
+  those). Same-origin browser fetches always pass. When hitting endpoints from node/tests, send an
+  `origin: http://localhost:4321` header or you'll get a 403 that looks like an auth bug.
+- **Testing the D1 repo headlessly** (auth-gated writes can't be reached without OAuth): bundle a
+  test entry with esbuild and run the REAL `drizzle-orm/d1` adapter over a node:sqlite-backed D1
+  shim (`prepare`/`bind`/`all→{results}`/`raw→arrays`/`run`), applying the real migrations. Node 26's
+  `node:sqlite` HAS fts5, so search is covered too. The 21-assertion harness is in git history
+  (feat(social) commit); recreate it rather than trusting types alone for repo changes.
 - **OAuth won't complete until redirect URIs are registered** in the Discord + Google app dashboards:
   `{BETTER_AUTH_URL}/api/auth/callback/discord` and `.../callback/google` (dev = `http://localhost:4321/...`).
   Code + creds are correct; this is a provider-dashboard setup step. Social sign-up assigns NO

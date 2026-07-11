@@ -6,6 +6,8 @@ import { getDb, user as userTable } from '@/shared/db'
 import { listByUser } from '@/entities/shared-config/api/repo'
 import { eq } from 'drizzle-orm'
 
+export const prerender = false
+
 // Usernames are stored normalized (lowercase) by the username plugin.
 const handle = (Astro.params.username ?? '').toLowerCase()
 
@@ -29,6 +31,7 @@ if (!profile) {
 }
 
 const configs = profile?.username ? await listByUser(db, profile.username) : []
+const totalLikes = configs.reduce((sum, c) => sum + c.likeCount, 0)
 
 const displayName = profile ? (profile.displayUsername || profile.username) : handle
 const joined = profile?.createdAt
@@ -40,34 +43,44 @@ const isSelf = Boolean(profile && Astro.locals.user?.username === profile.userna
 {profile
   ? (
     <Layout title={`${displayName} — Enshrouded server config`} description={`Public Enshrouded server configs shared by ${displayName}.`}>
-      <section class="container profile">
-        <header class="profile-head">
-          {profile.image
-            ? <img class="avatar" src={profile.image} alt="" width="80" height="80" referrerpolicy="no-referrer" />
-            : <span class="avatar avatar-fallback" aria-hidden="true">{String(displayName).charAt(0).toUpperCase()}</span>}
-          <div>
-            <h1>{displayName}</h1>
-            <p class="handle">@{profile.username}{joined ? ` · joined ${joined}` : ''}</p>
-            {isSelf && <a class="edit" href="/account">Edit your profile</a>}
-          </div>
-        </header>
+      <header class="cover">
+        <div class="cover-media" aria-hidden="true"></div>
+        <div class="cover-scrim" aria-hidden="true"></div>
+      </header>
 
-        <section class="configs">
-          <h2>Public configs {configs.length > 0 && <span class="c">{configs.length}</span>}</h2>
+      <div class="container pf">
+        <div class="pf-head">
+          {profile.image
+            ? <img class="avatar" src={profile.image} alt="" width="112" height="112" referrerpolicy="no-referrer" />
+            : <span class="avatar avatar-fallback" aria-hidden="true">{String(displayName).charAt(0).toUpperCase()}</span>}
+          <div class="pf-id">
+            <h1>{displayName}</h1>
+            <p class="handle">@{profile.username}</p>
+            <div class="pf-stats">
+              <span><strong>{configs.length}</strong> config{configs.length === 1 ? '' : 's'}</span>
+              <span><strong>{totalLikes}</strong> like{totalLikes === 1 ? '' : 's'}</span>
+              {joined && <span>Joined {joined}</span>}
+            </div>
+          </div>
+          {isSelf && <a class="btn btn-ghost pf-edit" href="/account">Edit profile</a>}
+        </div>
+
+        <section class="pf-configs">
+          <h2>Public configs</h2>
           {configs.length > 0
             ? (
-              <div class="cfg-grid">
+              <div class="grid">
                 {configs.map((c) => <ConfigCard config={c} />)}
               </div>
             )
             : (
-              <p class="empty">
-                {isSelf ? 'You have not published any configs yet.' : 'No public configs yet.'}
-                {isSelf && <a href="/editor">Build one</a>}
-              </p>
+              <div class="empty">
+                <p>{isSelf ? 'You have not published any configs yet.' : `${displayName} has not published any configs yet.`}</p>
+                {isSelf && <a class="btn btn-primary" href="/editor">Build one to share</a>}
+              </div>
             )}
         </section>
-      </section>
+      </div>
     </Layout>
   )
   : (
@@ -81,69 +94,105 @@ const isSelf = Boolean(profile && Astro.locals.user?.username === profile.userna
   )}
 
 <style>
-  .profile {
-    max-width: 760px;
-    padding-block: var(--space-9);
+  .cover {
+    position: relative;
+    height: 230px;
+    margin-left: calc(var(--rail-w) * -1);
+    padding-left: var(--rail-w);
+    overflow: hidden;
   }
-  .profile-head {
+  .cover-media {
+    position: absolute;
+    inset: 0;
+    background-image: url('/backgrounds/combat.webp');
+    background-image: image-set(url('/backgrounds/combat.avif') type('image/avif'), url('/backgrounds/combat.webp') type('image/webp'));
+    background-size: cover;
+    background-position: center 32%;
+  }
+  .cover-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(13, 12, 11, 0.35), rgba(13, 12, 11, 0.72) 70%, var(--bg));
+  }
+
+  .pf {
+    position: relative;
+  }
+  .pf-head {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: var(--space-4);
-    margin-bottom: var(--space-7);
+    margin-top: -56px;
+    margin-bottom: var(--space-8);
+    flex-wrap: wrap;
   }
   .avatar {
-    width: 80px;
-    height: 80px;
+    width: 112px;
+    height: 112px;
     border-radius: 50%;
     object-fit: cover;
-    border: 1px solid var(--border-2);
+    border: 3px solid var(--bg);
+    background: var(--surface-3);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
   }
   .avatar-fallback {
     display: grid;
     place-items: center;
-    background: var(--surface-3);
     color: var(--accent);
     font-family: var(--font-display);
-    font-size: 2.2rem;
+    font-size: 3rem;
   }
-  .profile-head h1 {
-    font-size: var(--fs-2xl);
-    line-height: 1.1;
+  .pf-id {
+    flex: 1;
+    min-width: 0;
+    padding-bottom: var(--space-1);
+  }
+  .pf-id h1 {
+    font-size: var(--fs-3xl);
+    line-height: 1;
   }
   .handle {
     color: var(--text-muted);
-    font-size: var(--fs-sm);
+    font-size: var(--fs-base);
     margin-top: 2px;
   }
-  .edit {
-    display: inline-block;
-    margin-top: var(--space-2);
-    font-size: var(--fs-sm);
-    color: var(--accent);
-  }
-  .configs h2 {
-    font-size: var(--fs-lg);
-    margin-bottom: var(--space-4);
+  .pf-stats {
     display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-  .configs h2 .c {
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-top: var(--space-3);
     font-size: var(--fs-sm);
     color: var(--text-dim);
-    font-weight: 400;
   }
-  .cfg-grid {
+  .pf-stats strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .pf-edit {
+    margin-bottom: var(--space-1);
+  }
+
+  .pf-configs {
+    padding-bottom: var(--space-10);
+  }
+  .pf-configs h2 {
+    font-size: var(--fs-xl);
+    margin-bottom: var(--space-4);
+  }
+  .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
     gap: var(--space-4);
   }
   .empty {
     display: flex;
-    gap: var(--space-2);
-    color: var(--text-dim);
-    font-size: var(--fs-sm);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+    padding: var(--space-8) 0;
+    color: var(--text-muted);
   }
+
   .notfound {
     max-width: 640px;
     padding-block: var(--space-10);
@@ -154,5 +203,18 @@ const isSelf = Boolean(profile && Astro.locals.user?.username === profile.userna
   .notfound p {
     margin: var(--space-3) 0 var(--space-5);
     color: var(--text-muted);
+  }
+
+  @media (max-width: 640px) {
+    .cover {
+      height: 170px;
+    }
+    .pf-head {
+      margin-top: -44px;
+    }
+    .avatar {
+      width: 88px;
+      height: 88px;
+    }
   }
 </style>
