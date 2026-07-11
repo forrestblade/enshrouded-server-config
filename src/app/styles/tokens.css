@@ -66,5 +66,7 @@
 
   /* Layout */
   --max-width: 1040px;
-  --rail-w: 76px;
+  /* Left nav column width. Content insets exactly this much and the rail box is
+     exactly this wide, so content never sits under the rail. */
+  --rail-w: 84px;
 }

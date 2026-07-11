@@ -2,11 +2,11 @@
   // Publish the current editor config to the browse gallery. Session-gated
   // (bounces to /login). Secrets are stripped server-side. On success -> /c/[slug].
   import type { ServerConfig } from '@/entities/server-config'
-  import { useSession } from '@/shared/auth/client'
   import { FORKED_FROM_KEY } from '@/shared/config/keys'
 
-  let { config, valid }: { config: ServerConfig, valid: boolean } = $props()
-  const session = useSession()
+  // `authed` is resolved server-side and passed down, so the gate is reliable
+  // (no dependency on the async client session store).
+  let { config, valid, authed = false }: { config: ServerConfig, valid: boolean, authed?: boolean } = $props()
 
   let open = $state(false)
   let title = $state('')
@@ -19,7 +19,7 @@
   const titleOk = $derived(title.trim().length >= 3 && title.trim().length <= 120)
 
   function start () {
-    if (!$session.data) {
+    if (!authed) {
       window.location.href = '/login?redirect=/editor'
       return
     }

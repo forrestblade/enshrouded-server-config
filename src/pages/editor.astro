@@ -1,11 +1,15 @@
 ---
 import Layout from '@/app/layouts/Layout.astro'
 import ConfigEditor from '@/widgets/config-editor/ui/ConfigEditor.svelte'
+
+// Auth state is resolved server-side (reliable) and handed to the publish flow,
+// so the Publish gate never depends on the async client session store.
+const authed = Boolean(Astro.locals.user)
 ---
 
 <Layout
   title="Config editor"
   description="Build and validate an Enshrouded server config with a live JSON preview, then download enshrouded_server.json."
 >
-  <ConfigEditor client:load />
+  <ConfigEditor client:load authed={authed} />
 </Layout>

@@ -19,6 +19,8 @@
   import FactorField from './FactorField.svelte'
   import UserGroupsEditor from './UserGroupsEditor.svelte'
 
+  let { authed = false }: { authed?: boolean } = $props()
+
   let config = $state<ServerConfig>(defaultServerConfig())
   let publicPreview = $state(false)
   let copied = $state(false)
@@ -202,7 +204,7 @@
         {/if}
       </aside>
       <div class="output-actions">
-        <PublishDialog config={snap} valid={isValid} />
+        <PublishDialog config={snap} valid={isValid} {authed} />
         <button class="btn" type="button" onclick={download}>Download</button>
         <button class="btn" type="button" onclick={copyJson}>{copied ? 'Copied' : 'Copy JSON'}</button>
         <button class="btn" type="button" onclick={resetDefaults}>Reset</button>

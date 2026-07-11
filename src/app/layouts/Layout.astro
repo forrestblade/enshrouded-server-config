@@ -151,26 +151,25 @@ const user = Astro.locals.user
         top: var(--space-4);
       }
 
-      /* Left-side floating HUD nav. No panel, no divider — fades into the page.
-         Left side keeps it stable against the right-edge scrollbar gutter. */
+      /* Left nav column. Contained to exactly --rail-w so page content (inset by
+         the same amount) never sits underneath it. Subtle right-edge fade keeps
+         it atmospheric without a hard divider. */
       .rail {
         position: fixed;
         left: 0;
         top: 0;
         bottom: 0;
-        width: 150px;
+        width: var(--rail-w);
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        align-items: flex-start;
-        padding: var(--space-4) 0 var(--space-4) var(--space-4);
+        align-items: center;
+        padding: var(--space-4) 0;
         z-index: 50;
-        pointer-events: none;
         background: linear-gradient(
           to right,
-          var(--bg) 42%,
-          color-mix(in srgb, var(--bg) 70%, transparent) 72%,
-          transparent 100%
+          var(--bg) 55%,
+          color-mix(in srgb, var(--bg) 35%, transparent) 100%
         );
       }
       .rail-items {
