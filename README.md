@@ -1,40 +1,35 @@
 # Enshrouded Server Config
 
-Configure and manage Enshrouded dedicated server settings. Built with [Valence](https://github.com/valencets/valence).
+Build, share, and discover [Enshrouded](https://enshrouded.zone/) dedicated server
+configurations — no hand-editing JSON, no silent config wipes.
 
-## Features
+> **Why:** Enshrouded silently overwrites `enshrouded_server.json` with defaults if the file has a
+> single JSON error. This tool makes an invalid export structurally impossible, and adds accounts,
+> sharing, likes, and forking on top.
 
-- Create and manage multiple server configurations
-- Collapsible sections for server settings, game settings, and user groups
-- Percentage sliders for game balance factors
-- Game settings presets (Default, Relaxed, Hard, Survival, Custom)
-- Dynamic user group management (add, edit, delete)
-- Export configs as JSON for the Enshrouded dedicated server
-- Session auth with Argon2id
-- First-party analytics via Valence telemetry
-- PostgreSQL persistence
+## Stack
+- **Astro 5** (SSR) on **Cloudflare Pages**
+- **Svelte 5** islands for the interactive editor
+- **Cloudflare D1** (SQLite) + **Drizzle ORM**
+- **Better Auth** — OAuth-only (Google, Discord, Twitch, Facebook, X) with account linking + magic link
+- **Consent-gated analytics** — zero tracking before explicit consent
+- **Cloudflare Turnstile** bot gating
 
-## Development
-
+## Develop
 ```bash
 pnpm install
-pnpm migrate
-pnpm dev
+cp .dev.vars.example .dev.vars     # fill in secrets
+pnpm dev                           # http://localhost:4321
 ```
 
-- Site: http://localhost:3000
-- Admin: http://localhost:3000/admin
+See [`docs/HANDOFF.md`](docs/HANDOFF.md) for current build state and the ordered task list, and
+[`docs/reference/enshrouded-schema.md`](docs/reference/enshrouded-schema.md) for the authoritative
+config field spec.
 
-## Environment
+## Status
+Mid-rewrite from a legacy Valence app to the Astro/Cloudflare stack above. Foundation scaffolded;
+feature build in progress.
 
-Copy `.env.example` to `.env` and configure:
+---
 
-```
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=enshrouded_config
-DB_USER=postgres
-DB_PASSWORD=
-PORT=3000
-CMS_SECRET=change-me
-```
+Crafted by [forrestblade.com](https://forrestblade.com).

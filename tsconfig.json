@@ -1,22 +1,14 @@
 {
+  "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
+    "types": ["@cloudflare/workers-types/2023-07-01"],
     "strictNullChecks": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "outDir": "dist",
-    "rootDir": ".",
-    "declaration": true,
-    "sourceMap": true
+    "verbatimModuleSyntax": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
-  "include": [
-    "*.ts",
-    "collections/**/*.ts",
-    "src/**/*.ts"
-  ]
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist", ".wrangler", "node_modules"]
 }

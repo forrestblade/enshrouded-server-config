@@ -1,0 +1,29 @@
+# Copy to `.dev.vars` for local dev (loaded by Wrangler / Astro platformProxy).
+# In production these are set as Cloudflare Pages secrets — never commit real values.
+
+# Better Auth
+BETTER_AUTH_SECRET="generate-with: openssl rand -base64 32"
+BETTER_AUTH_URL="http://localhost:4321"
+
+# OAuth providers (create apps + set redirect to {BETTER_AUTH_URL}/api/auth/callback/<provider>)
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+DISCORD_CLIENT_ID=""
+DISCORD_CLIENT_SECRET=""
+TWITCH_CLIENT_ID=""
+TWITCH_CLIENT_SECRET=""
+FACEBOOK_CLIENT_ID=""
+FACEBOOK_CLIENT_SECRET=""
+TWITTER_CLIENT_ID=""
+TWITTER_CLIENT_SECRET=""
+
+# Magic link email (Resend)
+RESEND_API_KEY=""
+EMAIL_FROM="noreply@enshroudedserverconfig.com"
+
+# Cloudflare Turnstile (bot gating on write endpoints)
+TURNSTILE_SITE_KEY=""
+TURNSTILE_SECRET_KEY=""
+
+# Analytics — GA4 (loaded ONLY after consent grant)
+PUBLIC_GA4_MEASUREMENT_ID=""

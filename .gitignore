@@ -1,7 +1,27 @@
-node_modules/
+# build output
 dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# cloudflare / wrangler
+.wrangler/
+.dev.vars
+
+# env & secrets
 .env
-uploads/
+.env.local
+*.local
+
+# logs
+npm-debug.log*
+pnpm-debug.log*
+logs/
 *.log
-.last-run.json
-test-results/
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

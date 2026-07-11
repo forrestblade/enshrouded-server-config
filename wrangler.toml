@@ -1,0 +1,18 @@
+name = "enshrouded-server-config"
+compatibility_date = "2025-05-05"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./dist"
+
+# Cloudflare D1 (SQLite). Create with:
+#   wrangler d1 create enshrouded_config
+# then paste the returned database_id below.
+[[d1_databases]]
+binding = "DB"
+database_name = "enshrouded_config"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+# Workers Analytics Engine — first-party, consent-gated event sink.
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "enshrouded_events"
