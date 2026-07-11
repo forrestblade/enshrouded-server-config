@@ -30,10 +30,12 @@ Run `pnpm dev` → http://localhost:4321 (port pinned in astro.config.mjs).
   IGNORED by ESLint (their TS `<script>` needs a hoisted `@typescript-eslint/parser` this env lacks);
   the Astro/Svelte compilers + `astro check` validate them instead.
 - **Analytics: HEADLINE feature, co-equal with the stack** (owner's studio niche = martech/analytics).
-  "Invisible analytics": first-party + cookieless via Cloudflare **Analytics Engine** at the edge (no
-  third-party tracker on the page), **zero collection before consent**, GPC/DNT respected, Consent
-  Mode v2 wired for GA4 only once granted, admin dashboard reading events back. Build it as a showcase.
-- Hosting: Cloudflare Pages, domain `enshroudedserverconfig.com`. Turnstile on write endpoints.
+  ~~"Invisible analytics": first-party + cookieless via Cloudflare **Analytics Engine**~~ **SUPERSEDED**
+  (owner direction: GA4 owns reporting). Shipped as consent-gated **GTM + GA4** with Consent Mode v2,
+  zero collection before consent, GPC/DNT hard-off. Authoritative spec: `docs/TRACKING_SPEC.md`.
+- Hosting: Cloudflare Pages, domain `enshroudedserverconfig.com`. ~~Turnstile on write endpoints~~
+  **replaced** by a per-user publish rate limit (`countRecentPublishes`, 429 over cap) — simpler, no
+  extra vendor script on the page.
 - **Attribution:** footer credit backlinking **forrestblade.com** (owner's studio — this is one of
   its first showcase projects, so design quality matters a lot).
 - Source of truth for the config schema: **`docs/reference/enshrouded-schema.md`**.
@@ -151,13 +153,14 @@ drizzle.config.ts               # dialect sqlite, schema ./src/shared/db/schema,
 2. **Better Auth** (Discord + Google, account linking); `/account`, `/u/[username]`. Populate
    `src/entities/session/model/types` from Better Auth's inferred types.
 3. ~~Social~~ **DONE** (publish, browse + FTS5, likes, fork, tags, profiles). `/browse` + `/c/[slug]`
-   exist. NOTE: `/about` is still linked in the nav and 404s — build it in polish.
-4. **Invisible analytics (HEADLINE)**: wire `hasAnalyticsConsent()` to a first-party beacon →
-   Cloudflare Analytics Engine (binding `ANALYTICS` already in wrangler.toml), Consent Mode v2 for
-   GA4 when granted, admin dashboard. The consent UI + gate are already built.
-5. **Polish**: SEO/sitemap/OG, a11y, perf, README, Cloudflare Pages CI, launch. Also: carry the
-   atmospheric theme into the editor page, **build the /about page (still 404s, linked in nav)**,
-   give About a solid-style icon to match dungeon/shadowkeep (wand + info are outline).
+   exist. ~~NOTE: `/about` is still linked in the nav and 404s~~ **DONE** — `/about` built.
+4. ~~Invisible analytics (first-party beacon → Analytics Engine + dashboard)~~ **SUPERSEDED → DONE**
+   as consent-gated GTM + GA4 (Consent Mode v2). See `docs/TRACKING_SPEC.md`; no AE binding exists.
+5. **Polish**: ~~SEO/sitemap/OG~~ **DONE** (dynamic `/sitemap.xml`, OG image + twitter cards,
+   robots.txt fixed), security headers **DONE** (middleware CSP/HSTS + `public/_headers`), tests
+   **DONE** (Vitest over the entities layer), `/about` **DONE**. Remaining: Cloudflare Pages CI,
+   launch, carry the atmospheric theme into the editor page, give About a solid-style icon to match
+   dungeon/shadowkeep (wand + info are outline).
 
 ## Task tracker snapshot (recreate these — the tracker does NOT carry across sessions)
 Done: (1) foundation + drift, (2) Zod keystone schema, (3) presets + export, (4) tokens/layout/homepage
