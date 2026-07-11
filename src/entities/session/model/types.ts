@@ -1,20 +1,15 @@
 /**
  * session / model / types — auth session shapes surfaced on `App.Locals`.
  *
- * Minimal for now; expanded/derived from Better Auth's inferred types when auth
- * is wired (task: Better Auth). Kept here so `src/env.d.ts` has a stable import.
+ * Derived from Better Auth's inferred types (`Auth['$Infer']['Session']`) so
+ * `Astro.locals.user` / `Astro.locals.session` stay in lockstep with the auth
+ * config — including username-plugin fields (`username`, `displayUsername`) and
+ * any future plugin/additional-field additions. Type-only import: the server
+ * auth module (Better Auth + drizzle + D1) is never bundled here.
  */
-export interface SessionUser {
-  id: string
-  email: string
-  name: string
-  image?: string | null
-  username?: string | null
-  createdAt: Date
-}
+import type { Auth } from '@/shared/auth'
 
-export interface Session {
-  id: string
-  userId: string
-  expiresAt: Date
-}
+type InferredSession = Auth['$Infer']['Session']
+
+export type SessionUser = InferredSession['user']
+export type Session = InferredSession['session']

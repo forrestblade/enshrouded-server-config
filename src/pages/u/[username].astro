@@ -1,0 +1,128 @@
+---
+import Layout from '@/app/layouts/Layout.astro'
+import { env } from 'cloudflare:workers'
+import { getDb, user as userTable } from '@/shared/db'
+import { eq } from 'drizzle-orm'
+
+// Usernames are stored normalized (lowercase) by the username plugin.
+const handle = (Astro.params.username ?? '').toLowerCase()
+
+const db = getDb(env.DB)
+const rows = handle
+  ? await db
+      .select({
+        username: userTable.username,
+        displayUsername: userTable.displayUsername,
+        image: userTable.image,
+        createdAt: userTable.createdAt,
+      })
+      .from(userTable)
+      .where(eq(userTable.username, handle))
+      .limit(1)
+  : []
+const profile = rows[0]
+
+if (!profile) {
+  Astro.response.status = 404
+}
+
+const displayName = profile ? (profile.displayUsername || profile.username) : handle
+const joined = profile?.createdAt
+  ? new Intl.DateTimeFormat('en', { year: 'numeric', month: 'long' }).format(profile.createdAt)
+  : null
+const isSelf = Boolean(profile && Astro.locals.user?.username === profile.username)
+---
+
+{profile
+  ? (
+    <Layout title={`${displayName} — Enshrouded server config`} description={`Public Enshrouded server configs shared by ${displayName}.`}>
+      <section class="container profile">
+        <header class="profile-head">
+          {profile.image
+            ? <img class="avatar" src={profile.image} alt="" width="80" height="80" referrerpolicy="no-referrer" />
+            : <span class="avatar avatar-fallback" aria-hidden="true">{String(displayName).charAt(0).toUpperCase()}</span>}
+          <div>
+            <h1>{displayName}</h1>
+            <p class="handle">@{profile.username}{joined ? ` · joined ${joined}` : ''}</p>
+            {isSelf && <a class="edit" href="/account">Edit your profile</a>}
+          </div>
+        </header>
+
+        <section class="configs">
+          <h2>Public configs</h2>
+          <p class="empty">No public configs yet.</p>
+        </section>
+      </section>
+    </Layout>
+  )
+  : (
+    <Layout title="Profile not found — Enshrouded server config" noindex>
+      <section class="container notfound">
+        <h1>Profile not found</h1>
+        <p>No player with the username <strong>{handle}</strong> exists.</p>
+        <a class="btn btn-ghost" href="/browse">Browse configs</a>
+      </section>
+    </Layout>
+  )}
+
+<style>
+  .profile {
+    max-width: 760px;
+    padding-block: var(--space-9);
+  }
+  .profile-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-7);
+  }
+  .avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border-2);
+  }
+  .avatar-fallback {
+    display: grid;
+    place-items: center;
+    background: var(--surface-3);
+    color: var(--accent);
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+  }
+  .profile-head h1 {
+    font-size: var(--fs-2xl);
+    line-height: 1.1;
+  }
+  .handle {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    margin-top: 2px;
+  }
+  .edit {
+    display: inline-block;
+    margin-top: var(--space-2);
+    font-size: var(--fs-sm);
+    color: var(--accent);
+  }
+  .configs h2 {
+    font-size: var(--fs-lg);
+    margin-bottom: var(--space-3);
+  }
+  .empty {
+    color: var(--text-dim);
+    font-size: var(--fs-sm);
+  }
+  .notfound {
+    max-width: 640px;
+    padding-block: var(--space-10);
+  }
+  .notfound h1 {
+    font-size: var(--fs-2xl);
+  }
+  .notfound p {
+    margin: var(--space-3) 0 var(--space-5);
+    color: var(--text-muted);
+  }
+</style>

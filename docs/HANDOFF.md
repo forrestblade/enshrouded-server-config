@@ -4,11 +4,12 @@ _Durable memory for the next agent. Read this first. Updated after the design/ed
 
 ## TL;DR
 A config editor + sharing platform for Enshrouded's `enshrouded_server.json`. Astro 5-line SSR on
-Cloudflare, **D1 + Drizzle (schema + migrations built)**, Better Auth (not built yet), Svelte 5
-islands. The typed schema, the config editor, the theme/nav, the consent primitive, the homepage,
-and now the **database layer (Drizzle schema + FTS5 search + migrations, applied & verified on local
-D1)** are built and working. **Auth, social, and the analytics pipeline are not built yet.** All
-gates are green: `pnpm typecheck`, `pnpm lint`, `pnpm check` (astro), `pnpm build`.
+Cloudflare, **D1 + Drizzle**, **Better Auth (Discord + Google, built & verified)**, Svelte 5 islands.
+The typed schema, the config editor, the theme/nav, the consent primitive, the homepage, the
+**database layer (Drizzle + FTS5 + migrations)**, and the **auth layer (OAuth sign-in, session
+middleware, /login /account /u/[username])** are built and working. **Social + the analytics
+pipeline are not built yet.** All gates are green: `pnpm typecheck`, `pnpm lint`, `pnpm check`
+(astro), `pnpm build`.
 
 Run `pnpm dev` → http://localhost:4321 (port pinned in astro.config.mjs).
 
@@ -89,9 +90,26 @@ src/
       schema/index.ts           #   table barrel (the {schema} passed to drizzle() + drizzle-kit)
       client.ts                 #   getDb(binding) -> per-request Drizzle D1 client (NEVER a singleton)
       index.ts                  #   public barrel: getDb, type Db, schema tables
+  shared/
+    auth/                       # THE auth layer (SERVER barrel: @/shared/auth)
+      server.ts                 #   createAuth(env) FACTORY (per-request; D1 binding is req-scoped).
+                                #   Discord+Google, account linking (trustedProviders), username plugin.
+      client.ts                 #   browser authClient (better-auth/svelte) + usernameClient. Import
+                                #   directly as @/shared/auth/client — NEVER via the server barrel.
+      index.ts                  #   SERVER barrel: createAuth, type Auth (pulls in drizzle+D1; server-only)
+  features/
+    auth/ui/SignInButtons.svelte  # Discord + Google OAuth buttons (signIn.social)
+    auth/ui/SignOutButton.svelte  # signOut + reload
+    auth/ui/UsernameForm.svelte   # set/change username (updateUser + isUsernameAvailable)
+  middleware.ts                 # resolves session -> Astro.locals.{user,session} every request
+                                #   (createAuth(env) from cloudflare:workers; errors degrade to logged-out)
   pages/
     index.astro                 # cinematic hero (exploration bg, Tropikal uppercase title, centered) + presets
     editor.astro                # renders <ConfigEditor client:load>
+    login.astro                 # OAuth sign-in page (open-redirect-guarded ?redirect=)
+    account.astro               # protected: profile, linked providers, username form, sign out
+    u/[username].astro          # public profile (D1 lookup by normalized username; 404s cleanly)
+    api/auth/[...all].ts         # Better Auth catch-all (mounts /api/auth/*). Forwards cf-connecting-ip
   env.d.ts                      # CloudflareEnv (Discord+Google+Turnstile+GA4) + App.Locals
 public/
   backgrounds/{survival,building,combat,exploration}.{webp,avif}   # optimized Enshrouded press-kit art
@@ -107,6 +125,12 @@ drizzle.config.ts               # dialect sqlite, schema ./src/shared/db/schema,
 ```
 
 ### Verified
+- **Auth layer: smoke-tested live on `pnpm dev` (localhost:4321).** `/api/auth/get-session` -> 200
+  `null` when logged out (D1 session lookup works); `POST /api/auth/sign-in/social` returns real
+  OAuth authorize URLs for BOTH providers (`discord.com`, `accounts.google.com` with `state`);
+  `/account` 302-> `/login?redirect=/account` when logged out; `/u/<unknown>` -> clean 404; home
+  rail shows "Sign in". The only untestable-headless bit is completing the provider consent (needs
+  registered redirect URIs + a real browser login).
 - **DB layer: applied to local D1 via `pnpm db:migrate:local` (21+5 commands OK). 9 end-to-end SQL
   assertions pass** against real local D1: FTS AI/AU/AD triggers sync on insert/update/delete,
   prefix (`relax*`) + porter stemming (`building`→`build`) match, server_name field searchable,
@@ -138,14 +162,18 @@ drizzle.config.ts               # dialect sqlite, schema ./src/shared/db/schema,
 
 ## Task tracker snapshot (recreate these — the tracker does NOT carry across sessions)
 Done: (1) foundation + drift, (2) Zod keystone schema, (3) presets + export, (4) tokens/layout/homepage
-build-green, (5) config editor island, (6) D1 + Drizzle schema + FTS5 + migrations, (11) Feature-Sliced
-Design restructure, (12) neverthrow, (13) neostandard. These are complete and verified.
+build-green, (5) config editor island, (6) D1 + Drizzle schema + FTS5 + migrations, (7) Better Auth
+(Discord + Google + account linking + profiles), (11) Feature-Sliced Design restructure, (12) neverthrow,
+(13) neostandard. These are complete and verified.
 
 Remaining todos (recreate in order; blockers in parens):
 - [x] **#6 D1 + Drizzle schema + FTS5 + migrations** — DONE. auth (user/session/account/verification)
       + server_config/tag/config_tag/like + FTS5. Applied & verified on local D1. Only owner action
       left: paste real database_id for `--remote`.
-- [ ] **#7 Better Auth — Discord + Google + account linking**; /account, /u/[username]. (needs #6)
+- [x] **#7 Better Auth — Discord + Google + account linking** — DONE & verified. createAuth factory,
+      session middleware, /login /account /u/[username], username plugin. Session types now derived
+      from `Auth['$Infer']['Session']`. Remaining owner step: register OAuth redirect URIs (above).
+- [ ] ~~#7 Better Auth — Discord + Google + account linking**; /account, /u/[username]. (needs #6)
 - [ ] **#8 Social** — publish (strip secrets), browse + FTS5 search, likes, fork/clone, tags,
       public profiles. /browse and /about are linked in the nav but 404 today. (needs #6, #7)
 - [ ] **#9 Invisible analytics (HEADLINE)** — first-party beacon → Cloudflare Analytics Engine
@@ -162,6 +190,22 @@ neostandard 0.13.0 · eslint-plugin-astro 1.7.0 (pinned v1) · eslint-plugin-sve
 @fontsource/oswald · sharp (devDep, for image scripts).
 
 ## Watch-outs / gotchas (learned the hard way)
+- **BINDINGS: adapter v14 REMOVED `Astro.locals.runtime.env` — it now THROWS** ("...removed in Astro
+  v6. Use 'import { env } from "cloudflare:workers"' instead."). So access D1/ANALYTICS/secrets via
+  `import { env } from 'cloudflare:workers'` INSIDE request handlers (never at module top level).
+  It's typed with our bindings by `declare namespace Cloudflare { interface Env extends CloudflareEnv {} }`
+  in `env.d.ts`. The old HANDOFF snippet `getDb(locals.runtime.env.DB)` was stale and would have
+  thrown; use `getDb(env.DB)`.
+- **`ctx.clientAddress` THROWS in the Cloudflare adapter** ("not available"). Cost a 500 on the auth
+  catch-all. The real IP is in the `cf-connecting-ip` header — forward that instead (see
+  `pages/api/auth/[...all].ts`).
+- **Auth is PER-REQUEST**: `createAuth(env)` is a factory, never a module singleton (D1 binding is
+  request-scoped). Server code imports `@/shared/auth`; browser code imports `@/shared/auth/client`
+  — keep them separate so Better Auth+drizzle+D1 never bundle into the client.
+- **OAuth won't complete until redirect URIs are registered** in the Discord + Google app dashboards:
+  `{BETTER_AUTH_URL}/api/auth/callback/discord` and `.../callback/google` (dev = `http://localhost:4321/...`).
+  Code + creds are correct; this is a provider-dashboard setup step. Social sign-up assigns NO
+  username — users set one on `/account` before their `/u/[username]` profile works.
 - **Dev server port creep**: long-running `astro dev` instances went stale and kept incrementing the
   port (4321→4322→4323…). Port is now pinned to **4321** in `astro.config.mjs`. If a restart lands
   elsewhere, kill stragglers: `for p in 4321 4322 4323; do for pid in $(netstat -ano | grep ":$p " |

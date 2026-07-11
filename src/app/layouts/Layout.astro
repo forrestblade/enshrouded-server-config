@@ -23,6 +23,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://enshroudeds
 const year = new Date().getFullYear()
 const path = Astro.url.pathname
 const active = (href: string): boolean => (href === '/' ? path === '/' : path.startsWith(href))
+const user = Astro.locals.user
 ---
 
 <!doctype html>
@@ -46,7 +47,7 @@ const active = (href: string): boolean => (href === '/' ? path === '/' : path.st
     <a class="skip-link" href="#main">Skip to content</a>
 
     <nav class="rail" aria-label="Primary">
-      <ul class="rail-items">
+      <ul class="rail-items rail-main">
         <li>
           <a href="/" class={active('/') ? 'rail-link active' : 'rail-link'} aria-current={active('/') ? 'page' : undefined}>
             <span class="rail-logo" aria-hidden="true"></span>
@@ -81,6 +82,32 @@ const active = (href: string): boolean => (href === '/' ? path === '/' : path.st
             </svg>
             <span>About</span>
           </a>
+        </li>
+      </ul>
+
+      <ul class="rail-items rail-bottom">
+        <li>
+          {user
+            ? (
+              <a href="/account" class={active('/account') ? 'rail-link active' : 'rail-link'} aria-current={active('/account') ? 'page' : undefined}>
+                {user.image
+                  ? <img class="rail-avatar" src={user.image} alt="" width="24" height="24" referrerpolicy="no-referrer" />
+                  : (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+                    </svg>
+                  )}
+                <span>Account</span>
+              </a>
+            )
+            : (
+              <a href="/login" class={active('/login') ? 'rail-link active' : 'rail-link'} aria-current={active('/login') ? 'page' : undefined}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+                <span>Sign in</span>
+              </a>
+            )}
         </li>
       </ul>
     </nav>
@@ -133,7 +160,7 @@ const active = (href: string): boolean => (href === '/' ? path === '/' : path.st
         width: 150px;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: flex-end;
         padding: var(--space-4) var(--space-4) var(--space-4) 0;
         z-index: 50;
@@ -153,6 +180,14 @@ const active = (href: string): boolean => (href === '/' ? path === '/' : path.st
         flex-direction: column;
         gap: var(--space-2);
         pointer-events: auto;
+      }
+      /* Main nav sits centered; the account/sign-in group is pinned to the
+         bottom of the rail (two auto top-margins split the free space). */
+      .rail-main {
+        margin-top: auto;
+      }
+      .rail-bottom {
+        margin-top: auto;
       }
       .rail-link {
         display: flex;
@@ -185,6 +220,12 @@ const active = (href: string): boolean => (href === '/' ? path === '/' : path.st
         background-color: currentColor;
         -webkit-mask: url('/icons/enshrouded-monogram.png') center / contain no-repeat;
         mask: url('/icons/enshrouded-monogram.png') center / contain no-repeat;
+      }
+      .rail-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
       }
 
       .shell {
@@ -235,19 +276,19 @@ const active = (href: string): boolean => (href === '/' ? path === '/' : path.st
           width: auto;
           height: 62px;
           flex-direction: row;
-          justify-content: center;
+          justify-content: space-around;
           align-items: center;
           padding: 0;
           background: linear-gradient(to top, var(--bg) 30%, transparent);
         }
+        /* Flatten both lists into the horizontal bar so all items (including
+           account/sign-in) distribute evenly across the bottom. */
         .rail-items {
-          flex-direction: row;
-          width: 100%;
-          justify-content: space-around;
-          align-items: center;
+          display: contents;
         }
         .rail-link {
           opacity: 0.85;
+          pointer-events: auto;
         }
         .shell {
           margin-right: 0;

@@ -1,0 +1,66 @@
+---
+import Layout from '@/app/layouts/Layout.astro'
+import SignInButtons from '@/features/auth/ui/SignInButtons.svelte'
+
+// Only allow same-site relative redirects (block open-redirect + protocol-relative //host).
+const raw = Astro.url.searchParams.get('redirect') ?? '/account'
+const redirect = raw.startsWith('/') && !raw.startsWith('//') ? raw : '/account'
+
+// Already signed in? Skip the login page.
+if (Astro.locals.user) {
+  return Astro.redirect(redirect)
+}
+
+const hadError = Astro.url.searchParams.has('error')
+---
+
+<Layout title="Sign in — Enshrouded server config" noindex>
+  <section class="container auth-page">
+    <h1>Sign in</h1>
+    <p class="lede">
+      Sign in to save configs to your account, publish them for other players, and manage your
+      profile. Sign-in is through Discord or Google. There is no password to set or remember.
+    </p>
+
+    {hadError && (
+      <p class="err" role="alert">Sign-in did not complete. Please try again.</p>
+    )}
+
+    <SignInButtons client:load redirect={redirect} />
+
+    <p class="fine">
+      We use your Discord or Google account for sign-in only. No email is sent and no password is
+      stored. If you sign in with both, they link to one account automatically.
+    </p>
+  </section>
+</Layout>
+
+<style>
+  .auth-page {
+    max-width: 640px;
+    padding-block: var(--space-10);
+  }
+  .auth-page h1 {
+    font-size: var(--fs-2xl);
+  }
+  .lede {
+    margin: var(--space-3) 0 var(--space-6);
+    color: var(--text-muted);
+    max-width: 52ch;
+  }
+  .err {
+    margin-bottom: var(--space-4);
+    padding: var(--space-3);
+    border: 1px solid #6b2b2b;
+    border-radius: var(--radius);
+    background: color-mix(in srgb, #d66 12%, transparent);
+    color: #ff9b9b;
+    font-size: var(--fs-sm);
+  }
+  .fine {
+    margin-top: var(--space-6);
+    color: var(--text-dim);
+    font-size: var(--fs-xs);
+    max-width: 52ch;
+  }
+</style>

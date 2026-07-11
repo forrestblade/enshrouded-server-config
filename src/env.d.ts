@@ -21,7 +21,17 @@ interface CloudflareEnv {
   PUBLIC_GA4_MEASUREMENT_ID: string
 }
 
-type Runtime = import('@astrojs/cloudflare').Runtime<CloudflareEnv>
+// Bindings are accessed via `import { env } from 'cloudflare:workers'` (adapter
+// v14 removed `Astro.locals.runtime.env` — it now throws). Merging our bindings
+// into `Cloudflare.Env` types that `env` with DB/ANALYTICS/secrets. Do NOT read
+// `env` at module top level; only inside request handlers.
+declare namespace Cloudflare {
+  interface Env extends CloudflareEnv {}
+}
+
+// v14 Runtime exposes only `cfContext` (ExecutionContext); it is no longer
+// generic. Env comes from `cloudflare:workers`, not from here.
+type Runtime = import('@astrojs/cloudflare').Runtime
 
 declare namespace App {
   interface Locals extends Runtime {

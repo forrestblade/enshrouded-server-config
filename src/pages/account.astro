@@ -1,0 +1,156 @@
+---
+import Layout from '@/app/layouts/Layout.astro'
+import SignOutButton from '@/features/auth/ui/SignOutButton.svelte'
+import UsernameForm from '@/features/auth/ui/UsernameForm.svelte'
+import { env } from 'cloudflare:workers'
+import { getDb, account as accountTable } from '@/shared/db'
+import { eq } from 'drizzle-orm'
+
+const user = Astro.locals.user
+if (!user) {
+  return Astro.redirect('/login?redirect=/account')
+}
+
+// Which OAuth providers are linked to this account.
+const db = getDb(env.DB)
+const links = await db
+  .select({ providerId: accountTable.providerId })
+  .from(accountTable)
+  .where(eq(accountTable.userId, user.id))
+const providers = links.map((l) => l.providerId)
+
+const displayName = user.displayUsername || user.username || user.name
+const profileHref = user.username ? `/u/${user.username}` : null
+const providerLabels: Record<string, string> = { discord: 'Discord', google: 'Google' }
+---
+
+<Layout title="Your account — Enshrouded server config" noindex>
+  <section class="container account">
+    <header class="account-head">
+      {user.image
+        ? <img class="avatar" src={user.image} alt="" width="72" height="72" referrerpolicy="no-referrer" />
+        : <span class="avatar avatar-fallback" aria-hidden="true">{displayName.charAt(0).toUpperCase()}</span>}
+      <div>
+        <h1>{displayName}</h1>
+        {profileHref
+          ? <a class="profile-link" href={profileHref}>View public profile</a>
+          : <span class="profile-none">Set a username to get a public profile.</span>}
+      </div>
+    </header>
+
+    <div class="cards">
+      <section class="card">
+        <h2>Username</h2>
+        <UsernameForm client:load current={user.username ?? ''} />
+      </section>
+
+      <section class="card">
+        <h2>Sign-in methods</h2>
+        {providers.length > 0
+          ? (
+            <ul class="providers">
+              {providers.map((p) => <li>{providerLabels[p] ?? p}</li>)}
+            </ul>
+          )
+          : <p class="muted">No linked providers found.</p>}
+        <p class="muted small">
+          Signing in with another provider using the same verified email links it here
+          automatically.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Account</h2>
+        <p class="muted">Signed in{user.email ? ` as ${user.email}` : ''}.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="/editor">Open editor</a>
+          <SignOutButton client:load />
+        </div>
+      </section>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .account {
+    max-width: 760px;
+    padding-block: var(--space-9);
+  }
+  .account-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-7);
+  }
+  .avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border-2);
+  }
+  .avatar-fallback {
+    display: grid;
+    place-items: center;
+    background: var(--surface-3);
+    color: var(--accent);
+    font-family: var(--font-display);
+    font-size: 2rem;
+  }
+  .account-head h1 {
+    font-size: var(--fs-2xl);
+    line-height: 1.1;
+  }
+  .profile-link {
+    font-size: var(--fs-sm);
+    color: var(--accent);
+  }
+  .profile-none {
+    font-size: var(--fs-sm);
+    color: var(--text-dim);
+  }
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .card {
+    padding: var(--space-5);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .card h2 {
+    font-size: var(--fs-lg);
+    margin-bottom: var(--space-3);
+  }
+  .providers {
+    list-style: none;
+    margin: 0 0 var(--space-3);
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .providers li {
+    padding: 0.25rem 0.7rem;
+    border: 1px solid var(--border-2);
+    border-radius: 999px;
+    font-size: var(--fs-sm);
+  }
+  .muted {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+  }
+  .muted.small {
+    margin-top: var(--space-2);
+    font-size: var(--fs-xs);
+    color: var(--text-dim);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+  }
+</style>
