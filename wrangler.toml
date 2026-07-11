@@ -1,19 +1,33 @@
 name = "enshrouded-server-config"
 compatibility_date = "2025-05-05"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "./dist"
 
-# Cloudflare D1 (SQLite). Create with:
-#   wrangler d1 create enshrouded_config
-# then paste the returned database_id below.
+# Deployed as a Cloudflare WORKER (SSR + static assets via Workers Builds CI,
+# deploy command: `npx wrangler deploy`) — NOT classic Pages. The
+# @astrojs/cloudflare adapter (v14, @cloudflare/vite-plugin) generates the
+# deployable config at dist/server/wrangler.json from this file, so keep this
+# file Workers-shaped: `pages_build_output_dir` must NOT be set here (it marks
+# the project as Pages, and the generated ASSETS binding is a reserved name in
+# Pages — the deploy fails with "The name 'ASSETS' is reserved").
+
+# Public analytics ids (they ship to the browser — not secrets; see
+# docs/TRACKING_SPEC.md §5 for the page_view double-count rule before enabling
+# both). Real secrets (BETTER_AUTH_SECRET, OAuth client secrets) are set with
+# `wrangler secret put`, never committed.
+[vars]
+BETTER_AUTH_URL = "https://enshroudedserverconfig.com"
+PUBLIC_GTM_CONTAINER_ID = "GTM-5H9R96VX"
+PUBLIC_GA4_MEASUREMENT_ID = "G-3PJG33PRF6"
+
+# Cloudflare D1 (SQLite). Created with: wrangler d1 create enshrouded_config
 [[d1_databases]]
 binding = "DB"
 database_name = "enshrouded_config"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "ad07ae11-f642-471a-8291-468f533b955a"
 migrations_dir = "migrations"
 
-# Analytics runs entirely through consent-gated Google Tag Manager + GA4 (client
-# side, loaded only after consent). There is no first-party event sink and no
-# custom dashboard — GA4 owns reporting — so no Analytics Engine binding is used.
-# The GTM container id + GA4 measurement id are PUBLIC vars set as Pages env
-# vars (see .dev.vars.example / docs/TRACKING_SPEC.md).
+# Astro sessions KV (the adapter auto-binds `SESSION`; pinned so deploys don't
+# fail on an id-less binding). Created with: wrangler kv namespace create SESSION
+[[kv_namespaces]]
+binding = "SESSION"
+id = "8ff46af45b514d7c91593c0ae67f6bd3"
