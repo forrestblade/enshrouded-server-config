@@ -56,12 +56,12 @@
 <style>
   .consent {
     position: fixed;
-    left: var(--space-4);
+    right: var(--space-4);
     bottom: var(--space-4);
     z-index: 60;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: flex-end;
     gap: var(--space-3);
   }
 

@@ -151,22 +151,23 @@ const user = Astro.locals.user
         top: var(--space-4);
       }
 
-      /* Right-side floating HUD nav. No panel, no divider — fades into the page. */
+      /* Left-side floating HUD nav. No panel, no divider — fades into the page.
+         Left side keeps it stable against the right-edge scrollbar gutter. */
       .rail {
         position: fixed;
-        right: 0;
+        left: 0;
         top: 0;
         bottom: 0;
         width: 150px;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        align-items: flex-end;
-        padding: var(--space-4) var(--space-4) var(--space-4) 0;
+        align-items: flex-start;
+        padding: var(--space-4) 0 var(--space-4) var(--space-4);
         z-index: 50;
         pointer-events: none;
         background: linear-gradient(
-          to left,
+          to right,
           var(--bg) 42%,
           color-mix(in srgb, var(--bg) 70%, transparent) 72%,
           transparent 100%
@@ -229,7 +230,7 @@ const user = Astro.locals.user
       }
 
       .shell {
-        margin-right: var(--rail-w);
+        margin-left: var(--rail-w);
         display: flex;
         flex-direction: column;
         min-height: 100dvh;
@@ -291,7 +292,7 @@ const user = Astro.locals.user
           pointer-events: auto;
         }
         .shell {
-          margin-right: 0;
+          margin-left: 0;
           padding-bottom: 62px;
         }
       }

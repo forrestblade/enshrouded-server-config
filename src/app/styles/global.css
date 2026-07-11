@@ -28,6 +28,10 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Always reserve the scrollbar gutter so pages with/without overflow don't
+     shift horizontally (the fixed nav rail used to jump when the scrollbar
+     appeared/disappeared between routes). */
+  scrollbar-gutter: stable;
 }
 
 body {
