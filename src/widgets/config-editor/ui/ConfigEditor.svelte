@@ -14,10 +14,10 @@
     VOICE_CHAT_MODES,
   } from '@/entities/server-config'
   import type { ServerConfig, GameSettings, NumericFieldKey } from '@/entities/server-config'
+  import { DRAFT_KEY } from '@/shared/config/keys'
+  import PublishDialog from '@/features/publish-config/ui/PublishDialog.svelte'
   import FactorField from './FactorField.svelte'
   import UserGroupsEditor from './UserGroupsEditor.svelte'
-
-  const DRAFT_KEY = 'esc:draft:v1'
 
   let config = $state<ServerConfig>(defaultServerConfig())
   let publicPreview = $state(false)
@@ -202,7 +202,8 @@
         {/if}
       </aside>
       <div class="output-actions">
-        <button class="btn btn-primary" type="button" onclick={download}>Download</button>
+        <PublishDialog config={snap} valid={isValid} />
+        <button class="btn" type="button" onclick={download}>Download</button>
         <button class="btn" type="button" onclick={copyJson}>{copied ? 'Copied' : 'Copy JSON'}</button>
         <button class="btn" type="button" onclick={resetDefaults}>Reset</button>
       </div>

@@ -1,7 +1,9 @@
 ---
 import Layout from '@/app/layouts/Layout.astro'
+import ConfigCard from '@/entities/shared-config/ui/ConfigCard.astro'
 import { env } from 'cloudflare:workers'
 import { getDb, user as userTable } from '@/shared/db'
+import { listByUser } from '@/entities/shared-config/api/repo'
 import { eq } from 'drizzle-orm'
 
 // Usernames are stored normalized (lowercase) by the username plugin.
@@ -26,6 +28,8 @@ if (!profile) {
   Astro.response.status = 404
 }
 
+const configs = profile?.username ? await listByUser(db, profile.username) : []
+
 const displayName = profile ? (profile.displayUsername || profile.username) : handle
 const joined = profile?.createdAt
   ? new Intl.DateTimeFormat('en', { year: 'numeric', month: 'long' }).format(profile.createdAt)
@@ -49,8 +53,19 @@ const isSelf = Boolean(profile && Astro.locals.user?.username === profile.userna
         </header>
 
         <section class="configs">
-          <h2>Public configs</h2>
-          <p class="empty">No public configs yet.</p>
+          <h2>Public configs {configs.length > 0 && <span class="c">{configs.length}</span>}</h2>
+          {configs.length > 0
+            ? (
+              <div class="cfg-grid">
+                {configs.map((c) => <ConfigCard config={c} />)}
+              </div>
+            )
+            : (
+              <p class="empty">
+                {isSelf ? 'You have not published any configs yet.' : 'No public configs yet.'}
+                {isSelf && <a href="/editor">Build one</a>}
+              </p>
+            )}
         </section>
       </section>
     </Layout>
@@ -108,9 +123,24 @@ const isSelf = Boolean(profile && Astro.locals.user?.username === profile.userna
   }
   .configs h2 {
     font-size: var(--fs-lg);
-    margin-bottom: var(--space-3);
+    margin-bottom: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .configs h2 .c {
+    font-size: var(--fs-sm);
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  .cfg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--space-4);
   }
   .empty {
+    display: flex;
+    gap: var(--space-2);
     color: var(--text-dim);
     font-size: var(--fs-sm);
   }

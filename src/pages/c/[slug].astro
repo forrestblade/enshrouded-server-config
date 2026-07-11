@@ -1,0 +1,291 @@
+---
+import Layout from '@/app/layouts/Layout.astro'
+import LikeButton from '@/features/like-config/ui/LikeButton.svelte'
+import ForkButton from '@/features/fork-config/ui/ForkButton.svelte'
+import { env } from 'cloudflare:workers'
+import { getDb } from '@/shared/db'
+import { getConfigDetail, incrementView } from '@/entities/shared-config/api/repo'
+import { stringifyEnshroudedJson } from '@/entities/server-config'
+import { highlightJson } from '@/shared/lib/json-highlight'
+
+export const prerender = false
+
+const slug = Astro.params.slug ?? ''
+const viewer = Astro.locals.user
+const db = getDb(env.DB)
+const detail = await getConfigDetail(db, slug, viewer?.id ?? null)
+
+const visible = detail != null && (detail.visibility !== 'private' || detail.isOwner)
+if (!visible) Astro.response.status = 404
+
+if (detail && visible && !detail.isOwner) {
+  await incrementView(db, detail.id)
+}
+
+const json = detail && visible ? stringifyEnshroudedJson(detail.config, { public: true }) : ''
+const highlighted = highlightJson(json)
+
+const authorName = detail ? (detail.author.displayUsername || detail.author.username || 'Unknown') : ''
+const authorHref = detail?.author.username ? `/u/${detail.author.username}` : null
+const created = detail
+  ? new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(detail.createdAt)
+  : ''
+---
+
+{detail && visible
+  ? (
+    <Layout
+      title={`${detail.title} — Enshrouded server config`}
+      description={detail.summary || `An Enshrouded server config shared by ${authorName}.`}
+      noindex={detail.visibility !== 'public'}
+    >
+      <article class="detail container">
+        <nav class="crumbs"><a href="/browse">← Browse</a></nav>
+
+        <header class="detail-head">
+          <div class="head-main">
+            <span class="preset">{detail.gameSettingsPreset} preset</span>
+            <h1>{detail.title}</h1>
+            <p class="server">Server name: <code>{detail.serverName}</code></p>
+            {detail.summary && <p class="summary">{detail.summary}</p>}
+
+            <div class="byline">
+              {authorHref
+                ? (
+                  <a class="author" href={authorHref}>
+                    {detail.author.image
+                      ? <img class="av" src={detail.author.image} alt="" width="26" height="26" referrerpolicy="no-referrer" />
+                      : <span class="av av-fallback" aria-hidden="true">{authorName.charAt(0).toUpperCase()}</span>}
+                    <span>{authorName}</span>
+                  </a>
+                )
+                : <span class="author">{authorName}</span>}
+              <span class="dot">·</span>
+              <span>{created}</span>
+              <span class="dot">·</span>
+              <span>{detail.viewCount} view{detail.viewCount === 1 ? '' : 's'}</span>
+              {detail.visibility !== 'public' && <><span class="dot">·</span><span class="vis">{detail.visibility}</span></>}
+            </div>
+
+            {detail.forkedFrom && (
+              <p class="forked">Forked from <a href={`/c/${detail.forkedFrom.slug}`}>{detail.forkedFrom.title}</a></p>
+            )}
+
+            {detail.tags.length > 0 && (
+              <ul class="tags">
+                {detail.tags.map((t) => <li><a href={`/browse?tag=${encodeURIComponent(t.toLowerCase())}`}>{t}</a></li>)}
+              </ul>
+            )}
+          </div>
+
+          <div class="actions">
+            <LikeButton client:load slug={detail.slug} count={detail.likeCount} liked={detail.likedByViewer} authed={viewer != null} />
+            <ForkButton client:load config={detail.config} slug={detail.slug} />
+            <button class="btn" type="button" id="copy-json">Copy JSON</button>
+            <button class="btn" type="button" id="download-json">Download</button>
+          </div>
+        </header>
+
+        <section class="json-panel">
+          <div class="json-head"><span class="fname">enshrouded_server.json</span></div>
+          <pre class="json" id="config-json"><code set:html={highlighted}></code></pre>
+        </section>
+      </article>
+
+      <script is:inline define:vars={{ json }}>
+        const copyBtn = document.getElementById('copy-json')
+        const dlBtn = document.getElementById('download-json')
+        copyBtn?.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(json)
+            copyBtn.textContent = 'Copied'
+            setTimeout(() => { copyBtn.textContent = 'Copy JSON' }, 1500)
+          } catch (e) { /* clipboard unavailable */ }
+        })
+        dlBtn?.addEventListener('click', () => {
+          const blob = new Blob([json], { type: 'application/json' })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = 'enshrouded_server.json'
+          document.body.appendChild(a)
+          a.click()
+          a.remove()
+          URL.revokeObjectURL(url)
+        })
+      </script>
+    </Layout>
+  )
+  : (
+    <Layout title="Config not found — Enshrouded server config" noindex>
+      <section class="container notfound">
+        <h1>Config not found</h1>
+        <p>This config does not exist, or it is private.</p>
+        <a class="btn btn-ghost" href="/browse">Browse configs</a>
+      </section>
+    </Layout>
+  )}
+
+<style>
+  .detail {
+    max-width: 900px;
+    padding-block: var(--space-6) var(--space-10);
+  }
+  .crumbs {
+    margin-bottom: var(--space-4);
+    font-size: var(--fs-sm);
+  }
+  .crumbs a {
+    color: var(--text-muted);
+  }
+  .detail-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-6);
+  }
+  .head-main {
+    min-width: 0;
+    flex: 1 1 340px;
+  }
+  .preset {
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+  }
+  .detail-head h1 {
+    font-size: var(--fs-3xl);
+    line-height: 1.05;
+    margin: var(--space-2) 0;
+  }
+  .server {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+  }
+  .server code {
+    color: var(--text);
+  }
+  .summary {
+    margin-top: var(--space-3);
+    color: var(--text-muted);
+    max-width: 60ch;
+  }
+  .byline {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+    font-size: var(--fs-sm);
+    color: var(--text-dim);
+  }
+  .author {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-muted);
+  }
+  .av {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .av-fallback {
+    display: grid;
+    place-items: center;
+    background: var(--surface-3);
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-family: var(--font-display);
+  }
+  .dot {
+    opacity: 0.5;
+  }
+  .vis {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: var(--fs-xs);
+    color: var(--warn);
+  }
+  .forked {
+    margin-top: var(--space-3);
+    font-size: var(--fs-sm);
+    color: var(--text-dim);
+  }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+    padding: 0;
+    list-style: none;
+  }
+  .tags a {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border-2);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+  }
+  .tags a:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    text-decoration: none;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: flex-start;
+  }
+
+  .json-panel {
+    background: #0b0c0d;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .json-head {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+  .fname {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+  }
+  .json {
+    margin: 0;
+    padding: var(--space-4);
+    max-height: 70vh;
+    overflow: auto;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--text-dim);
+    white-space: pre;
+  }
+  .json :global(.t-key) { color: #7aa2e3; }
+  .json :global(.t-str) { color: #9bce8a; }
+  .json :global(.t-num) { color: #e0a56b; }
+  .json :global(.t-bool) { color: #c68fd4; }
+  .json :global(.t-null) { color: var(--text-dim); }
+
+  .notfound {
+    max-width: 640px;
+    padding-block: var(--space-10);
+  }
+  .notfound h1 {
+    font-size: var(--fs-2xl);
+  }
+  .notfound p {
+    margin: var(--space-3) 0 var(--space-5);
+    color: var(--text-muted);
+  }
+</style>
