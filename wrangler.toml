@@ -12,7 +12,8 @@ database_name = "enshrouded_config"
 database_id = "REPLACE_WITH_D1_DATABASE_ID"
 migrations_dir = "migrations"
 
-# Workers Analytics Engine — first-party, consent-gated event sink.
-[[analytics_engine_datasets]]
-binding = "ANALYTICS"
-dataset = "enshrouded_events"
+# Analytics runs entirely through consent-gated Google Tag Manager + GA4 (client
+# side, loaded only after consent). There is no first-party event sink and no
+# custom dashboard — GA4 owns reporting — so no Analytics Engine binding is used.
+# The GTM container id + GA4 measurement id are PUBLIC vars set as Pages env
+# vars (see .dev.vars.example / docs/TRACKING_SPEC.md).

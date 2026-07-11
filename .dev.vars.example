@@ -23,5 +23,11 @@ TWITTER_CLIENT_SECRET=""
 TURNSTILE_SITE_KEY=""
 TURNSTILE_SECRET_KEY=""
 
-# Analytics — GA4 (loaded ONLY after consent grant)
-PUBLIC_GA4_MEASUREMENT_ID=""
+# Analytics — consent-gated Google Tag Manager + GA4 (loaded ONLY after consent).
+# GTM is the tag manager; GA4 can live INSIDE the container OR be loaded directly.
+# Configure GA4 in exactly ONE place — setting both a container that contains GA4
+# and the direct measurement id double-counts every hit. These are PUBLIC (they
+# ship to the browser), not secrets. GA4 owns reporting; there is no custom
+# dashboard. Full setup: docs/TRACKING_SPEC.md.
+PUBLIC_GTM_CONTAINER_ID="GTM-5H9R96VX"
+PUBLIC_GA4_MEASUREMENT_ID="G-3PJG33PRF6"

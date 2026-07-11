@@ -1,7 +1,9 @@
 ---
 import { ClientRouter } from 'astro:transitions'
+import { env } from 'cloudflare:workers'
 import TechStack from '@/shared/ui/TechStack.astro'
 import ConsentBanner from '@/features/consent/ui/ConsentBanner.svelte'
+import AnalyticsTracker from '@/features/analytics/ui/AnalyticsTracker.svelte'
 import '@fontsource/oswald/500.css'
 import '@fontsource/oswald/700.css'
 import '../styles/tokens.css'
@@ -24,6 +26,19 @@ const year = new Date().getFullYear()
 const path = Astro.url.pathname
 const active = (href: string): boolean => (href === '/' ? path === '/' : path.startsWith(href))
 const user = Astro.locals.user
+
+// GTM + GA4 are opt-in and only load after consent; pass the ids (may be empty)
+// to the tracker island. Read defensively so a static/prerendered page never
+// errors on a missing binding.
+let gtmId = ''
+let ga4Id = ''
+try {
+  gtmId = env.PUBLIC_GTM_CONTAINER_ID ?? ''
+  ga4Id = env.PUBLIC_GA4_MEASUREMENT_ID ?? ''
+} catch {
+  gtmId = ''
+  ga4Id = ''
+}
 ---
 
 <!doctype html>
@@ -136,6 +151,7 @@ const user = Astro.locals.user
     </div>
 
     <ConsentBanner client:idle />
+    <AnalyticsTracker client:idle gtmId={gtmId} ga4Id={ga4Id} />
 
     <style>
       .skip-link {

@@ -1,6 +1,7 @@
 <script lang="ts">
   // Optimistic like toggle. Server reconciles the count in the response.
   // Not signed in -> bounce to login (server knows auth state, passes `authed`).
+  import { track } from '@/features/analytics'
   let {
     slug,
     count = 0,
@@ -29,6 +30,7 @@
         const data = await res.json() as { liked: boolean, likeCount: number }
         on = data.liked
         n = data.likeCount
+        track('like', { configSlug: slug, likeState: data.liked ? 'on' : 'off' })
       } else {
         on = prevOn
         n = prevN

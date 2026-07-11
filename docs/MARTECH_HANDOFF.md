@@ -1,3 +1,11 @@
+> ⚠️ **SUPERSEDED (2026-07-11).** The owner directed: no custom dashboard, use GA4/GTM —
+> "don't reinvent the wheel, GA4 handles that." The first-party **Analytics Engine** beacon,
+> the admin **dashboard**, admin gating, and the AE SQL read-back described below were **removed**.
+> Analytics now run through **consent-gated Google Tag Manager (`GTM-5H9R96VX`) + GA4
+> (`G-3PJG33PRF6`)**. The consent gate, GPC/DNT rules, and Consent Mode v2 discipline were kept.
+> **The current, authoritative spec is [`docs/TRACKING_SPEC.md`](TRACKING_SPEC.md).** The text below
+> is retained only for historical context.
+
 # MARTECH HANDOFF — Invisible Analytics (the headline feature)
 
 _Durable brief for the next agent, whose focus is the martech / analytics work. Read this first,

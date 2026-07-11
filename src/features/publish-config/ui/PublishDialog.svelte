@@ -3,6 +3,7 @@
   // (bounces to /login). Secrets are stripped server-side. On success -> /c/[slug].
   import type { ServerConfig } from '@/entities/server-config'
   import { FORKED_FROM_KEY } from '@/shared/config/keys'
+  import { track } from '@/features/analytics'
 
   // `authed` is resolved server-side and passed down, so the gate is reliable
   // (no dependency on the async client session store).
@@ -70,6 +71,7 @@
       if (res.status === 201) {
         const data = await res.json() as { slug: string }
         try { localStorage.removeItem(FORKED_FROM_KEY) } catch { /* ignore */ }
+        track('publish', { configSlug: data.slug, visibility })
         window.location.href = `/c/${data.slug}`
         return
       }

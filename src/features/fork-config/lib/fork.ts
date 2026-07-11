@@ -6,11 +6,13 @@
  */
 import type { ServerConfig } from '@/entities/server-config'
 import { DRAFT_KEY, FORKED_FROM_KEY } from '@/shared/config/keys'
+import { track } from '@/features/analytics'
 
 export function forkIntoEditor (config: ServerConfig, sourceSlug: string): void {
   try {
     localStorage.setItem(DRAFT_KEY, JSON.stringify(config))
     localStorage.setItem(FORKED_FROM_KEY, sourceSlug)
   } catch { /* storage unavailable — still navigate */ }
+  track('fork', { configSlug: sourceSlug })
   window.location.href = '/editor'
 }

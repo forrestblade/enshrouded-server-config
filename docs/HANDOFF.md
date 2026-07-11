@@ -178,9 +178,15 @@ Remaining todos (recreate in order; blockers in parens):
       LikeButton, ForkButton, /browse, /c/[slug]. /u + /account list configs. **Also done this**
       **session: layout fix (nav→left, consent→right, scrollbar-gutter:stable) + full redesign of**
       **/login, /u/[username], /account (atmospheric covers, glass cards).** Remaining: `/about` 404s.
-- [ ] **#9 Invisible analytics (HEADLINE)** — first-party beacon → Cloudflare Analytics Engine
-      (ANALYTICS binding), Consent Mode v2 for GA4 once granted, admin dashboard. The consent UI +
-      `hasAnalyticsConsent()` gate are already built; only the pipeline/dashboard remain.
+- [x] **#9 Analytics** — DONE, but PIVOTED. Owner direction: no custom dashboard, GA4 handles
+      reporting. Implemented as **consent-gated Google Tag Manager (`GTM-5H9R96VX`) + GA4
+      (`G-3PJG33PRF6`)** with Consent Mode v2 (default denied → `analytics_storage` granted only;
+      ad_* stay denied), GPC/DNT hard-off, and no `<noscript>` iframe. Product events
+      (publish/like/fork/download/copy) push to `window.dataLayer`; pageviews + site search come from
+      GA4 Enhanced Measurement. The first-party **Analytics Engine** beacon + admin dashboard + AE
+      binding + admin gating were **removed** (not built). Feature slice: `src/features/analytics/`.
+      **Authoritative setup/spec: `docs/TRACKING_SPEC.md`** (GA4 + GTM + Cloudflare steps). Owner
+      still needs to: build the GTM triggers/tags + register GA4 custom dimensions (see the spec).
 - [ ] **#10 Polish** — SEO/sitemap/OG, a11y, perf, README, Cloudflare Pages CI, launch. Plus: theme
       the editor page to match, build /browse + /about, give About a solid-style icon.
 

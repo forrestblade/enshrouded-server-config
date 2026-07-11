@@ -82,8 +82,8 @@ const created = detail
           <div class="actions">
             <LikeButton client:load slug={detail.slug} count={detail.likeCount} liked={detail.likedByViewer} authed={viewer != null} />
             <ForkButton client:load config={detail.config} slug={detail.slug} />
-            <button class="btn" type="button" id="copy-json">Copy JSON</button>
-            <button class="btn" type="button" id="download-json">Download</button>
+            <button class="btn" type="button" id="copy-json" data-esc-track="copy" data-esc-track-slug={detail.slug}>Copy JSON</button>
+            <button class="btn" type="button" id="download-json" data-esc-track="download" data-esc-track-slug={detail.slug}>Download</button>
             {detail.isOwner && <DeleteButton client:load slug={detail.slug} redirect="/account" />}
           </div>
         </header>
