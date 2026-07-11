@@ -32,13 +32,17 @@ const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 const CSP = [
   "default-src 'self'",
   // 'unsafe-inline' — required by Astro inline scripts (define:vars); see docblock.
-  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
+  // static.cloudflareinsights.com — Cloudflare Web Analytics auto-injects its
+  // beacon at the edge when enabled on the zone (toggle it off in the dashboard
+  // if you want the strict nothing-before-consent story; allowing it here just
+  // stops CSP console errors while it is on).
+  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com",
   // 'unsafe-inline' — Astro/Svelte scoped styles + transition style attributes.
   "style-src 'self' 'unsafe-inline'",
   // https: — OAuth avatars (Discord/Google CDNs) + GA image beacons.
   "img-src 'self' data: https:",
   "font-src 'self'",
-  "connect-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com",
+  "connect-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://cloudflareinsights.com",
   // GTM debug/preview badge iframe; everything else stays unframeable.
   'frame-src https://www.googletagmanager.com',
   "frame-ancestors 'none'",
