@@ -1,0 +1,141 @@
+---
+import Layout from '@/app/layouts/Layout.astro'
+import TechStack from '@/shared/ui/TechStack.astro'
+
+export const prerender = false
+---
+
+<Layout
+  title="About — Enshrouded server config"
+  description="A free editor for enshrouded_server.json. Every field is checked against what the game accepts, so the file you download will load."
+>
+  <header class="about-hero">
+    <div class="about-hero-media" aria-hidden="true"></div>
+    <div class="about-hero-inner container">
+      <p class="eyebrow">About</p>
+      <h1>About this site</h1>
+    </div>
+  </header>
+
+  <div class="container about">
+    <section class="block">
+      <h2>What it does</h2>
+      <p>
+        Enshrouded wipes <code>enshrouded_server.json</code> back to defaults if the file has a
+        single error in it. This <a href="/editor">editor</a> checks every field against what the
+        game accepts, so the file you download will load. Sign in to publish your config,
+        <a href="/browse">browse</a> what others have shared, or fork one to tweak.
+      </p>
+    </section>
+
+    <section class="block">
+      <h2>Your data</h2>
+      <p>
+        Sign-in is through Discord or Google, so no password is stored. Published configs have
+        group passwords, file paths, and your server IP stripped before saving. Analytics
+        (Google Analytics) only load if you accept in the privacy panel. No ads, and Do Not
+        Track / Global Privacy Control are respected.
+      </p>
+    </section>
+
+    <section class="block">
+      <h2>How it was built</h2>
+      <p>
+        Astro and Svelte on Cloudflare, with the data in D1.
+        Built by <a href="https://forrestblade.com" target="_blank" rel="noopener">forrestblade.com</a>.
+      </p>
+      <div class="stack"><TechStack /></div>
+    </section>
+
+    <p class="disclaimer">
+      Free community tool. Not affiliated with Keen Games.
+    </p>
+
+    <div class="cta">
+      <a class="btn btn-primary" href="/editor">Open the editor</a>
+      <a class="btn btn-ghost" href="/browse">Browse configs</a>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .about-hero {
+    position: relative;
+    overflow: hidden;
+    margin-left: calc(var(--rail-w) * -1);
+    padding-left: var(--rail-w);
+    border-bottom: 1px solid var(--border);
+  }
+  .about-hero-media {
+    position: absolute;
+    inset: 0;
+    background-image: url('/backgrounds/survival.webp');
+    background-image: image-set(
+      url('/backgrounds/survival.avif') type('image/avif'),
+      url('/backgrounds/survival.webp') type('image/webp')
+    );
+    background-size: cover;
+    background-position: center 60%;
+  }
+  .about-hero-media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(13, 12, 11, 0.55), rgba(13, 12, 11, 0.8) 70%, var(--bg));
+  }
+  .about-hero-inner {
+    position: relative;
+    padding-block: var(--space-10) var(--space-8);
+  }
+  .eyebrow {
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+  }
+  .about-hero h1 {
+    font-size: var(--fs-3xl);
+    margin-top: var(--space-2);
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5);
+  }
+
+  .about {
+    max-width: 680px;
+    padding-block: var(--space-8) var(--space-10);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+  .block h2 {
+    font-size: var(--fs-xl);
+    margin-bottom: var(--space-2);
+  }
+  .block p {
+    color: var(--text-muted);
+    max-width: 65ch;
+  }
+  .block code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    color: var(--text);
+    background: var(--surface-2);
+    padding: 0.1em 0.35em;
+    border-radius: var(--radius-sm);
+  }
+  .stack {
+    margin-top: var(--space-3);
+    padding: var(--space-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  .disclaimer {
+    font-size: var(--fs-sm);
+    color: var(--text-dim);
+  }
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+</style>
